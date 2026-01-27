@@ -1,0 +1,9 @@
+======================================================================
+ASPEN PLUS NODE IMPORT RESEARCH
+======================================================================
+Testing blocks_node.Import('C:\Users\domingueza\ASPEN_PY\node_snippet.inp')...
+  [FAIL] (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Import is not support for this object.', None, 0, 0), None)
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

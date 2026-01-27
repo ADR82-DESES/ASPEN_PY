@@ -1,0 +1,16 @@
+======================================================================
+ASPEN PLUS INTERNAL MODEL RESEARCH
+======================================================================
+
+[1] Testing LibRef...
+  LibRef value: <COMObject <unknown>>
+
+[2] Testing RootModel...
+  RootModel: <bound method RootModel of <COMObject <unknown>>>
+  RootModel methods: []
+
+[3] Searching for Palette/Model sources...
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

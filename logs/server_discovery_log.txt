@@ -1,0 +1,6 @@
+InprocHandler32: OLE32.DLL
+LocalServer32: C:\Program Files\AspenTech\Aspen Plus V14.0\GUI\Xeq\aspenplus.exe -Automation
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

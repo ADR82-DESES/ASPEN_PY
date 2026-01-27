@@ -1,0 +1,47 @@
+======================================================================
+ADVANCED ASPEN PLUS API RESEARCH
+======================================================================
+
+[1] Exploring with EnsureDispatch...
+----------------------------------------------------------------------
+
+Trying EnsureDispatch: AspenTech.Framework.UnitOpCollection
+  [INFO] EnsureDispatch failed, falling back to Dispatch: (-2147024809, 'El parámetro no es correcto.', (0, 'mscorlib', 'El parámetro que falta no tiene un valor predeterminado.\r\nNombre del parámetro: parameters', None, 0, -2147024809), None)
+  [FAIL] (-2147024809, 'El parámetro no es correcto.', (0, 'mscorlib', 'El parámetro que falta no tiene un valor predeterminado.\r\nNombre del parámetro: parameters', None, 0, -2147024809), None)
+
+Trying EnsureDispatch: AspenTech.AspenPlus.PfsDialogs.PFSFlowsheetDialogs.400
+  [INFO] EnsureDispatch failed, falling back to Dispatch: This COM object can not automate the makepy process - please run makepy manually for this object
+  [SUCCESS] Created via Dispatch: AspenTech.AspenPlus.PfsDialogs.PFSFlowsheetDialogs
+  Methods: ['AddBookmark', 'AddItem', 'AddRef', 'CloseFindObjectsDialog', 'CloseUnplacedBlocksDialog', 'Equals', 'FindObjectsDialogAddHierarchy', 'FindObjectsDialogClearHierarchyList', 'FindObjectsDialogRemoveHierarchy', 'GetBookmark', 'GetBookmarkCount', 'GetHashCode', 'GetIDsOfNames', 'GetType', 'GetTypeInfo', 'GetTypeInfoCount', 'Invoke', 'MessageBox', 'QueryInterface', 'RefreshFindObjectsDialog', 'Release', 'ShowAnnotationDialog', 'ShowBookmarksDialog', 'ShowControlVariablesListDialog', 'ShowFindObjectsDialog', 'ShowGridReminderDialog', 'ShowMenu', 'ShowNumericInputDialog', 'ShowStreamDialog', 'ShowTextInputDialog', 'ShowUniversalPortDialog', 'ShowUnplacedBlocksDialog', 'ToString', 'UnplacedBlocksDialogAddBlock', 'UnplacedBlocksDialogRemoveBlock']
+
+Trying EnsureDispatch: AspenTech.AspenPlus.HybridModelLibManager.40.0
+  [INFO] EnsureDispatch failed, falling back to Dispatch: This COM object can not automate the makepy process - please run makepy manually for this object
+  [SUCCESS] Created via Dispatch: AspenTech.AspenPlus.HybridModelUtilities.ModelLibraryManager
+  Methods: ['AddRef', 'GetIDsOfNames', 'GetTypeInfo', 'GetTypeInfoCount', 'Invoke', 'QueryInterface', 'Release']
+
+Trying EnsureDispatch: AspenTech.Modeler.ACMExpLibManager.40.0
+  [INFO] EnsureDispatch failed, falling back to Dispatch: This COM object can not automate the makepy process - please run makepy manually for this object
+  [SUCCESS] Created via Dispatch: AspenTech.Modeler.ACMExpUtilities.ModelLibraryManager
+  Methods: ['AddRef', 'GetIDsOfNames', 'GetTypeInfo', 'GetTypeInfoCount', 'Invoke', 'QueryInterface', 'Release']
+
+[2] Deep Dive: UnitOpCollection.add
+----------------------------------------------------------------------
+Testing UnitOpCollection.add with different argument patterns...
+  Trying add('MIXER',)...
+    [FAIL] The Python instance can not be converted to a COM object
+  Trying add('MIXER', 'Mixer')...
+    [FAIL] IUnitOpCollection.add() takes from 1 to 2 positional arguments but 3 were given
+  Trying add('Mixer', 'MIXER')...
+    [FAIL] IUnitOpCollection.add() takes from 1 to 2 positional arguments but 3 were given
+  Trying add(1, 'MIXER')...
+    [FAIL] IUnitOpCollection.add() takes from 1 to 2 positional arguments but 3 were given
+  Trying add('MIXER', 1)...
+    [FAIL] IUnitOpCollection.add() takes from 1 to 2 positional arguments but 3 were given
+
+[3] Searching for collections in Apwn.Document...
+----------------------------------------------------------------------
+Application object found: Aspen Plus 40.0 OLE Services
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

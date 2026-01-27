@@ -1,0 +1,40 @@
+======================================================================
+MIXER BLOCK CREATION RESEARCH
+======================================================================
+
+[1] Connecting and Initializing...
+  Connected to Dispatch
+  [OK] InitNew() successful
+  [OK] Made visible
+
+[2] Testing Mixer Block Creation...
+----------------------------------------------------------------------
+
+Test 1: Add('MIXER', 'Mixer')
+  [FAIL] Invalid block type 'Mixer'
+
+Test 2: Add('MIXER', 'MIXER')
+  [FAIL] Invalid block type 'MIXER'
+
+Test 3: Add('MIXER', 'MIX')
+  [FAIL] Invalid block type 'MIX'
+
+Test 4: Add('MIXER', 'Mix')
+  [FAIL] Invalid block type 'Mix'
+
+Test 5: Add('MIXER', 'mixer')
+  [FAIL] Invalid block type 'mixer'
+
+Test 6: Add('MIXER', '')
+  [FAIL] Invalid block type ''
+
+[3] Testing Stream Connections...
+----------------------------------------------------------------------
+[SKIP] No MIXER block to test connections
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================
+
+Results saved to mixer_research_log.txt
+Check Aspen Plus window to see what was created

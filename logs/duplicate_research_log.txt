@@ -1,0 +1,11 @@
+======================================================================
+ASPEN PLUS DUPLICATE RESEARCH
+======================================================================
+Loading: C:\Program Files\AspenTech\Aspen Plus V14.0\GUI\Examples\Hydrogen\Alkaline electrolysis\Industrial Scale Alkaline Electrolyzer\Industrial Scale Alkaline Electrolyzer.bkp
+Source block: B1
+Trying to duplicate B1 to B2 via Elements.Add('B2', 'B1')...
+  [FAIL] (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Invalid Block/Model/Library Specification', None, 0, 0), None)
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

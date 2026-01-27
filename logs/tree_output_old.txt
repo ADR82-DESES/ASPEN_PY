@@ -1,0 +1,33 @@
+======================================================================
+ASPEN PLUS TREE EXPLORER
+======================================================================
+
+[1] Connecting to Aspen Plus...
+  [OK] Connected: Aspen Plus 40.0 OLE Services
+
+[2] Exploring Tree Structure...
+
+--- Path: \Data\Streams\OUT ---
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+--- Path: \Data\Streams\OUT\Output ---
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+--- Path: \Data\Streams\OUT\Output\TEMP_OUT ---
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+--- Path: \Data\Streams\OUT\Output\TEMP ---
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+--- Path: \Data\Blocks\MIXER ---
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+[3] Checking Simulation Status...
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+[4] Listing All Streams...
+  [ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+======================================================================
+EXPLORATION COMPLETE
+======================================================================

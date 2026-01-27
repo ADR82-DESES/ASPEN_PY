@@ -1,0 +1,14 @@
+======================================================================
+ASPEN PLUS NODE DEEP DIVE
+======================================================================
+
+[1] Testing NewChild()...
+  [SUCCESS] NewChild('B1') result: B1
+
+[2] Testing AppendTemplate()...
+  Trying AppendTemplate('C:\Users\domingueza\ASPEN_PY\tiny_mixer.inp')...
+    [FAIL] The Python instance can not be converted to a COM object
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

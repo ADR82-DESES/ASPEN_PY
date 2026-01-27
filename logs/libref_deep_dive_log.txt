@@ -1,0 +1,16 @@
+======================================================================
+ASPEN PLUS LIBREF DEEP DIVE
+======================================================================
+LibRef object: <COMObject <unknown>>
+Number of libraries found: 1
+
+[2] Enumerating Libraries...
+  Library 0: Built-In | Path: 
+
+[3] Enumerating Categories...
+
+[4] Searching Data tree for Libraries...
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

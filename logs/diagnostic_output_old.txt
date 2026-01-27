@@ -1,0 +1,46 @@
+======================================================================
+ASPEN PLUS SIMPLE DIAGNOSTIC
+======================================================================
+
+[TEST 1] Connection
+----------------------------------------------------------------------
+[OK] Connected via Dispatch
+[OK] Document Name: Aspen Plus 40.0 OLE Services
+
+[TEST 2] Basic Properties
+----------------------------------------------------------------------
+[OK] Visible: False
+[OK] SuppressDialogs: 1
+[OK] Dirty: None
+
+[TEST 3] Tree Access
+----------------------------------------------------------------------
+[FAIL] Cannot access Tree: (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)
+
+[TEST 4] Engine Access
+----------------------------------------------------------------------
+[OK] Engine accessible
+[INFO] Has Run method: True
+[INFO] Has Run2 method: True
+
+[TEST 5] Key Node Paths
+----------------------------------------------------------------------
+[ERROR] \Data\Components: (-2147352567, 'Ocurrió una excepción.', (2002, 'As
+[ERROR] \Data\Properties: (-2147352567, 'Ocurrió una excepción.', (2002, 'As
+[ERROR] \Data\Streams: (-2147352567, 'Ocurrió una excepción.', (2002, 'As
+[ERROR] \Data\Blocks: (-2147352567, 'Ocurrió una excepción.', (2002, 'As
+
+[TEST 6] Component Creation Test
+----------------------------------------------------------------------
+[ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not 
+
+[TEST 7] Stream Creation Test
+----------------------------------------------------------------------
+[ERROR] (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not 
+
+======================================================================
+DIAGNOSTIC COMPLETE
+======================================================================
+
+Results saved to diagnostic_output.txt
+Please review the file for full details.

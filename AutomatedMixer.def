@@ -1,0 +1,10 @@
+INPUT: AutomatedMixer.inm
+MODNAME: apmain
+RUNID: AutomatedMixer
+NEW_RUNID: AutomatedMixer
+OLD_RUNID: AutomatedMixer
+PDF: AutomatedMixer.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+SPONLY:
+DBCONN: _0938dxz.ads

@@ -1,0 +1,14 @@
+======================================================================
+ASPEN PLUS LOW-LEVEL INVOKE RESEARCH
+======================================================================
+DISPID for Add: 1610743825
+
+Testing 3-argument Invoke with 'Model Library'...
+  [FAIL] 3-argument Invoke: (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Invalid Block/Model/Library Specification', None, 0, 0), None)
+
+Testing 2-argument Invoke...
+  [FAIL] 2-argument Invoke: (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Invalid Block/Model/Library Specification', None, 0, 0), None)
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

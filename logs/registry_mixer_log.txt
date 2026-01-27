@@ -1,0 +1,10 @@
+======================================================================
+ASPEN PLUS REGISTRY MIXER SEARCH
+======================================================================
+Searching HKEY_CLASSES_ROOT...
+Searching HKEY_LOCAL_MACHINE\SOFTWARE\AspenTech...
+  Key Found | SOFTWARE\AspenTech\Aspen Plus\40.0\Converters\HeatExchanger.MixerToHeaterConverterCollection.40.0
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

@@ -1,0 +1,12 @@
+======================================================================
+TARGETED COM DISCOVERY
+======================================================================
+Interface: IWMPMediaCollection | IID: {8363BC22-B4B4-4B19-989D-1CD765749DD1}
+Interface: IWMPMediaCollection2 | IID: {8BA957F5-FD8C-4791-B82D-F840401EE474}
+
+Searching for ProgIDs ending in .Simulation or .Application...
+ProgID: AspenZyqad400PFD.Application
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

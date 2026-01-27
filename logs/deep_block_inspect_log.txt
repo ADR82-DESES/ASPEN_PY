@@ -1,0 +1,625 @@
+======================================================================
+ASPEN PLUS DEEP BLOCK INSPECTION
+======================================================================
+Loading: C:\Program Files\AspenTech\Aspen Plus V14.0\GUI\Examples\Hydrogen\Alkaline electrolysis\Industrial Scale Alkaline Electrolyzer\Industrial Scale Alkaline Electrolyzer.bkp
+Inspecting Block: B1
+  B1 | Path: \B1 | Value: V-DRUM1
+    Input | Path: \B1\Input | Value: None
+      Unit Set | Path: \B1\Input\Unit Set | Value: SI
+      User Table | Path: \B1\Input\User Table | Value: 0
+      User Tree | Path: \B1\Input\User Tree | Value: 0
+      ADDINPUT | Path: \B1\Input\ADDINPUT | Value: None
+      ALWAYS_INST | Path: \B1\Input\ALWAYS_INST | Value: NO
+      AUTO_COMPS | Path: \B1\Input\AUTO_COMPS | Value: None
+      AUTO_COMPS_T | Path: \B1\Input\AUTO_COMPS_T | Value: 0.0
+      AUTO_PHASE | Path: \B1\Input\AUTO_PHASE | Value: YES
+      AUTO_PHASE_T | Path: \B1\Input\AUTO_PHASE_T | Value: 0.1
+      BLKOPFREWAT | Path: \B1\Input\BLKOPFREWAT | Value: NO
+      BOUND_TYPE | Path: \B1\Input\BOUND_TYPE | Value: None
+      BYPASS | Path: \B1\Input\BYPASS | Value: 0.0
+      CHECK_FREE_W | Path: \B1\Input\CHECK_FREE_W | Value: YES
+      CHEMISTRY | Path: \B1\Input\CHEMISTRY | Value: GLOBAL
+      CHEM_METHOD | Path: \B1\Input\CHEM_METHOD | Value: YES
+      COMMENT | Path: \B1\Input\COMMENT | Value: None
+      COMPBAL | Path: \B1\Input\COMPBAL | Value: NOCOMPBAL
+      CONST_METHOD | Path: \B1\Input\CONST_METHOD | Value: EQUI-MASS
+      COORD | Path: \B1\Input\COORD | Value: None
+      CPEQP | Path: \B1\Input\CPEQP | Value: 500.0
+      CPMED | Path: \B1\Input\CPMED | Value: 4200.0
+      CUMFRAC | Path: \B1\Input\CUMFRAC | Value: None
+      CUM_SUBSATT | Path: \B1\Input\CUM_SUBSATT | Value: None
+      DERIV_METHOD | Path: \B1\Input\DERIV_METHOD | Value: None
+      DESCRIPTION | Path: \B1\Input\DESCRIPTION | Value: None
+      DIAMETER | Path: \B1\Input\DIAMETER | Value: None
+      DUM_CUMATT | Path: \B1\Input\DUM_CUMATT | Value: None
+      DUM_INTERVAL | Path: \B1\Input\DUM_INTERVAL | Value: None
+      DUM_LIMUNITS | Path: \B1\Input\DUM_LIMUNITS | Value: None
+      DUM_LOWER | Path: \B1\Input\DUM_LOWER | Value: None
+      DUM_SUBSATT | Path: \B1\Input\DUM_SUBSATT | Value: None
+      DUM_UPPER | Path: \B1\Input\DUM_UPPER | Value: None
+      DUTY | Path: \B1\Input\DUTY | Value: 0.0
+      DUTY_TOL | Path: \B1\Input\DUTY_TOL | Value: None
+      EMBEDDED | Path: \B1\Input\EMBEDDED | Value: 0
+      ENABLED | Path: \B1\Input\ENABLED | Value: None
+      ENERGY_BAL | Path: \B1\Input\ENERGY_BAL | Value: YES
+      ENTRN | Path: \B1\Input\ENTRN | Value: 0.0
+      EOVAR_TYPE | Path: \B1\Input\EOVAR_TYPE | Value: None
+      EO_COMPS | Path: \B1\Input\EO_COMPS | Value: None
+      EO_COMP_TOL | Path: \B1\Input\EO_COMP_TOL | Value: 1e-15
+      EO_DEP_COMPS | Path: \B1\Input\EO_DEP_COMPS | Value: None
+      EO_FORM | Path: \B1\Input\EO_FORM | Value: None
+      EO_HEAVY_KEY | Path: \B1\Input\EO_HEAVY_KEY | Value: None
+      EO_L2_COMP | Path: \B1\Input\EO_L2_COMP | Value: None
+      EO_LIGHT_KEY | Path: \B1\Input\EO_LIGHT_KEY | Value: None
+      EO_PT_COMP | Path: \B1\Input\EO_PT_COMP | Value: None
+      EO_PT_PHASE | Path: \B1\Input\EO_PT_PHASE | Value: None
+      EO_PT_PHYSQT | Path: \B1\Input\EO_PT_PHYSQT | Value: None
+      EO_PT_TYPE | Path: \B1\Input\EO_PT_TYPE | Value: None
+      EO_PT_UOM | Path: \B1\Input\EO_PT_UOM | Value: None
+      EO_PT_VALUE | Path: \B1\Input\EO_PT_VALUE | Value: None
+      EO_TEMP_TOL | Path: \B1\Input\EO_TEMP_TOL | Value: 0.001
+      EQPHCP | Path: \B1\Input\EQPHCP | Value: NO
+      FAKEINT | Path: \B1\Input\FAKEINT | Value: None
+      FILE | Path: \B1\Input\FILE | Value: None
+      FLASH_FORM | Path: \B1\Input\FLASH_FORM | Value: PML
+      FLASH_METHOD | Path: \B1\Input\FLASH_METHOD | Value: None
+      FLOW_TOL | Path: \B1\Input\FLOW_TOL | Value: None
+      FORMSCALE | Path: \B1\Input\FORMSCALE | Value: None
+      FRWATEROPSET | Path: \B1\Input\FRWATEROPSET | Value: STEAMNBS
+      FVC_ID1 | Path: \B1\Input\FVC_ID1 | Value: None
+      FVC_ID2 | Path: \B1\Input\FVC_ID2 | Value: None
+      FVC_SENTENCE | Path: \B1\Input\FVC_SENTENCE | Value: None
+      FVC_VARIABLE | Path: \B1\Input\FVC_VARIABLE | Value: None
+      FVN | Path: \B1\Input\FVN | Value: None
+      FVN_ELEM | Path: \B1\Input\FVN_ELEM | Value: None
+      FVN_ID1 | Path: \B1\Input\FVN_ID1 | Value: None
+      FVN_ID2 | Path: \B1\Input\FVN_ID2 | Value: None
+      FVN_ID3 | Path: \B1\Input\FVN_ID3 | Value: None
+      FVN_SENTENCE | Path: \B1\Input\FVN_SENTENCE | Value: None
+      FVN_VARIABLE | Path: \B1\Input\FVN_VARIABLE | Value: None
+      FVN_VARTYPE | Path: \B1\Input\FVN_VARTYPE | Value: None
+      GLOBALSCRIPT | Path: \B1\Input\GLOBALSCRIPT | Value: None
+      HCURVE_DESCR | Path: \B1\Input\HCURVE_DESCR | Value: None
+      HEADING | Path: \B1\Input\HEADING | Value: None
+      HEATOPT | Path: \B1\Input\HEATOPT | Value: CONST-DUTY
+      HENRY_COMPS | Path: \B1\Input\HENRY_COMPS | Value: HC-1
+      HIERARCHY | Path: \B1\Input\HIERARCHY | Value: None
+      HIGH_PREC | Path: \B1\Input\HIGH_PREC | Value: None
+      HOLDUP_MED | Path: \B1\Input\HOLDUP_MED | Value: None
+      HT2ENV | Path: \B1\Input\HT2ENV | Value: NO
+      HTCEQP | Path: \B1\Input\HTCEQP | Value: 0.5
+      HTYPE | Path: \B1\Input\HTYPE | Value: ELLIPTICAL
+      IDESCRIPTION | Path: \B1\Input\IDESCRIPTION | Value: None
+      IDETAILS | Path: \B1\Input\IDETAILS | Value: NO
+      INCR | Path: \B1\Input\INCR | Value: None
+      INDEP_VAR | Path: \B1\Input\INDEP_VAR | Value: None
+      INIT_SCRIPT | Path: \B1\Input\INIT_SCRIPT | Value: None
+      INLET_PHASE | Path: \B1\Input\INLET_PHASE | Value: None
+      INPUT | Path: \B1\Input\INPUT | Value: INPUT
+      INTERACTIVE | Path: \B1\Input\INTERACTIVE | Value: None
+      INTERPOLATE | Path: \B1\Input\INTERPOLATE | Value: LINEAR
+      INTERVAL | Path: \B1\Input\INTERVAL | Value: None
+      IVENABLED | Path: \B1\Input\IVENABLED | Value: None
+      IVLOWER | Path: \B1\Input\IVLOWER | Value: None
+      IVNAME | Path: \B1\Input\IVNAME | Value: None
+      IVSCALE | Path: \B1\Input\IVSCALE | Value: None
+      IVSPEC | Path: \B1\Input\IVSPEC | Value: None
+      IVSTEP | Path: \B1\Input\IVSTEP | Value: None
+      IVUPPER | Path: \B1\Input\IVUPPER | Value: None
+      IVVALUE | Path: \B1\Input\IVVALUE | Value: None
+      L2_COMP_MODE | Path: \B1\Input\L2_COMP_MODE | Value: AUTO
+      LAMBDA | Path: \B1\Input\LAMBDA | Value: 2270000.0
+      LENGTH | Path: \B1\Input\LENGTH | Value: None
+      LEVELCONT | Path: \B1\Input\LEVELCONT | Value: YES
+      LIMUNITS | Path: \B1\Input\LIMUNITS | Value: None
+      LINES | Path: \B1\Input\LINES | Value: None
+      LIQ1FRAC | Path: \B1\Input\LIQ1FRAC | Value: None
+      LIQFRAC | Path: \B1\Input\LIQFRAC | Value: 0.5
+      LISTS | Path: \B1\Input\LISTS | Value: None
+      LOCALSCRIPT | Path: \B1\Input\LOCALSCRIPT | Value: None
+      LOWER | Path: \B1\Input\LOWER | Value: None
+      LSSOURCE | Path: \B1\Input\LSSOURCE | Value: None
+      MASSEQP | Path: \B1\Input\MASSEQP | Value: None
+      MAXIT | Path: \B1\Input\MAXIT | Value: 30
+      MIN_PRES | Path: \B1\Input\MIN_PRES | Value: YES
+      NEG_COMP_CHK | Path: \B1\Input\NEG_COMP_CHK | Value: -1e-08
+      NEG_FLOW_CHK | Path: \B1\Input\NEG_FLOW_CHK | Value: -1e-15
+      NEWPAGE | Path: \B1\Input\NEWPAGE | Value: NONEWPAGE
+      NPHASE | Path: \B1\Input\NPHASE | Value: 2
+      NPOINTS | Path: \B1\Input\NPOINTS | Value: None
+      ON_SMEO_DIFF | Path: \B1\Input\ON_SMEO_DIFF | Value: None
+      OPSETNAME | Path: \B1\Input\OPSETNAME | Value: ENRTL-RK
+      OPT_OVERALL | Path: \B1\Input\OPT_OVERALL | Value: DISTFUN
+      OPT_PSD | Path: \B1\Input\OPT_PSD | Value: COPY
+      OPT_RANGE | Path: \B1\Input\OPT_RANGE | Value: None
+      OPT_SUBPSD | Path: \B1\Input\OPT_SUBPSD | Value: OVERALL
+      OV_ATTR | Path: \B1\Input\OV_ATTR | Value: None
+      OV_D50 | Path: \B1\Input\OV_D50 | Value: None
+      OV_D63 | Path: \B1\Input\OV_D63 | Value: None
+      OV_DIAM | Path: \B1\Input\OV_DIAM | Value: None
+      OV_DISTFUN | Path: \B1\Input\OV_DISTFUN | Value: None
+      OV_FRACTION | Path: \B1\Input\OV_FRACTION | Value: None
+      OV_GGSN | Path: \B1\Input\OV_GGSN | Value: None
+      OV_GMDEV | Path: \B1\Input\OV_GMDEV | Value: None
+      OV_MESHOPT | Path: \B1\Input\OV_MESHOPT | Value: PREDEF
+      OV_PSDID | Path: \B1\Input\OV_PSDID | Value: None
+      OV_RRSBN | Path: \B1\Input\OV_RRSBN | Value: None
+      OV_STDDEV | Path: \B1\Input\OV_STDDEV | Value: None
+      OV_STEEPNES | Path: \B1\Input\OV_STEEPNES | Value: None
+      PDROP | Path: \B1\Input\PDROP | Value: None
+      PHYS_QTY | Path: \B1\Input\PHYS_QTY | Value: None
+      POINTNO | Path: \B1\Input\POINTNO | Value: None
+      PRES | Path: \B1\Input\PRES | Value: 0.0
+      PRESCONT | Path: \B1\Input\PRESCONT | Value: YES
+      PRES_PROFILE | Path: \B1\Input\PRES_PROFILE | Value: None
+      PRES_TOL | Path: \B1\Input\PRES_TOL | Value: 1.0
+      PROPERTIES | Path: \B1\Input\PROPERTIES | Value: None
+      PROP_LEVEL | Path: \B1\Input\PROP_LEVEL | Value: 4
+      PSDID | Path: \B1\Input\PSDID | Value: None
+      PSVBX | Path: \B1\Input\PSVBX | Value: None
+      PSVBY | Path: \B1\Input\PSVBY | Value: None
+      PSVLABELBOX | Path: \B1\Input\PSVLABELBOX | Value: None
+      PSVROUTE0 | Path: \B1\Input\PSVROUTE0 | Value: None
+      PSVROUTE1 | Path: \B1\Input\PSVROUTE1 | Value: None
+      PSVROUTE2 | Path: \B1\Input\PSVROUTE2 | Value: None
+      PSVROUTE3 | Path: \B1\Input\PSVROUTE3 | Value: None
+      PSVROUTE4 | Path: \B1\Input\PSVROUTE4 | Value: None
+      PSVROUTE5 | Path: \B1\Input\PSVROUTE5 | Value: None
+      P_EST | Path: \B1\Input\P_EST | Value: None
+      RAMPED | Path: \B1\Input\RAMPED | Value: None
+      REBWIZ | Path: \B1\Input\REBWIZ | Value: None
+      REPORT | Path: \B1\Input\REPORT | Value: REPORT
+      RESTART | Path: \B1\Input\RESTART | Value: NO
+      RESULTS | Path: \B1\Input\RESULTS | Value: RESULTS
+      SBWEIGHT | Path: \B1\Input\SBWEIGHT | Value: None
+      SC_METHOD | Path: \B1\Input\SC_METHOD | Value: None
+      SC_TYPE | Path: \B1\Input\SC_TYPE | Value: None
+      SFRAC_TOL | Path: \B1\Input\SFRAC_TOL | Value: 0.0001
+      SG_LOWER | Path: \B1\Input\SG_LOWER | Value: None
+      SG_PHYS_QTY | Path: \B1\Input\SG_PHYS_QTY | Value: None
+      SG_SPEC | Path: \B1\Input\SG_SPEC | Value: None
+      SG_UOM | Path: \B1\Input\SG_UOM | Value: None
+      SG_UPPER | Path: \B1\Input\SG_UPPER | Value: None
+      SG_VALUE | Path: \B1\Input\SG_VALUE | Value: None
+      SHOWASICON | Path: \B1\Input\SHOWASICON | Value: 0
+      SIM_LEVEL | Path: \B1\Input\SIM_LEVEL | Value: 4
+      SOLU_WATER | Path: \B1\Input\SOLU_WATER | Value: 3
+      SOLVE_METHOD | Path: \B1\Input\SOLVE_METHOD | Value: None
+      SOLVE_OPEN | Path: \B1\Input\SOLVE_OPEN | Value: None
+      SPARSITY | Path: \B1\Input\SPARSITY | Value: None
+      SPC_DPI | Path: \B1\Input\SPC_DPI | Value: YES
+      SPC_HDUTY | Path: \B1\Input\SPC_HDUTY | Value: YES
+      SPC_PML | Path: \B1\Input\SPC_PML | Value: NO
+      SPC_PRES | Path: \B1\Input\SPC_PRES | Value: YES
+      SPC_TEMP | Path: \B1\Input\SPC_TEMP | Value: YES
+      SPC_VFRAC | Path: \B1\Input\SPC_VFRAC | Value: YES
+      SPEC_OPT | Path: \B1\Input\SPEC_OPT | Value: PD
+      SPEC_OVOPT | Path: \B1\Input\SPEC_OVOPT | Value: None
+      SPEC_SUBOPT | Path: \B1\Input\SPEC_SUBOPT | Value: None
+      SSXML | Path: \B1\Input\SSXML | Value: <tffString><GroupName>Boundary</GroupName><TemplateName>Full</TemplateName><IsTemplateGroupDefaulted>false</IsTemplateGroupDefaulted><IsTemplateGlobalDefaulted>true</IsTemplateGlobalDefaulted><IncludesChildHierarchyStreams>false</IncludesChildHierarchyStreams><CommonShellSettings>&lt;srcSettings StreamIds="S6,O2-PROD,S5" TemplateName="Full"&gt;&lt;TFFTable&gt;&lt;GeneralOptions&gt;Description,SourceAndDestination,StreamClass,MaximumErrorTolerance,CostFlow,PhaseLabel,ComponentAttributes,ParticleSizeDistributions,Temperature,Pressure,MolarVaporFraction,MolarLiquidFraction,MolarSolidFraction,MolarEnthalpy,MolarEntropy,MolarDensity,MassVaporFraction,MassLiquidFraction,MassSolidFraction,MassEnthalpy,MassEntropy,MassDensity,EnthalpyFlow,AverageMolecularWeight,BatchProperties&lt;/GeneralOptions&gt;&lt;ScopeOptions&gt;PhasesForMixedSubstream,TotalStream,Substreams,MoleFlows,MassFlows,MoleFractions,MassFractions,VolumeFlows&lt;/ScopeOptions&gt;&lt;Properties&gt;&lt;Property Type="StateConditionProperty" EngineName="TEMP" /&gt;&lt;Property Type="StateConditionProperty" EngineName="PRES" /&gt;&lt;Property Type="StateConditionProperty" EngineName="VFRAC" /&gt;&lt;Property Type="StateConditionProperty" EngineName="LFRAC" /&gt;&lt;Property Type="StateConditionProperty" EngineName="SFRAC" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSVFRA" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSLFRA" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSSFRA" /&gt;&lt;Property Type="StateConditionProperty" EngineName="HMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSHMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="SMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSSMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="RHOMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSRHOM" /&gt;&lt;Property Type="StateConditionProperty" EngineName="HFLMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MWMX" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MOLEFLOW" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MOLEFRAC" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSFLOW" /&gt;&lt;Property Type="StateConditionProperty" EngineName="MASSFRAC" /&gt;&lt;Property Type="StateConditionProperty" EngineName="VOLFLMX" /&gt;&lt;Property Type="BatchProperty" EngineName="cmole_cycle" /&gt;&lt;Property Type="BatchProperty" EngineName="cmole_time" /&gt;&lt;Property Type="BatchProperty" EngineName="cmass_cycle" /&gt;&lt;Property Type="BatchProperty" EngineName="cmass_time" /&gt;&lt;Property Type="BatchProperty" EngineName="vol_cycle" /&gt;&lt;Property Type="BatchProperty" EngineName="vol_time" /&gt;&lt;Property Type="BatchProperty" EngineName="enth_cycle" /&gt;&lt;Property Type="BatchProperty" EngineName="enth_time" /&gt;&lt;Property Type="BatchProperty" EngineName="cycle_time" /&gt;&lt;Property Type="BatchProperty" EngineName="oper_time" /&gt;&lt;Property Type="BatchProperty" EngineName="ntrain" /&gt;&lt;/Properties&gt;&lt;/TFFTable&gt;&lt;/srcSettings&gt;</CommonShellSettings></tffString>
+      STREAM_LEVEL | Path: \B1\Input\STREAM_LEVEL | Value: 4
+      SUBBYPASS | Path: \B1\Input\SUBBYPASS | Value: None
+      SUBSATT | Path: \B1\Input\SUBSATT | Value: None
+      SUB_D50 | Path: \B1\Input\SUB_D50 | Value: None
+      SUB_D63 | Path: \B1\Input\SUB_D63 | Value: None
+      SUB_DIAM | Path: \B1\Input\SUB_DIAM | Value: None
+      SUB_GGSN | Path: \B1\Input\SUB_GGSN | Value: None
+      SUB_GMDEV | Path: \B1\Input\SUB_GMDEV | Value: None
+      SUB_RRSBN | Path: \B1\Input\SUB_RRSBN | Value: None
+      SUB_STDDEV | Path: \B1\Input\SUB_STDDEV | Value: None
+      SUB_STEEPNES | Path: \B1\Input\SUB_STEEPNES | Value: None
+      S_CUMFRAC | Path: \B1\Input\S_CUMFRAC | Value: None
+      S_DISTFUN | Path: \B1\Input\S_DISTFUN | Value: None
+      S_FRACTION | Path: \B1\Input\S_FRACTION | Value: None
+      S_MESHOPT | Path: \B1\Input\S_MESHOPT | Value: None
+      S_OPT | Path: \B1\Input\S_OPT | Value: None
+      TAPPR | Path: \B1\Input\TAPPR | Value: 10.0
+      TEMP | Path: \B1\Input\TEMP | Value: 313.15
+      TERM_LEVEL | Path: \B1\Input\TERM_LEVEL | Value: 4
+      THRESHOLD | Path: \B1\Input\THRESHOLD | Value: None
+      THRU | Path: \B1\Input\THRU | Value: None
+      TMED | Path: \B1\Input\TMED | Value: None
+      TOL | Path: \B1\Input\TOL | Value: 1e-06
+      TOTBAL | Path: \B1\Input\TOTBAL | Value: TOTBAL
+      TRUE_COMPS | Path: \B1\Input\TRUE_COMPS | Value: NO
+      T_EST | Path: \B1\Input\T_EST | Value: 343.15
+      UOM | Path: \B1\Input\UOM | Value: None
+      UPPER | Path: \B1\Input\UPPER | Value: None
+      USER_METHOD | Path: \B1\Input\USER_METHOD | Value: None
+      USER_OVLOWER | Path: \B1\Input\USER_OVLOWER | Value: None
+      USER_OVUPPER | Path: \B1\Input\USER_OVUPPER | Value: None
+      USER_OVVALUE | Path: \B1\Input\USER_OVVALUE | Value: None
+      USER_SLOWER | Path: \B1\Input\USER_SLOWER | Value: None
+      USER_SUPPER | Path: \B1\Input\USER_SUPPER | Value: None
+      USER_SVALUE | Path: \B1\Input\USER_SVALUE | Value: None
+      UTILITY_ID | Path: \B1\Input\UTILITY_ID | Value: None
+      VAPOR | Path: \B1\Input\VAPOR | Value: 0.0
+        MIXED | Path: \B1\Input\VAPOR\MIXED | Value: 0.0
+      VFRAC | Path: \B1\Input\VFRAC | Value: None
+      VFRACX_TOL | Path: \B1\Input\VFRACX_TOL | Value: 1e-05
+      VFRAC_TOL | Path: \B1\Input\VFRAC_TOL | Value: 0.001
+      VSTYPE | Path: \B1\Input\VSTYPE | Value: INSTANTANEOUS
+      WALLHTC | Path: \B1\Input\WALLHTC | Value: 0.5
+      WALLHTCDRY | Path: \B1\Input\WALLHTCDRY | Value: 0.5
+      WALLHTCWET | Path: \B1\Input\WALLHTCWET | Value: 0.5
+      WETHT | Path: \B1\Input\WETHT | Value: NO
+      WIDE | Path: \B1\Input\WIDE | Value: None
+    Output | Path: \B1\Output | Value: None
+      Unit Set | Path: \B1\Output\Unit Set | Value: 
+      Prop Data | Path: \B1\Output\Prop Data | Value: None
+      User Table | Path: \B1\Output\User Table | Value: 0
+      User Tree | Path: \B1\Output\User Tree | Value: 0
+      BAL_ENTH_GEN | Path: \B1\Output\BAL_ENTH_GEN | Value: None
+      BAL_ENTH_OUT | Path: \B1\Output\BAL_ENTH_OUT | Value: -2268738890.0
+      BAL_FEEDCO2E | Path: \B1\Output\BAL_FEEDCO2E | Value: 0.0
+      BAL_MASG_FLW | Path: \B1\Output\BAL_MASG_FLW | Value: None
+      BAL_MASG_TFL | Path: \B1\Output\BAL_MASG_TFL | Value: None
+      BAL_MASI_TFL | Path: \B1\Output\BAL_MASI_TFL | Value: 163.685908
+      BAL_MASO_FLW | Path: \B1\Output\BAL_MASO_FLW | Value: 163.685908
+      BAL_MASO_TFL | Path: \B1\Output\BAL_MASO_TFL | Value: 163.685908
+      BAL_MASR_TFL | Path: \B1\Output\BAL_MASR_TFL | Value: 0.0
+      BAL_MOLG_FLW | Path: \B1\Output\BAL_MOLG_FLW | Value: 0.0
+      BAL_MOLG_TFL | Path: \B1\Output\BAL_MOLG_TFL | Value: 0.0
+      BAL_MOLI_TFL | Path: \B1\Output\BAL_MOLI_TFL | Value: 7.59824425
+      BAL_MOLO_FLW | Path: \B1\Output\BAL_MOLO_FLW | Value: 7.59824425
+      BAL_MOLO_TFL | Path: \B1\Output\BAL_MOLO_TFL | Value: 7.59824425
+      BAL_MOLR_TFL | Path: \B1\Output\BAL_MOLR_TFL | Value: 0.0
+      BAL_NETSTRCO2E | Path: \B1\Output\BAL_NETSTRCO2E | Value: 0.0
+      BAL_NNCG_FLW | Path: \B1\Output\BAL_NNCG_FLW | Value: None
+      BAL_NNCI_FLW | Path: \B1\Output\BAL_NNCI_FLW | Value: None
+      BAL_NNCO_FLW | Path: \B1\Output\BAL_NNCO_FLW | Value: None
+      BAL_NNCR_FLW | Path: \B1\Output\BAL_NNCR_FLW | Value: None
+      BAL_PRODCO2E | Path: \B1\Output\BAL_PRODCO2E | Value: 0.0
+      BAL_TOTCO2E | Path: \B1\Output\BAL_TOTCO2E | Value: 0.0
+      BAL_UTILCO2E | Path: \B1\Output\BAL_UTILCO2E | Value: 0.0
+      BLKMSG | Path: \B1\Output\BLKMSG | Value: None
+      BLKSTAT | Path: \B1\Output\BLKSTAT | Value: 0
+      B_K | Path: \B1\Output\B_K | Value: 1
+        KOH | Path: \B1\Output\B_K\KOH | Value: 2.43481885e-96
+        H2 | Path: \B1\Output\B_K\H2 | Value: 91752.4267
+        O2 | Path: \B1\Output\B_K\O2 | Value: 98356.9892
+        H2O | Path: \B1\Output\B_K\H2O | Value: 0.0477021584
+      B_PRES | Path: \B1\Output\B_PRES | Value: 676356.219
+      B_PRES_IN | Path: \B1\Output\B_PRES_IN | Value: 0.0
+      B_TEMP | Path: \B1\Output\B_TEMP | Value: 348.538382
+      B_TEMP_IN | Path: \B1\Output\B_TEMP_IN | Value: None
+      B_VFRAC | Path: \B1\Output\B_VFRAC | Value: 0.00393471385
+      B_VFRAC_IN | Path: \B1\Output\B_VFRAC_IN | Value: None
+      CMF_CATT | Path: \B1\Output\CMF_CATT | Value: 0
+      CMF_HMX | Path: \B1\Output\CMF_HMX | Value: 0
+      CMF_LFRAC | Path: \B1\Output\CMF_LFRAC | Value: 0
+      CMF_MAFL | Path: \B1\Output\CMF_MAFL | Value: 0
+      CMF_MAMX | Path: \B1\Output\CMF_MAMX | Value: 0
+      CMF_MOFL | Path: \B1\Output\CMF_MOFL | Value: 0
+      CMF_MOMX | Path: \B1\Output\CMF_MOMX | Value: 0
+      CMF_MWMX | Path: \B1\Output\CMF_MWMX | Value: 0
+      CMF_NBOPST | Path: \B1\Output\CMF_NBOPST | Value: 0
+      CMF_PRES | Path: \B1\Output\CMF_PRES | Value: 0
+      CMF_PTARG | Path: \B1\Output\CMF_PTARG | Value: 0
+      CMF_QTARG | Path: \B1\Output\CMF_QTARG | Value: 0
+      CMF_RHOMX | Path: \B1\Output\CMF_RHOMX | Value: 0
+      CMF_SATT | Path: \B1\Output\CMF_SATT | Value: 0
+      CMF_SMX | Path: \B1\Output\CMF_SMX | Value: 0
+      CMF_TEMP | Path: \B1\Output\CMF_TEMP | Value: 0
+      CMF_TTARG | Path: \B1\Output\CMF_TTARG | Value: 0
+      CMF_VFRAC | Path: \B1\Output\CMF_VFRAC | Value: 0
+      CMF_VTARG | Path: \B1\Output\CMF_VTARG | Value: 0
+      COMP_ATTR | Path: \B1\Output\COMP_ATTR | Value: 0
+      DESCRIPTION | Path: \B1\Output\DESCRIPTION | Value: None
+      DUTY_IN | Path: \B1\Output\DUTY_IN | Value: 0.0
+      DUTY_OUT | Path: \B1\Output\DUTY_OUT | Value: 0
+      F | Path: \B1\Output\F | Value: 1
+        KOH | Path: \B1\Output\F\KOH | Value: 0.0912232973
+        H2 | Path: \B1\Output\F\H2 | Value: 6.15043494e-06
+        O2 | Path: \B1\Output\F\O2 | Value: 0.00376774997
+        H2O | Path: \B1\Output\F\H2O | Value: 0.905002802
+      F2 | Path: \B1\Output\F2 | Value: 0
+      GUID | Path: \B1\Output\GUID | Value: None
+      K1 | Path: \B1\Output\K1 | Value: 0
+      K2 | Path: \B1\Output\K2 | Value: 0
+      KODE | Path: \B1\Output\KODE | Value: 10
+      LENTRN_IN | Path: \B1\Output\LENTRN_IN | Value: 0.0
+      LIQ_RATIO | Path: \B1\Output\LIQ_RATIO | Value: 1.0
+      MVFRAC | Path: \B1\Output\MVFRAC | Value: 0.00572530768
+      PDROP | Path: \B1\Output\PDROP | Value: 0.0
+      PER_ERROR | Path: \B1\Output\PER_ERROR | Value: 0
+      PRES_OUT | Path: \B1\Output\PRES_OUT | Value: 0
+      PROPSTAT | Path: \B1\Output\PROPSTAT | Value: 0
+      P_EST | Path: \B1\Output\P_EST | Value: None
+      QCALC | Path: \B1\Output\QCALC | Value: 0.0
+      QNET | Path: \B1\Output\QNET | Value: 0.0
+      ROWSTAT | Path: \B1\Output\ROWSTAT | Value: 0
+      ROWSTATSG | Path: \B1\Output\ROWSTATSG | Value: 0
+      SENTRN_IN | Path: \B1\Output\SENTRN_IN | Value: 0
+      SUBS_ATTR | Path: \B1\Output\SUBS_ATTR | Value: 0
+      TEMP_OUT | Path: \B1\Output\TEMP_OUT | Value: 0
+      TOT_ENTH_ABS | Path: \B1\Output\TOT_ENTH_ABS | Value: -2268738890.0
+      TOT_ENTH_REL | Path: \B1\Output\TOT_ENTH_REL | Value: -2.0038293e-12
+      TOT_MASS_ABS | Path: \B1\Output\TOT_MASS_ABS | Value: 163.685908
+      TOT_MASS_REL | Path: \B1\Output\TOT_MASS_REL | Value: 0.0
+      TOT_MOLE_ABS | Path: \B1\Output\TOT_MOLE_ABS | Value: 7.59824425
+      TOT_MOLE_REL | Path: \B1\Output\TOT_MOLE_REL | Value: 0.0
+      T_EST | Path: \B1\Output\T_EST | Value: 343.15
+      UTIL_CO2RATE | Path: \B1\Output\UTIL_CO2RATE | Value: None
+      UTIL_COST | Path: \B1\Output\UTIL_COST | Value: None
+      UTIL_DUTY | Path: \B1\Output\UTIL_DUTY | Value: None
+      UTL_ID | Path: \B1\Output\UTL_ID | Value: None
+      UTL_USAGE | Path: \B1\Output\UTL_USAGE | Value: None
+      VFRAC_OUT | Path: \B1\Output\VFRAC_OUT | Value: 0
+      X | Path: \B1\Output\X | Value: 1
+        KOH | Path: \B1\Output\X\KOH | Value: 0.0915836528
+        H2 | Path: \B1\Output\X\H2 | Value: 1.69894193e-08
+        O2 | Path: \B1\Output\X\O2 | Value: 9.71062897e-06
+        H2O | Path: \B1\Output\X\H2O | Value: 0.90840662
+      X1 | Path: \B1\Output\X1 | Value: 0
+      X2 | Path: \B1\Output\X2 | Value: 0
+      Y | Path: \B1\Output\Y | Value: 1
+        KOH | Path: \B1\Output\Y\KOH | Value: 2.22989603e-97
+        H2 | Path: \B1\Output\Y\H2 | Value: 0.00155882044
+        O2 | Path: \B1\Output\Y\O2 | Value: 0.955108223
+        H2O | Path: \B1\Output\Y\H2O | Value: 0.0433329562
+      Y2 | Path: \B1\Output\Y2 | Value: 0
+    CC Nodes | Path: \B1\CC Nodes | Value: None
+      AEBLDIST | Path: \B1\CC Nodes\AEBLDIST | Value: 2
+      AGEDIAM | Path: \B1\CC Nodes\AGEDIAM | Value: 2
+      AGEND50 | Path: \B1\CC Nodes\AGEND50 | Value: 2
+      AGEND63 | Path: \B1\CC Nodes\AGEND63 | Value: 2
+      AGENEDER | Path: \B1\CC Nodes\AGENEDER | Value: 2
+      AGENGGSN | Path: \B1\CC Nodes\AGENGGSN | Value: 2
+      AGENGMV | Path: \B1\CC Nodes\AGENGMV | Value: 2
+      AGENRRSBN | Path: \B1\CC Nodes\AGENRRSBN | Value: 2
+      AGENSV | Path: \B1\CC Nodes\AGENSV | Value: 2
+      BKOP | Path: \B1\CC Nodes\BKOP | Value: 1
+      BYPASSED | Path: \B1\CC Nodes\BYPASSED | Value: 1
+      BYPASSED2 | Path: \B1\CC Nodes\BYPASSED2 | Value: 1
+      CCDYNFLSH | Path: \B1\CC Nodes\CCDYNFLSH | Value: 0
+      CCDYNFLSH1 | Path: \B1\CC Nodes\CCDYNFLSH1 | Value: 1
+      CCHEATCP | Path: \B1\CC Nodes\CCHEATCP | Value: 0
+      CCHOLDUP | Path: \B1\CC Nodes\CCHOLDUP | Value: 0
+      CCHTDYN | Path: \B1\CC Nodes\CCHTDYN | Value: 1
+      CCHTDYN2 | Path: \B1\CC Nodes\CCHTDYN2 | Value: 1
+      CCLAMBDA | Path: \B1\CC Nodes\CCLAMBDA | Value: 0
+      CCTAPPR | Path: \B1\CC Nodes\CCTAPPR | Value: 0
+      CCTMED | Path: \B1\CC Nodes\CCTMED | Value: 0
+      CHEML | Path: \B1\CC Nodes\CHEML | Value: 1
+      CHEMLOCK | Path: \B1\CC Nodes\CHEMLOCK | Value: 0
+      COMPOBJ | Path: \B1\CC Nodes\COMPOBJ | Value: 1
+      DYNCSH0 | Path: \B1\CC Nodes\DYNCSH0 | Value: 1
+      DYNCSH1 | Path: \B1\CC Nodes\DYNCSH1 | Value: 1
+      DYNCSH3 | Path: \B1\CC Nodes\DYNCSH3 | Value: 1
+      DYNSH1 | Path: \B1\CC Nodes\DYNSH1 | Value: 1
+      EBLDIST | Path: \B1\CC Nodes\EBLDIST | Value: 2
+      ENTADD | Path: \B1\CC Nodes\ENTADD | Value: 0
+      ENTBLKDG | Path: \B1\CC Nodes\ENTBLKDG | Value: 0
+      ENTBLKPR | Path: \B1\CC Nodes\ENTBLKPR | Value: 0
+      ENTBLKRP | Path: \B1\CC Nodes\ENTBLKRP | Value: 0
+      ENTBLKSI | Path: \B1\CC Nodes\ENTBLKSI | Value: 0
+      ENTBLKSIB | Path: \B1\CC Nodes\ENTBLKSIB | Value: 0
+      ENTEOMOD | Path: \B1\CC Nodes\ENTEOMOD | Value: 0
+      ENTHCADD | Path: \B1\CC Nodes\ENTHCADD | Value: 0
+      ENTHCSET | Path: \B1\CC Nodes\ENTHCSET | Value: 0
+      ENTIPT | Path: \B1\CC Nodes\ENTIPT | Value: 0
+      ENTOPT | Path: \B1\CC Nodes\ENTOPT | Value: 1
+      ENTPSD | Path: \B1\CC Nodes\ENTPSD | Value: 0
+      ENTRE | Path: \B1\CC Nodes\ENTRE | Value: 0
+      ENTUTL | Path: \B1\CC Nodes\ENTUTL | Value: 0
+      EODEF | Path: \B1\CC Nodes\EODEF | Value: 1
+      EOENT | Path: \B1\CC Nodes\EOENT | Value: 0
+      EOENT1 | Path: \B1\CC Nodes\EOENT1 | Value: 0
+      EOENT2 | Path: \B1\CC Nodes\EOENT2 | Value: 0
+      EOPT1 | Path: \B1\CC Nodes\EOPT1 | Value: 1
+      EOPT2 | Path: \B1\CC Nodes\EOPT2 | Value: 1
+      EOPT3 | Path: \B1\CC Nodes\EOPT3 | Value: 1
+      EOPT4 | Path: \B1\CC Nodes\EOPT4 | Value: 1
+      ERRPARVAL1 | Path: \B1\CC Nodes\ERRPARVAL1 | Value: 1
+      ERRPARVAL2 | Path: \B1\CC Nodes\ERRPARVAL2 | Value: 1
+      ERRPARVAL3 | Path: \B1\CC Nodes\ERRPARVAL3 | Value: 1
+      ERRPARVAL4 | Path: \B1\CC Nodes\ERRPARVAL4 | Value: 1
+      ERRPARVAL5 | Path: \B1\CC Nodes\ERRPARVAL5 | Value: 1
+      EXISTD | Path: \B1\CC Nodes\EXISTD | Value: 1
+      EXISTP | Path: \B1\CC Nodes\EXISTP | Value: 1
+      EXISTSP | Path: \B1\CC Nodes\EXISTSP | Value: 0
+      EXISTST | Path: \B1\CC Nodes\EXISTST | Value: 1
+      EXISTT | Path: \B1\CC Nodes\EXISTT | Value: 0
+      EXISTVF | Path: \B1\CC Nodes\EXISTVF | Value: 0
+      EXTGPSD | Path: \B1\CC Nodes\EXTGPSD | Value: 2
+      FILESC | Path: \B1\CC Nodes\FILESC | Value: 2
+      FIRSTSET | Path: \B1\CC Nodes\FIRSTSET | Value: 1
+      FREE2 | Path: \B1\CC Nodes\FREE2 | Value: 1
+      FREE3 | Path: \B1\CC Nodes\FREE3 | Value: 0
+      FVCID1 | Path: \B1\CC Nodes\FVCID1 | Value: 1
+      FVCID2 | Path: \B1\CC Nodes\FVCID2 | Value: 1
+      FVCSENTENCE | Path: \B1\CC Nodes\FVCSENTENCE | Value: 1
+      FVCVARIABLE | Path: \B1\CC Nodes\FVCVARIABLE | Value: 1
+      FVNELEM | Path: \B1\CC Nodes\FVNELEM | Value: 1
+      FVNID1 | Path: \B1\CC Nodes\FVNID1 | Value: 1
+      FVNID2 | Path: \B1\CC Nodes\FVNID2 | Value: 1
+      FVNID3 | Path: \B1\CC Nodes\FVNID3 | Value: 1
+      FVNPROPSET | Path: \B1\CC Nodes\FVNPROPSET | Value: 1
+      FVNSENTENCE | Path: \B1\CC Nodes\FVNSENTENCE | Value: 1
+      FVNVARIABLE | Path: \B1\CC Nodes\FVNVARIABLE | Value: 1
+      FVNVARTYPE | Path: \B1\CC Nodes\FVNVARTYPE | Value: 1
+      GENBLKOP | Path: \B1\CC Nodes\GENBLKOP | Value: 1
+      GENOVAL | Path: \B1\CC Nodes\GENOVAL | Value: 1
+      GENSUBB | Path: \B1\CC Nodes\GENSUBB | Value: 2
+      GENSUBS | Path: \B1\CC Nodes\GENSUBS | Value: 0
+      GGSGGSN1 | Path: \B1\CC Nodes\GGSGGSN1 | Value: 1
+      GGSGGSN2 | Path: \B1\CC Nodes\GGSGGSN2 | Value: 1
+      GGSXMAX | Path: \B1\CC Nodes\GGSXMAX | Value: 1
+      GGSXMAX1 | Path: \B1\CC Nodes\GGSXMAX1 | Value: 1
+      GLOBSC | Path: \B1\CC Nodes\GLOBSC | Value: 2
+      HASDECANT | Path: \B1\CC Nodes\HASDECANT | Value: 0
+      HASDECANT1 | Path: \B1\CC Nodes\HASDECANT1 | Value: 0
+      HASHEAT1 | Path: \B1\CC Nodes\HASHEAT1 | Value: 0
+      HASHEAT2 | Path: \B1\CC Nodes\HASHEAT2 | Value: 0
+      HASHEAT3 | Path: \B1\CC Nodes\HASHEAT3 | Value: 0
+      HASHEAT4 | Path: \B1\CC Nodes\HASHEAT4 | Value: 0
+      HASNOFRAC | Path: \B1\CC Nodes\HASNOFRAC | Value: 1
+      HCLOCK | Path: \B1\CC Nodes\HCLOCK | Value: 0
+      HCV | Path: \B1\CC Nodes\HCV | Value: 1
+      HENRYL | Path: \B1\CC Nodes\HENRYL | Value: 1
+      IDYNAMIC | Path: \B1\CC Nodes\IDYNAMIC | Value: 1
+      IVENT | Path: \B1\CC Nodes\IVENT | Value: 0
+      IVSPEC | Path: \B1\CC Nodes\IVSPEC | Value: 1
+      IVUNIT | Path: \B1\CC Nodes\IVUNIT | Value: 2
+      JDYNAMIC | Path: \B1\CC Nodes\JDYNAMIC | Value: 1
+      KDYNAMIC | Path: \B1\CC Nodes\KDYNAMIC | Value: 1
+      L2CP1 | Path: \B1\CC Nodes\L2CP1 | Value: 0
+      L2CP2 | Path: \B1\CC Nodes\L2CP2 | Value: 1
+      LDYNAMIC | Path: \B1\CC Nodes\LDYNAMIC | Value: 1
+      LOCASC | Path: \B1\CC Nodes\LOCASC | Value: 2
+      LOCKS | Path: \B1\CC Nodes\LOCKS | Value: 1
+      LOGD50 | Path: \B1\CC Nodes\LOGD50 | Value: 1
+      MDYNAMIC | Path: \B1\CC Nodes\MDYNAMIC | Value: 1
+      MULTIODF | Path: \B1\CC Nodes\MULTIODF | Value: 0
+      NMLD50 | Path: \B1\CC Nodes\NMLD50 | Value: 1
+      NOTALLZERO | Path: \B1\CC Nodes\NOTALLZERO | Value: 1
+      NOTALLZEROL | Path: \B1\CC Nodes\NOTALLZEROL | Value: 1
+      NOTALLZEROS | Path: \B1\CC Nodes\NOTALLZEROS | Value: 1
+      NOTTURE | Path: \B1\CC Nodes\NOTTURE | Value: 0
+      ONE | Path: \B1\CC Nodes\ONE | Value: 1
+      ONLY1DF1 | Path: \B1\CC Nodes\ONLY1DF1 | Value: 1
+      ONLYONE | Path: \B1\CC Nodes\ONLYONE | Value: 2
+      ONLYONE1 | Path: \B1\CC Nodes\ONLYONE1 | Value: 1
+      ONLYONE3 | Path: \B1\CC Nodes\ONLYONE3 | Value: 1
+      OPT1 | Path: \B1\CC Nodes\OPT1 | Value: 1
+      OPTIONIC | Path: \B1\CC Nodes\OPTIONIC | Value: 1
+      OPTIONLS | Path: \B1\CC Nodes\OPTIONLS | Value: 1
+      OPTIONNP | Path: \B1\CC Nodes\OPTIONNP | Value: 1
+      OVBYPAS | Path: \B1\CC Nodes\OVBYPAS | Value: 1
+      OVDISTC | Path: \B1\CC Nodes\OVDISTC | Value: 1
+      OVDISTC1 | Path: \B1\CC Nodes\OVDISTC1 | Value: 1
+      OVGLBAL | Path: \B1\CC Nodes\OVGLBAL | Value: 1
+      OVGLBAT | Path: \B1\CC Nodes\OVGLBAT | Value: 1
+      OVGLBNZ | Path: \B1\CC Nodes\OVGLBNZ | Value: 1
+      OVLDIST | Path: \B1\CC Nodes\OVLDIST | Value: 0
+      OVLLOCM | Path: \B1\CC Nodes\OVLLOCM | Value: 0
+      OVLOCAL | Path: \B1\CC Nodes\OVLOCAL | Value: 1
+      OVLOCHV | Path: \B1\CC Nodes\OVLOCHV | Value: 1
+      OVLOCNZ | Path: \B1\CC Nodes\OVLOCNZ | Value: 1
+      OVLPRED | Path: \B1\CC Nodes\OVLPRED | Value: 0
+      OVLPREM | Path: \B1\CC Nodes\OVLPREM | Value: 0
+      OVLTABU | Path: \B1\CC Nodes\OVLTABU | Value: 0
+      PSD1 | Path: \B1\CC Nodes\PSD1 | Value: 1
+      PSDCNST | Path: \B1\CC Nodes\PSDCNST | Value: 0
+      PSDCOM1 | Path: \B1\CC Nodes\PSDCOM1 | Value: 1
+      PSDCOMA | Path: \B1\CC Nodes\PSDCOMA | Value: 1
+      PSDDIST | Path: \B1\CC Nodes\PSDDIST | Value: 0
+      PSDSPEC | Path: \B1\CC Nodes\PSDSPEC | Value: 0
+      PSDSUBS | Path: \B1\CC Nodes\PSDSUBS | Value: 0
+      RMODE | Path: \B1\CC Nodes\RMODE | Value: 1
+      RRSBN1 | Path: \B1\CC Nodes\RRSBN1 | Value: 1
+      RRSBN2 | Path: \B1\CC Nodes\RRSBN2 | Value: 1
+      RRSBND63 | Path: \B1\CC Nodes\RRSBND63 | Value: 1
+      RTOPT | Path: \B1\CC Nodes\RTOPT | Value: 0
+      SBBYPAS | Path: \B1\CC Nodes\SBBYPAS | Value: 0
+      SCMETH | Path: \B1\CC Nodes\SCMETH | Value: 1
+      SFRC | Path: \B1\CC Nodes\SFRC | Value: 0
+      SGEDIAM | Path: \B1\CC Nodes\SGEDIAM | Value: 2
+      SGEND50 | Path: \B1\CC Nodes\SGEND50 | Value: 2
+      SGEND63 | Path: \B1\CC Nodes\SGEND63 | Value: 2
+      SGENEDER | Path: \B1\CC Nodes\SGENEDER | Value: 2
+      SGENGGSN | Path: \B1\CC Nodes\SGENGGSN | Value: 2
+      SGENGMV | Path: \B1\CC Nodes\SGENGMV | Value: 2
+      SGENRRSBN | Path: \B1\CC Nodes\SGENRRSBN | Value: 2
+      SGENSV | Path: \B1\CC Nodes\SGENSV | Value: 2
+      SGENTS | Path: \B1\CC Nodes\SGENTS | Value: 0
+      SGENTV | Path: \B1\CC Nodes\SGENTV | Value: 0
+      SGGSGGSN1 | Path: \B1\CC Nodes\SGGSGGSN1 | Value: 1
+      SGGSGGSN2 | Path: \B1\CC Nodes\SGGSGGSN2 | Value: 1
+      SGGSXMAX | Path: \B1\CC Nodes\SGGSXMAX | Value: 1
+      SGGSXMAX1 | Path: \B1\CC Nodes\SGGSXMAX1 | Value: 1
+      SGSPEC | Path: \B1\CC Nodes\SGSPEC | Value: 1
+      SGUNT | Path: \B1\CC Nodes\SGUNT | Value: 1
+      SGVAR1 | Path: \B1\CC Nodes\SGVAR1 | Value: 1
+      SGVAR2 | Path: \B1\CC Nodes\SGVAR2 | Value: 1
+      SGVAR3 | Path: \B1\CC Nodes\SGVAR3 | Value: 1
+      SHT01 | Path: \B1\CC Nodes\SHT01 | Value: 0
+      SHT0F1 | Path: \B1\CC Nodes\SHT0F1 | Value: 0
+      SHT1F1 | Path: \B1\CC Nodes\SHT1F1 | Value: 0
+      SHT234 | Path: \B1\CC Nodes\SHT234 | Value: 0
+      SHT3F2 | Path: \B1\CC Nodes\SHT3F2 | Value: 0
+      SHT3F3 | Path: \B1\CC Nodes\SHT3F3 | Value: 0
+      SHT3O2 | Path: \B1\CC Nodes\SHT3O2 | Value: 0
+      SHT4F1 | Path: \B1\CC Nodes\SHT4F1 | Value: 0
+      SHT4L1 | Path: \B1\CC Nodes\SHT4L1 | Value: 1
+      SHT4L2 | Path: \B1\CC Nodes\SHT4L2 | Value: 0
+      SHT4L3 | Path: \B1\CC Nodes\SHT4L3 | Value: 0
+      SLID1 | Path: \B1\CC Nodes\SLID1 | Value: 1
+        MIXED | Path: \B1\CC Nodes\SLID1\MIXED | Value: 1
+      SLOGD50 | Path: \B1\CC Nodes\SLOGD50 | Value: 1
+      SMENT | Path: \B1\CC Nodes\SMENT | Value: 0
+      SMODE | Path: \B1\CC Nodes\SMODE | Value: 1
+      SMSPEC | Path: \B1\CC Nodes\SMSPEC | Value: 1
+      SNMLD50 | Path: \B1\CC Nodes\SNMLD50 | Value: 1
+      SPAR | Path: \B1\CC Nodes\SPAR | Value: 1
+      SRRSBN1 | Path: \B1\CC Nodes\SRRSBN1 | Value: 1
+      SRRSBN2 | Path: \B1\CC Nodes\SRRSBN2 | Value: 1
+      SRRSBND63 | Path: \B1\CC Nodes\SRRSBND63 | Value: 1
+      SUBCHKT | Path: \B1\CC Nodes\SUBCHKT | Value: 2
+      SUBDFIDE | Path: \B1\CC Nodes\SUBDFIDE | Value: 1
+      SUBDFTOT | Path: \B1\CC Nodes\SUBDFTOT | Value: 1
+      SUBDIST | Path: \B1\CC Nodes\SUBDIST | Value: 2
+      SUBDIST1 | Path: \B1\CC Nodes\SUBDIST1 | Value: 1
+      SUBLOCC | Path: \B1\CC Nodes\SUBLOCC | Value: 1
+      SUBLOCM | Path: \B1\CC Nodes\SUBLOCM | Value: 2
+      SUBLOCT | Path: \B1\CC Nodes\SUBLOCT | Value: 1
+      SUBLOCV | Path: \B1\CC Nodes\SUBLOCV | Value: 1
+      SUBPREC | Path: \B1\CC Nodes\SUBPREC | Value: 1
+      SUBPREM | Path: \B1\CC Nodes\SUBPREM | Value: 2
+      SUBTABU | Path: \B1\CC Nodes\SUBTABU | Value: 2
+      TRYPSD | Path: \B1\CC Nodes\TRYPSD | Value: 0
+      UCSH0 | Path: \B1\CC Nodes\UCSH0 | Value: 0
+      UCSH1 | Path: \B1\CC Nodes\UCSH1 | Value: 0
+      UCSH2 | Path: \B1\CC Nodes\UCSH2 | Value: 0
+      UCSH3 | Path: \B1\CC Nodes\UCSH3 | Value: 0
+      UCSH4 | Path: \B1\CC Nodes\UCSH4 | Value: 0
+      UCSH5 | Path: \B1\CC Nodes\UCSH5 | Value: 0
+      UNITLESS | Path: \B1\CC Nodes\UNITLESS | Value: 1
+      UNITLESSSG | Path: \B1\CC Nodes\UNITLESSSG | Value: 1
+      USEROVL | Path: \B1\CC Nodes\USEROVL | Value: 0
+      USERSUB | Path: \B1\CC Nodes\USERSUB | Value: 0
+      UTLNOTREQD | Path: \B1\CC Nodes\UTLNOTREQD | Value: 1
+      UTLRED | Path: \B1\CC Nodes\UTLRED | Value: 1
+      VAREXIST1 | Path: \B1\CC Nodes\VAREXIST1 | Value: 1
+      VAREXIST2 | Path: \B1\CC Nodes\VAREXIST2 | Value: 1
+      VFRAC | Path: \B1\CC Nodes\VFRAC | Value: 0
+    Ports | Path: \B1\Ports | Value: None
+      F(IN) | Path: \B1\Ports\F(IN) | Value: None
+        AN-OUT | Path: \B1\Ports\F(IN)\AN-OUT | Value: AN-OUT
+      HS(IN) | Path: \B1\Ports\HS(IN) | Value: None
+      V(OUT) | Path: \B1\Ports\V(OUT) | Value: None
+        O2-PROD | Path: \B1\Ports\V(OUT)\O2-PROD | Value: O2-PROD
+      L(OUT) | Path: \B1\Ports\L(OUT) | Value: None
+        S5 | Path: \B1\Ports\L(OUT)\S5 | Value: S5
+      WD(OUT) | Path: \B1\Ports\WD(OUT) | Value: None
+      HS(OUT) | Path: \B1\Ports\HS(OUT) | Value: None
+    Connections | Path: \B1\Connections | Value: None
+      AN-OUT | Path: \B1\Connections\AN-OUT | Value: F(IN)
+      O2-PROD | Path: \B1\Connections\O2-PROD | Value: V(OUT)
+      S5 | Path: \B1\Connections\S5 | Value: L(OUT)
+    Comments | Path: \B1\Comments | Value: None
+    Subobjects | Path: \B1\Subobjects | Value: None
+      Hcurves | Path: \B1\Subobjects\Hcurves | Value: 1
+      Ports | Path: \B1\Subobjects\Ports | Value: 1
+    Stream Results | Path: \B1\Stream Results | Value: 1
+      Display | Path: \B1\Stream Results\Display | Value: STREAMS
+      Units | Path: \B1\Stream Results\Units | Value:  
+      TFF File | Path: \B1\Stream Results\TFF File | Value: FULL
+      Table | Path: \B1\Stream Results\Table | Value: 1
+    Heat Results | Path: \B1\Heat Results | Value: 0
+      Display | Path: \B1\Heat Results\Display | Value:  
+      Units | Path: \B1\Heat Results\Units | Value:  
+      TFF File | Path: \B1\Heat Results\TFF File | Value:  
+    Work Results | Path: \B1\Work Results | Value: 0
+      Display | Path: \B1\Work Results\Display | Value:  
+      Units | Path: \B1\Work Results\Units | Value:  
+      TFF File | Path: \B1\Work Results\TFF File | Value:  
+    Power Results | Path: \B1\Power Results | Value: 0
+      Display | Path: \B1\Power Results\Display | Value:  
+      Units | Path: \B1\Power Results\Units | Value:  
+      TFF File | Path: \B1\Power Results\TFF File | Value:  
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

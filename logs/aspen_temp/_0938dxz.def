@@ -1,0 +1,10 @@
+SLAVE:
+INPUT: _0938dxz.inm
+MODNAME: apmain
+RUNID: _0938dxz
+NEW_RUNID: _0938dxz
+OLD_RUNID: _0938dxz
+PDF: _0938dxz.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+DBCONN: _0938dxz.ads

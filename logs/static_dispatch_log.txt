@@ -1,0 +1,12 @@
+======================================================================
+ASPEN PLUS STATIC DISPATCH RESEARCH
+======================================================================
+Static dispatch object: Aspen Plus 40.0 OLE Services
+
+Enumerating all methods/properties (static):
+Total attributes: 107
+Promising attributes: ['FailedToOpenDescription', 'FailedToOpenKey', 'LibRef', 'RootModel', '_prop_map_get_', '_prop_map_put_']
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

@@ -1,0 +1,13 @@
+======================================================================
+ASPEN PLUS FLOWSHEET RESEARCH
+======================================================================
+Flowsheet node: <COMObject FindNode>
+Flowsheet Elements count: 4
+  Item(0): Section
+  Item(1): Def-Streams
+  Item(2): Custom Forms
+  Item(3): Batch Process Plots
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

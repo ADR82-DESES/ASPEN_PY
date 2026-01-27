@@ -1,0 +1,16 @@
+======================================================================
+ASPEN PLUS INDEX ADD RESEARCH
+======================================================================
+
+[1] Testing Add('B1', 'Mixer', 0)...
+  [FAIL] (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Invalid Block/Model/Library Specification', None, 0, 0), None)
+
+[2] Testing Add('B2', 'Mixer|Built-In')...
+  [FAIL] (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Invalid Block/Model/Library Specification', None, 0, 0), None)
+
+[3] Testing Add('B3', 'Mixer', 'Mixers/Splitters')...
+  [FAIL] (-2147352567, 'Ocurrió una excepción.', (1, 'Aspen.HA', 'Invalid Block/Model/Library Specification', None, 0, 0), None)
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================

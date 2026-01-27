@@ -1,0 +1,16 @@
+======================================================================
+ASPEN PLUS AUTO INSPECTION
+======================================================================
+Searching for any .bkp file in AspenTech directory...
+
+--- Testing: C:\Program Files\AspenTech\Aspen Plus V14.0\GUI\Examples\Hydrogen\Alkaline electrolysis\Industrial Scale Alkaline Electrolyzer\Industrial Scale Alkaline Electrolyzer.bkp ---
+Found 11 blocks
+  Block: B1
+  Block: B2
+  Block: B4
+  Block: B5
+  Block: B6
+
+======================================================================
+RESEARCH COMPLETE
+======================================================================
