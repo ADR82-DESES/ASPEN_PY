@@ -1,0 +1,10 @@
+INPUT: MethanolPlant.inm
+MODNAME: apmain
+RUNID: MethanolPlant
+NEW_RUNID: MethanolPlant
+OLD_RUNID: MethanolPlant
+PDF: MethanolPlant.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+SPONLY:
+DBCONN: _4846oka.ads

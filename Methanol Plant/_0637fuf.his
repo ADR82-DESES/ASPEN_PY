@@ -1,0 +1,91 @@
+
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + +                                                                         + +
+ + +                      ASPEN PLUS CALCULATION HISTORY                     + +
+ + +                                                                         + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+
+ ASPEN PLUS IS A TRADEMARK OF           HOTLINE:
+ ASPEN TECHNOLOGY, INC.                 U.S.A. 888/996-7100
+ 781/221-6400                           EUROPE (44) 1189-226555
+
+ PLATFORM: WIN-X64                                       JANUARY 28, 2026    
+ VERSION: 40.0   Build 359                               WEDNESDAY   
+ INSTALLATION:                                           12:07:30 P.M.       
+
+ THIS COPY OF ASPEN PLUS LICENSED TO UNIVERSIDAD DE CANTABRIA        
+
+
+      ASPEN PLUS (R) IS A PROPRIETARY PRODUCT OF ASPEN TECHNOLOGY, INC.
+      (ASPENTECH), AND MAY BE USED ONLY UNDER AGREEMENT WITH ASPENTECH.
+      RESTRICTED RIGHTS LEGEND:  USE, REPRODUCTION, OR DISCLOSURE BY THE
+      U.S. GOVERNMENT IS SUBJECT TO RESTRICTIONS SET FORTH IN 
+      (i) FAR 52.227-14, Alt. III, (ii) FAR 52.227-19, (iii) DFARS 
+      252.227-7013(c)(1)(ii), or (iv) THE ACCOMPANYING LICENSE AGREEMENT,
+      AS APPLICABLE. FOR PURPOSES OF THE FAR, THIS SOFTWARE SHALL BE DEEMED
+      TO BE "UNPUBLISHED" AND LICENSED WITH DISCLOSURE PROHIBITIONS.
+      CONTRACTOR/SUBCONTRACTOR: ASPEN TECHNOLOGY, INC. 20 CROSBY DRIVE,
+      BEDFORD, MA 01730.
+ *** INPUT SUMMARY ***
+
+ >>CURRENT RUN
+
+   ORIGINAL RUN                           JANUARY 28, 2026    
+   12:07:30 P.M.                          WEDNESDAY   
+   INPUT FILE: _0637fuf.inm
+   RUN ID : _0637fuf
+          1    ;
+          2    ;Input file created by Aspen Plus Rel. 40.0 at 12:07:29 Wed Jan 28, 2026
+          3    ;Directory C:\Users\domingueza\ASPEN_PY\Methanol Plant  Runid METHANOLPLANT
+          4    ;
+          5
+          6
+          7    PROP
+          8
+          9    DYNAMICS
+         10        DYNAMICS RESULTS=ON
+         11
+         12    IN-UNITS MET PRESSURE=bar TEMPERATURE=C DELTA-T=C PDROP=bar  &
+         13            INVERSE-PRES='1/bar' SHORT-LENGTH=mm
+         14
+         15    DATABANKS 'APV140 PURE40' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' &
+         16             / 'APV140 INORGANIC' / 'APESV140 AP-EOS' /  &
+         17            'NISTV140 NIST-TRC' / NOASPENPCD
+         18
+         19    PROP-SOURCES 'APV140 PURE40' / 'APV140 AQUEOUS' /  &
+         20            'APV140 SOLIDS' / 'APV140 INORGANIC' / 'APESV140 AP-EOS' &
+         21             / 'NISTV140 NIST-TRC'
+         22
+         23    PROPERTIES
+         24    ;
+         25    ;
+         26    ;
+         27    ;
+         28    ;
+         29    ;
+ *** INPUT TRANSLATOR MESSAGES ***
+
+  *** THIS RUN USES THE PROPERTIES ENTERPRISE DATABASE ***
+      SQLLOCALDB.APESV140 : (DATAVERSION - 40.0.0.13)                         
+      SQLLOCALDB.APV140 : (DATAVERSION - 40.0.0.13)                           
+      SQLLOCALDB.FACTV140 : (DATAVERSION - 40.0.0.12)                         
+      SQLLOCALDB.NISTV140 : (DATAVERSION - 40.0.0.12)                         
+
+  ****TERMINAL ERROR                                           (PSTOP1AP.1)     
+      NO COMPONENTS HAVE BEEN DEFINED FOR THIS PROBLEM.                         
+
+
+
+ ********************************************************************
+ *  ERROR SEVERITY LEVEL OF  0 IS <= ABORT LEVEL OF  0              *
+ *  EXECUTION IS TERMINATED: SIMULATION WILL NOT BE EXECUTED        *
+ ********************************************************************
+
+
+
+
+
+ SIMULATION PROGRAM CANNOT BE EXECUTED BECAUSE OF
+ ERRORS IN INPUT TRANSLATION, PLEASE CHECK HISTORY FILE

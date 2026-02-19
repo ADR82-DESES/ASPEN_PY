@@ -1,0 +1,28 @@
+[12:02:35] ============================================================
+[12:02:35] METHANOL PLANT FLOWSHEET BUILDER
+[12:02:35] Based on DESIGN_BASIS.md
+[12:02:35] ============================================================
+[12:02:35] Connecting to Aspen Plus...
+[12:02:57] Opening simulation: C:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant.bkp
+[12:06:02] Simulation loaded successfully!
+[12:06:02] 
+=== Verifying Flowsheet Structure ===
+[12:06:02] 
+Checking Streams:
+Traceback (most recent call last):
+  File "C:\Users\domingueza\ASPEN_PY\Methanol Plant\run_flowsheet.py", line 292, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\domingueza\ASPEN_PY\Methanol Plant\run_flowsheet.py", line 275, in main
+    verify_flowsheet(aspen)
+    ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\domingueza\ASPEN_PY\Methanol Plant\run_flowsheet.py", line 106, in verify_flowsheet
+    log(f"  {status} {stream}")
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\domingueza\ASPEN_PY\Methanol Plant\run_flowsheet.py", line 22, in log
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2717' in position 13: character maps to <undefined>

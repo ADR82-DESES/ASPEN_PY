@@ -1,0 +1,10 @@
+SLAVE:
+INPUT: _0130ywt.inm
+MODNAME: apmain
+RUNID: _0130ywt
+NEW_RUNID: _0130ywt
+OLD_RUNID: _0130ywt
+PDF: _0130ywt.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+DBCONN: _0130ywt.ads

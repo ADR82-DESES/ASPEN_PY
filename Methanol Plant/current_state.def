@@ -1,0 +1,10 @@
+INPUT: current_state.inm
+MODNAME: apmain
+RUNID: current_state
+NEW_RUNID: current_state
+OLD_RUNID: current_state
+PDF: current_state.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+SPONLY:
+DBCONN: _1148jym.ads

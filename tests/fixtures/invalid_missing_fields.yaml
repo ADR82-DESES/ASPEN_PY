@@ -1,0 +1,35 @@
+metadata:
+  title: "Incomplete Plant"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+
+properties:
+  method: "RK-SOAVE"
+
+flowsheet:
+  - block: "MIXER"
+    inputs: ["S1"]
+    outputs: ["S2"]
+
+streams:
+  - name: "S1"
+    # Missing temperature and pressure
+    mass_flow: 100.0
+    composition:
+      CH4: 1.0
+  - name: "S2"
+    temperature: 25.0
+    pressure: 1.0
+    # Missing flow
+    composition:
+      CH4: 1.0
+
+blocks:
+  - name: "MIXER"
+    type: "MIXER"

@@ -1,0 +1,5 @@
+======================================================================
+CREATE METHANOL BLOCKS VIA COM (BLOCKS ONLY)
+======================================================================
+Probe failed; COM-only block creation not supported in Aspen 40.x.
+See logs/com_block_probe_log.txt for details.

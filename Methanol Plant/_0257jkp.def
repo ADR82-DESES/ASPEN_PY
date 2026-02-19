@@ -1,0 +1,10 @@
+SLAVE:
+INPUT: _0257jkp.inm
+MODNAME: apmain
+RUNID: _0257jkp
+NEW_RUNID: _0257jkp
+OLD_RUNID: _0257jkp
+PDF: _0257jkp.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+SPONLY:

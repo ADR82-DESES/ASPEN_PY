@@ -1,0 +1,10 @@
+SLAVE:
+INPUT: _1443qpp.inm
+MODNAME: apmain
+RUNID: _1443qpp
+NEW_RUNID: _1443qpp
+OLD_RUNID: _1443qpp
+PDF: _1443qpp.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+SPONLY:

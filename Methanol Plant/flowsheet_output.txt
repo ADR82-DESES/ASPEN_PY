@@ -1,0 +1,45 @@
+[12:07:38] ============================================================
+[12:07:38] METHANOL PLANT FLOWSHEET BUILDER
+[12:07:38] Based on DESIGN_BASIS.md
+[12:07:38] ============================================================
+[12:07:38] Connecting to Aspen Plus...
+[12:07:52] Opening simulation: C:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant.bkp
+[12:08:02] Simulation loaded successfully!
+[12:08:02] 
+=== Verifying Flowsheet Structure ===
+[12:08:02] 
+Checking Streams:
+[12:08:02]   [X] NG-FEED
+[12:08:03]   [X] STEAM
+[12:08:04]   [X] O2-FEED
+[12:08:04]   [X] ATR-IN
+[12:08:04]   [X] HOT-SYN
+[12:08:04]   [X] COLD-SYN
+[12:08:04]   [X] DRY-GAS
+[12:08:04]   [X] HP-GAS
+[12:08:04]   [X] R-IN
+[12:08:04]   [X] R-OUT
+[12:08:04]   [X] CRUDE-ME
+[12:08:04]   [X] MEOH-PRO
+[12:08:04]   [X] WASTE-H2O
+[12:08:04]   [X] RECYCLE
+[12:08:04]   [X] PURGE
+[12:08:04] 
+Checking Blocks:
+[12:08:04]   [X] MIX-FEED
+[12:08:04]   [X] B-ATR
+[12:08:04]   [X] B-COOL
+[12:08:04]   [X] B-FLASH
+[12:08:04]   [X] B-COMP
+[12:08:04]   [X] MIX-LOOP
+[12:08:04]   [X] B-SYN
+[12:08:04]   [X] B-SEP
+[12:08:04]   [X] SPLIT
+[12:08:04]   [X] B-DIST
+[12:08:04] 
+=== Running Simulation ===
+[12:08:04] Reinitializing simulation...
+[12:08:04] Starting simulation run...
+[12:08:09] ERROR during simulation: Apwn.Document.EngineRunning
+[12:08:09] 
+Done!

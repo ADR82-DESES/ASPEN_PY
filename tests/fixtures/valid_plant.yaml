@@ -1,0 +1,81 @@
+metadata:
+  title: "Methanol Plant 10k TPD"
+  description: "Reference plant based on MethanolPlant.inp"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+  - id: "H2O"
+    name: "WATER"
+  - id: "O2"
+    name: "OXYGEN"
+  - id: "CO"
+    name: "CARBON-MONOXIDE"
+  - id: "CO2"
+    name: "CARBON-DIOXIDE"
+  - id: "H2"
+    name: "HYDROGEN"
+  - id: "CH3OH"
+    name: "METHANOL"
+  - id: "N2"
+    name: "NITROGEN"
+
+properties:
+  method: "RK-SOAVE"
+  databanks: ["APV140 PURE32", "APV140 AQUEOUS"]
+
+flowsheet:
+  - block: "MIX-FEED"
+    inputs: ["NG-FEED", "STEAM", "O2-FEED"]
+    outputs: ["ATR-IN"]
+  - block: "B-ATR"
+    inputs: ["ATR-IN"]
+    outputs: ["HOT-SYN"]
+
+streams:
+  - name: "NG-FEED"
+    temperature: 40.0
+    pressure: 30.0
+    mass_flow: 220000.0
+    composition:
+      CH4: 1.0
+  - name: "STEAM"
+    temperature: 250.0
+    pressure: 35.0
+    mass_flow: 148500.0
+    composition:
+      H2O: 1.0
+  - name: "O2-FEED"
+    temperature: 150.0
+    pressure: 30.0
+    mass_flow: 264000.0
+    composition:
+      O2: 1.0
+  - name: "ATR-IN"
+    temperature: 150.0
+    pressure: 30.0
+    mass_flow: 632500.0
+    composition:
+      CH4: 0.35
+      H2O: 0.23
+      O2: 0.42
+  - name: "HOT-SYN"
+    temperature: 1000.0
+    pressure: 30.0
+    mass_flow: 632500.0
+    composition:
+      CO: 0.4
+      H2: 0.6
+
+blocks:
+  - name: "MIX-FEED"
+    type: "MIXER"
+  - name: "B-ATR"
+    type: "RGIBBS"
+    parameters:
+      TEMP: 1000.0
+      PRES: 30.0

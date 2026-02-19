@@ -52,9 +52,13 @@ ASPEN_PY/
 ## 📖 Documentation
 
 - **[QUICK_START.md](QUICK_START.md)** - Get started in 5 minutes
-- **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** - Complete project overview
-- **[INVESTIGATION_RESULTS.md](INVESTIGATION_RESULTS.md)** - Technical details
-- **[AUTOMATION_GUIDE.md](AUTOMATION_GUIDE.md)** - Full automation guide
+- **[API Usage Guide](docs/API_USAGE.md)** - How to use the Python API
+- **[Validation Rules](docs/VALIDATION_RULES.md)** - Detailed description of validation checks
+- **[Schema Reference](docs/SCHEMA_REFERENCE.md)** - Full YAML/JSON schema definition
+- **[INP Generation Guide](docs/INP_GENERATION.md)** - Guide to producing Aspen Plus input files
+- **[FINAL_SUMMARY.md](docs/FINAL_SUMMARY.md)** - Complete project overview
+- **[INVESTIGATION_RESULTS.md](docs/INVESTIGATION_RESULTS.md)** - Technical details
+- **[AUTOMATION_GUIDE.md](docs/AUTOMATION_GUIDE.md)** - Full automation guide
 
 ## 🎯 What This Does
 

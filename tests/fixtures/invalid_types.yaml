@@ -1,0 +1,25 @@
+metadata:
+  title: "Bad Types Plant"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+
+properties:
+  method: "RK-SOAVE"
+
+flowsheet: []
+
+streams:
+  - name: "S1"
+    temperature: "HOT" # Should be a number
+    pressure: 1.0
+    mass_flow: 100.0
+    composition:
+      CH4: 1.0
+
+blocks: []
