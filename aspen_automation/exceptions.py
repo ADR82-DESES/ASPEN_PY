@@ -25,3 +25,25 @@ class ValidationError(Exception):
                 msg += f"  \u2192 {suggestion}\n"
         
         return msg
+
+class AspenConnectionError(Exception):
+    """Raised when connection to Aspen Plus fails."""
+    def __init__(self, message: str, details: Any = None):
+        self.details = details
+        super().__init__(message)
+
+class BuildError(Exception):
+    """Raised when simulation build (INP/COM) fails."""
+    def __init__(self, message: str, build_mode: str, mechanism_tried: str, diagnostics: Any = None):
+        self.build_mode = build_mode
+        self.mechanism_tried = mechanism_tried
+        self.diagnostics = diagnostics
+        super().__init__(message)
+
+class SimulationError(Exception):
+    """Raised when simulation execution fails."""
+    def __init__(self, message: str, convergence_status: str, diagnostics: Any = None):
+        self.convergence_status = convergence_status
+        self.diagnostics = diagnostics
+        super().__init__(message)
+
