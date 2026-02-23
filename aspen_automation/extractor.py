@@ -1,7 +1,9 @@
-import re
+from __future__ import annotations
+
 import datetime
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+import re
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 
@@ -10,288 +12,703 @@ from .schema import PlantSpecification
 
 logger = logging.getLogger("aspen_automation.extractor")
 
-def _safe_node_value(aspen: Any, path: str) -> Optional[float]:
+DEFAULT_PURITY_EXPRESSION = "CH3OH wt% in MEOH-PRO"
+ENERGY_BALANCE_VIEW_LEGACY = "legacy"
+ENERGY_BALANCE_VIEW_SUMMARY = "summary"
+
+
+def _spec_to_dict(spec: Union[PlantSpecification, Dict[str, Any]]) -> Dict[str, Any]:
+    if isinstance(spec, PlantSpecification):
+        return spec.model_dump()
+    if isinstance(spec, dict):
+        return spec
+    raise TypeError(f"spec must be PlantSpecification or dict; got {type(spec).__name__}")
+
+
+def _as_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        converted = float(value)
+    except (TypeError, ValueError):
+        return None
+    if pd.isna(converted):
+        return None
+    return converted
+
+
+def _get_node_value(aspen: Any, path: str) -> Optional[float]:
     try:
         node = aspen.Tree.FindNode(path)
-        if node:
-            val = node.Value
-            if val is not None:
-                return val
+        if node is None:
+            return None
+        return _as_float(node.Value)
     except Exception:
-        pass
-    return None
+        return None
+
+
+def _safe_node_value(aspen: Any, path: str) -> Optional[float]:
+    return _get_node_value(aspen, path)
+
+
+def _get_text_node_value(aspen: Any, path: str) -> Optional[str]:
+    try:
+        node = aspen.Tree.FindNode(path)
+        if node is None:
+            return None
+        value = node.Value
+    except Exception:
+        return None
+    if value is None:
+        return None
+    return str(value)
+
 
 def _get_element_names(aspen: Any, node_path: str) -> List[str]:
-    names = []
+    names: List[str] = []
     try:
         node = aspen.Tree.FindNode(node_path)
-        if node:
-            count = node.Elements.Count
-            for i in range(1, count + 1):
-                try:
-                    element = node.Elements.Item(i)
-                    if element and element.Name:
-                        names.append(element.Name)
-                except Exception:
-                    pass
+        if node is None:
+            return names
+        count = int(node.Elements.Count)
     except Exception:
-        pass
+        return names
+
+    for index in range(1, count + 1):
+        try:
+            element = node.Elements.Item(index)
+            element_name = getattr(element, "Name", None)
+            if element_name:
+                names.append(str(element_name))
+        except Exception:
+            continue
     return names
 
+
+def _component_ids(spec_dict: Dict[str, Any]) -> List[str]:
+    component_ids: List[str] = []
+    for component in spec_dict.get("components", []):
+        if isinstance(component, dict) and component.get("id"):
+            component_ids.append(str(component["id"]))
+    return component_ids
+
+
+def _stream_names(spec_dict: Dict[str, Any]) -> List[str]:
+    names: List[str] = []
+    for stream in spec_dict.get("streams", []):
+        if isinstance(stream, dict) and stream.get("name"):
+            names.append(str(stream["name"]))
+    return names
+
+
+def _block_specs(spec_dict: Dict[str, Any]) -> List[Tuple[str, Optional[str]]]:
+    specs: List[Tuple[str, Optional[str]]] = []
+    for block in spec_dict.get("blocks", []):
+        if not isinstance(block, dict):
+            continue
+        name = block.get("name")
+        if not name:
+            continue
+        block_type = block.get("type")
+        specs.append((str(name), str(block_type) if block_type is not None else None))
+    return specs
+
+
+def _streams_columns(component_ids: Sequence[str]) -> List[str]:
+    columns = ["stream_name", "temperature", "pressure", "mass_flow", "mole_flow"]
+    for component_id in component_ids:
+        columns.append(f"{component_id}_mole_frac")
+        columns.append(f"{component_id}_mass_frac")
+    return columns
+
+
+def _extract_stream_row(aspen: Any, stream_name: str, components: Sequence[str]) -> Dict[str, Any]:
+    row: Dict[str, Any] = {
+        "stream_name": stream_name,
+        "temperature": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\TEMP_OUT\MIXED"),
+        "pressure": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\PRES_OUT\MIXED"),
+        "mass_flow": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\MASSFLMX\MIXED"),
+        "mole_flow": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\MOLEFLMX\MIXED"),
+    }
+
+    for component in components:
+        row[f"{component}_mole_frac"] = _get_node_value(
+            aspen, rf"\Data\Streams\{stream_name}\Output\MOLEFRAC\MIXED\{component}"
+        )
+        row[f"{component}_mass_frac"] = _get_node_value(
+            aspen, rf"\Data\Streams\{stream_name}\Output\MASSFRAC\MIXED\{component}"
+        )
+    return row
+
+
 def extract_stream_properties(aspen: Any, stream_names: List[str], component_ids: List[str]) -> pd.DataFrame:
-    rows = []
-    for name in stream_names:
-        row = {"stream_name": name}
-        row["temperature"] = _safe_node_value(aspen, rf"\Data\Streams\{name}\Output\TEMP_OUT\MIXED")
-        row["pressure"] = _safe_node_value(aspen, rf"\Data\Streams\{name}\Output\PRES_OUT\MIXED")
-        
-        row["mass_flow"] = _safe_node_value(aspen, rf"\Data\Streams\{name}\Output\MASSFLMX\MIXED")
-        
-        row["mole_flow"] = _safe_node_value(aspen, rf"\Data\Streams\{name}\Output\MOLEFLMX\MIXED")
-        
-        for comp_id in component_ids:
-            row[f"{comp_id}_mole_frac"] = _safe_node_value(aspen, rf"\Data\Streams\{name}\Output\MOLEFRAC\MIXED\{comp_id}")
-            row[f"{comp_id}_mass_frac"] = _safe_node_value(aspen, rf"\Data\Streams\{name}\Output\MASSFRAC\MIXED\{comp_id}")
-            
-        rows.append(row)
-    return pd.DataFrame(rows)
+    rows = [_extract_stream_row(aspen, stream_name, component_ids) for stream_name in stream_names]
+    return pd.DataFrame(rows, columns=_streams_columns(component_ids))
+
+
+def _extract_block_row(aspen: Any, block_name: str, block_type: Optional[str] = None) -> Dict[str, Any]:
+    detected_type = block_type or _get_text_node_value(aspen, rf"\Data\Blocks\{block_name}\Input\TYPE")
+    duty_kw = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\QNET")
+    if duty_kw is None:
+        duty_kw = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\DUTY")
+
+    net_work_kw = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\WNET")
+    conversion = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\CONV")
+    efficiency = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\EFF")
+
+    return {
+        "block_name": block_name,
+        "block_type": detected_type,
+        "duty": duty_kw,
+        "duty_kw": duty_kw,
+        "duty_mw": (duty_kw / 1000.0) if duty_kw is not None else None,
+        "net_work_kw": net_work_kw,
+        "conversion": conversion,
+        "efficiency": efficiency,
+    }
+
 
 def extract_block_performance(aspen: Any, block_names: List[str]) -> pd.DataFrame:
-    rows = []
-    for name in block_names:
-        row = {"block_name": name}
-        row["block_type"] = _safe_node_value(aspen, rf"\Data\Blocks\{name}\Input\TYPE")
-        
-        duty = _safe_node_value(aspen, rf"\Data\Blocks\{name}\Output\QNET")
-        if duty is None:
-            duty = _safe_node_value(aspen, rf"\Data\Blocks\{name}\Output\DUTY")
-        row["duty"] = duty
-        
-        row["conversion"] = _safe_node_value(aspen, rf"\Data\Blocks\{name}\Output\CONV")
-        row["efficiency"] = _safe_node_value(aspen, rf"\Data\Blocks\{name}\Output\EFF")
-        
-        rows.append(row)
-    return pd.DataFrame(rows)
+    rows = [_extract_block_row(aspen, block_name) for block_name in block_names]
+    columns = [
+        "block_name",
+        "block_type",
+        "duty",
+        "duty_kw",
+        "duty_mw",
+        "net_work_kw",
+        "conversion",
+        "efficiency",
+    ]
+    return pd.DataFrame(rows, columns=columns)
+
+
+def _identify_feed_product_streams(
+    spec: Union[PlantSpecification, Dict[str, Any]]
+) -> Tuple[List[str], List[str]]:
+    spec_dict = _spec_to_dict(spec)
+    all_inputs: set[str] = set()
+    all_outputs: set[str] = set()
+
+    for connection in spec_dict.get("flowsheet", []):
+        if not isinstance(connection, dict):
+            continue
+        inputs = connection.get("inputs", [])
+        outputs = connection.get("outputs", [])
+        if isinstance(inputs, list):
+            for stream_name in inputs:
+                if stream_name:
+                    all_inputs.add(str(stream_name))
+        if isinstance(outputs, list):
+            for stream_name in outputs:
+                if stream_name:
+                    all_outputs.add(str(stream_name))
+
+    feed_streams = sorted(all_inputs - all_outputs)
+    product_streams = sorted(all_outputs - all_inputs)
+    return feed_streams, product_streams
+
+
+_PURITY_RE = re.compile(
+    r"^\s*(?P<component>\S+)\s+"
+    r"(?P<basis>wt%|mass%|weight%|mol%|mole%|mass\s+fraction|mole\s+fraction)\s+"
+    r"in\s+(?P<stream>\S+)\s*$",
+    flags=re.IGNORECASE,
+)
+
+
+def _parse_purity_expression(expression: str) -> Tuple[str, str, str]:
+    match = _PURITY_RE.match(expression or "")
+    if not match:
+        raise ValueError(
+            "Purity expression must follow '<component> <wt%|mol%|mass fraction|mole fraction> in <stream>'."
+        )
+    component = match.group("component").strip()
+    basis_raw = match.group("basis").strip().lower()
+    stream_name = match.group("stream").strip()
+
+    if basis_raw in {"wt%", "mass%", "weight%", "mass fraction"}:
+        basis = "mass"
+    else:
+        basis = "mole"
+    return component, basis, stream_name
+
 
 def parse_purity_expression(expression: str) -> Tuple[str, str, str]:
-    match = re.match(r"^(\S+)\s+(wt%|mol%|mass fraction|mole fraction)\s+in\s+(\S+)$", expression, re.IGNORECASE)
-    if not match:
-        raise ValueError(f"Invalid purity expression: '{expression}'")
-    return match.group(1), match.group(2), match.group(3)
+    component, basis, stream_name = _parse_purity_expression(expression)
+    basis_token = "wt%" if basis == "mass" else "mol%"
+    return component, basis_token, stream_name
 
-def evaluate_purity(aspen: Any, expression: str) -> Optional[float]:
-    component, basis, stream = parse_purity_expression(expression)
-    if basis.lower() in ("wt%", "mass fraction"):
-        return _safe_node_value(aspen, rf"\Data\Streams\{stream}\Output\MASSFRAC\MIXED\{component}")
+
+def _resolve_column_case_insensitive(df: pd.DataFrame, expected: str) -> Optional[str]:
+    expected_lower = expected.lower()
+    for column in df.columns:
+        if str(column).lower() == expected_lower:
+            return str(column)
+    return None
+
+
+def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
+    if column not in df.columns:
+        return pd.Series(dtype="float64")
+    return pd.to_numeric(df[column], errors="coerce")
+
+
+def _evaluate_purity(streams_df: pd.DataFrame, expression: str) -> Optional[float]:
+    if streams_df.empty:
+        return None
+
+    try:
+        component, basis, stream_name = _parse_purity_expression(expression)
+    except ValueError:
+        logger.warning("Invalid purity expression '%s'; returning None.", expression)
+        return None
+    stream_column = _resolve_column_case_insensitive(streams_df, "stream_name")
+    if stream_column is None:
+        return None
+
+    stream_mask = streams_df[stream_column].astype(str).str.upper() == stream_name.upper()
+    if not stream_mask.any():
+        return None
+
+    candidate_column = f"{component}_{'mass_frac' if basis == 'mass' else 'mole_frac'}"
+    purity_column = _resolve_column_case_insensitive(streams_df, candidate_column)
+    if purity_column is None:
+        return None
+
+    value = streams_df.loc[stream_mask, purity_column].iloc[0]
+    return _as_float(value)
+
+
+def evaluate_purity(aspen_or_streams: Any, expression: str) -> Optional[float]:
+    if isinstance(aspen_or_streams, pd.DataFrame):
+        return _evaluate_purity(aspen_or_streams, expression)
+
+    component, basis, stream_name = _parse_purity_expression(expression)
+    if basis == "mass":
+        path = rf"\Data\Streams\{stream_name}\Output\MASSFRAC\MIXED\{component}"
     else:
-        return _safe_node_value(aspen, rf"\Data\Streams\{stream}\Output\MOLEFRAC\MIXED\{component}")
+        path = rf"\Data\Streams\{stream_name}\Output\MOLEFRAC\MIXED\{component}"
+    return _get_node_value(aspen_or_streams, path)
 
-def calculate_material_balance(aspen: Any, spec: Union[PlantSpecification, Dict]) -> pd.DataFrame:
-    if isinstance(spec, PlantSpecification):
-        spec_dict = spec.model_dump()
-    else:
-        spec_dict = spec
 
-    flowsheet = spec_dict.get("flowsheet", [])
-    
-    all_inputs = set()
-    all_outputs = set()
-    
-    for entry in flowsheet:
-        for inp in entry.get("inputs", []):
-            all_inputs.add(inp)
-        for out in entry.get("outputs", []):
-            all_outputs.add(out)
-            
-    feed_streams = all_inputs - all_outputs
-    product_streams = all_outputs - all_inputs
+def _sum_component_flow(aspen: Any, stream_names: Iterable[str], component_id: str) -> float:
+    total = 0.0
+    for stream_name in stream_names:
+        mole_flow = _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\MOLEFLMX\MIXED")
+        mole_fraction = _get_node_value(
+            aspen, rf"\Data\Streams\{stream_name}\Output\MOLEFRAC\MIXED\{component_id}"
+        )
+        if mole_flow is None or mole_fraction is None:
+            continue
+        total += mole_flow * mole_fraction
+    return total
 
-    components = spec_dict.get("components", [])
-    rows = []
-    
-    for comp in components:
-        comp_id = comp.get("id")
-        
-        total_in = 0.0
-        for s in feed_streams:
-            flow = _safe_node_value(aspen, rf"\Data\Streams\{s}\Output\MOLEFLMX\MIXED")
-            frac = _safe_node_value(aspen, rf"\Data\Streams\{s}\Output\MOLEFRAC\MIXED\{comp_id}")
-            if flow is not None and frac is not None:
-                total_in += flow * frac
-                
-        total_out = 0.0
-        for s in product_streams:
-            flow = _safe_node_value(aspen, rf"\Data\Streams\{s}\Output\MOLEFLMX\MIXED")
-            frac = _safe_node_value(aspen, rf"\Data\Streams\{s}\Output\MOLEFRAC\MIXED\{comp_id}")
-            if flow is not None and frac is not None:
-                total_out += flow * frac
-                
-        closure = 0.0
-        if total_in > 0:
-            closure = (total_out / total_in - 1) * 100
-            
-        rows.append({
-            "component": comp_id,
-            "input_kmol_hr": total_in,
-            "output_kmol_hr": total_out,
-            "closure_%": closure
-        })
-        
-    return pd.DataFrame(rows)
 
-def calculate_energy_balance(aspen: Any, spec: Union[PlantSpecification, Dict]) -> pd.DataFrame:
-    if isinstance(spec, PlantSpecification):
-        spec_dict = spec.model_dump()
-    else:
-        spec_dict = spec
-        
-    blocks = spec_dict.get("blocks", [])
-    rows = []
-    
-    total_duty = 0.0
-    for b in blocks:
-        block_name = b.get("name")
-        duty = _safe_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\QNET")
-        if duty is None:
-            duty = _safe_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\DUTY")
-            
-        rows.append({
-            "block_name": block_name,
-            "duty_kw": duty
-        })
-        
-        if duty is not None:
-            total_duty += duty
-            
-    rows.append({
+def calculate_material_balance(
+    aspen: Any, spec: Union[PlantSpecification, Dict[str, Any]]
+) -> pd.DataFrame:
+    spec_dict = _spec_to_dict(spec)
+    component_ids = _component_ids(spec_dict)
+    feed_streams, product_streams = _identify_feed_product_streams(spec_dict)
+
+    rows: List[Dict[str, Any]] = []
+    for component_id in component_ids:
+        input_kmol_hr = _sum_component_flow(aspen, feed_streams, component_id)
+        output_kmol_hr = _sum_component_flow(aspen, product_streams, component_id)
+        closure_pct = None
+        if input_kmol_hr > 0:
+            closure_pct = (output_kmol_hr / input_kmol_hr - 1.0) * 100.0
+
+        rows.append(
+            {
+                "component_id": component_id,
+                "component": component_id,
+                "input_kmol_hr": input_kmol_hr,
+                "output_kmol_hr": output_kmol_hr,
+                "closure_pct": closure_pct,
+                "closure_%": closure_pct,
+            }
+        )
+
+    columns = ["component_id", "component", "input_kmol_hr", "output_kmol_hr", "closure_pct", "closure_%"]
+    return pd.DataFrame(rows, columns=columns)
+
+
+def calculate_energy_balance(
+    aspen: Any,
+    spec: Union[PlantSpecification, Dict[str, Any]],
+    energy_balance_view: str = ENERGY_BALANCE_VIEW_LEGACY,
+) -> pd.DataFrame:
+    spec_dict = _spec_to_dict(spec)
+    block_specs = _block_specs(spec_dict)
+
+    if not block_specs:
+        block_specs = [(name, None) for name in _get_element_names(aspen, r"\Data\Blocks")]
+
+    block_rows = [_extract_block_row(aspen, name, block_type) for name, block_type in block_specs]
+    blocks_df = pd.DataFrame(
+        block_rows,
+        columns=["block_name", "block_type", "duty", "duty_kw", "duty_mw", "net_work_kw", "conversion", "efficiency"],
+    )
+    return _energy_balance_from_blocks(blocks_df, energy_balance_view=energy_balance_view)
+
+
+def _normalize_energy_balance_view(energy_balance_view: Optional[str]) -> str:
+    if energy_balance_view is None:
+        return ENERGY_BALANCE_VIEW_LEGACY
+
+    normalized_view = str(energy_balance_view).strip().lower()
+    if normalized_view in {"legacy", "per-block", "per_block", "by_block", "blocks"}:
+        return ENERGY_BALANCE_VIEW_LEGACY
+    if normalized_view in {"summary", "aggregate", "aggregated", "category", "categories"}:
+        return ENERGY_BALANCE_VIEW_SUMMARY
+
+    raise ValueError(
+        "energy_balance_view must be one of: "
+        "'legacy' (aliases: 'per-block', 'per_block', 'by_block', 'blocks') or "
+        "'summary' (aliases: 'aggregate', 'aggregated', 'category', 'categories')."
+    )
+
+
+def _energy_balance_from_blocks(
+    blocks_df: pd.DataFrame, energy_balance_view: str = ENERGY_BALANCE_VIEW_LEGACY
+) -> pd.DataFrame:
+    normalized_view = _normalize_energy_balance_view(energy_balance_view)
+    if normalized_view == ENERGY_BALANCE_VIEW_SUMMARY:
+        return _energy_balance_summary_from_blocks(blocks_df)
+    return _energy_balance_legacy_from_blocks(blocks_df)
+
+
+def _energy_balance_legacy_from_blocks(blocks_df: pd.DataFrame) -> pd.DataFrame:
+    columns = ["block_name", "duty", "duty_kw", "duty_mw"]
+    if blocks_df.empty:
+        return pd.DataFrame(
+            [{"block_name": "TOTAL", "duty": 0.0, "duty_kw": 0.0, "duty_mw": 0.0}],
+            columns=columns,
+        )
+
+    legacy_df = blocks_df.reindex(columns=columns).copy()
+    duty_kw = _numeric_series(legacy_df, "duty_kw").dropna()
+    total_duty_kw = float(duty_kw.sum()) if not duty_kw.empty else 0.0
+
+    total_row = {
         "block_name": "TOTAL",
-        "duty_kw": total_duty
-    })
-    
-    return pd.DataFrame(rows)
+        "duty": total_duty_kw,
+        "duty_kw": total_duty_kw,
+        "duty_mw": total_duty_kw / 1000.0,
+    }
+    return pd.concat([legacy_df, pd.DataFrame([total_row], columns=columns)], ignore_index=True)
+
+
+def _energy_balance_summary_from_blocks(blocks_df: pd.DataFrame) -> pd.DataFrame:
+    if blocks_df.empty:
+        return pd.DataFrame(
+            [
+                {"category": "Heat Input", "value_mw": 0.0},
+                {"category": "Heat Output", "value_mw": 0.0},
+                {"category": "Net Work", "value_mw": 0.0},
+            ]
+        )
+
+    duty_kw = _numeric_series(blocks_df, "duty_kw").dropna()
+    work_kw = _numeric_series(blocks_df, "net_work_kw").dropna()
+
+    heat_input_kw = duty_kw[duty_kw > 0].sum()
+    heat_output_kw = duty_kw[duty_kw < 0].sum()
+    net_work_kw = work_kw.sum()
+
+    return pd.DataFrame(
+        [
+            {"category": "Heat Input", "value_mw": heat_input_kw / 1000.0},
+            {"category": "Heat Output", "value_mw": heat_output_kw / 1000.0},
+            {"category": "Net Work", "value_mw": net_work_kw / 1000.0},
+        ]
+    )
+
 
 def extract_diagnostics(aspen: Any) -> Dict[str, Any]:
-    per_error = _safe_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\PER_ERROR")
-    error_count = _safe_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\NERROR")
-    warning_count = _safe_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\NWARN")
-    
-    convergence_status = "converged" if per_error == 0 else "failed"
-    
+    per_error = _get_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\PER_ERROR")
+    error_count = _get_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\NERROR")
+    warning_count = _get_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\NWARN")
+
+    if per_error is None:
+        convergence_status = "unknown"
+    elif per_error == 0:
+        convergence_status = "converged"
+    else:
+        convergence_status = "failed"
+
     return {
         "per_error": per_error,
         "error_count": error_count,
         "warning_count": warning_count,
-        "convergence_status": convergence_status
+        "convergence_status": convergence_status,
     }
 
-def calculate_kpis(aspen: Any, spec: Union[PlantSpecification, Dict], streams_df: pd.DataFrame, blocks_df: pd.DataFrame) -> Dict[str, Any]:
-    kpis = {
-        "production_rate_tpd": None,
-        "purity_fraction": None,
-        "energy_consumption_mw": None,
-        "yield_fraction": None,
-        "convergence_status": None
-    }
-    
-    if isinstance(spec, PlantSpecification):
-        spec_dict = spec.model_dump()
-    else:
-        spec_dict = spec
-        
-    try:
-        targets = spec_dict.get("targets", {})
-        
-        # production_rate_tpd
-        prod_stream = targets.get("production_stream", "MEOH-PRO")
-        if not streams_df.empty and "mass_flow" in streams_df.columns:
-            stream_row = streams_df[streams_df["stream_name"] == prod_stream]
-            if not stream_row.empty:
-                mass_flow = stream_row.iloc[0]["mass_flow"]
-                if mass_flow is not None and not pd.isna(mass_flow):
-                    kpis["production_rate_tpd"] = mass_flow * 24 / 1000
-                    
-        # purity_fraction
-        purity_dict = targets.get("purity", {})
-        expression = purity_dict.get("expression", "CH3OH wt% in MEOH-PRO")
-        kpis["purity_fraction"] = evaluate_purity(aspen, expression)
-        
-        # energy_consumption_mw
-        if not blocks_df.empty and "duty_kw" in blocks_df.columns:
-            filtered = blocks_df[blocks_df["block_name"] != "TOTAL"]
-            duty_sum = filtered["duty_kw"].dropna().sum()
-            kpis["energy_consumption_mw"] = duty_sum / 1000
-            
-        # yield_fraction
-        # Moles of target component in product stream / moles of primary feed component in feed stream
-        # derive stream names from spec targets or use defaults
-        comp, basis, target_stream = parse_purity_expression(expression)
-        
-        # To get the feed component, we could look for a natural feed component, or use a default.
-        # "moles of target component in product stream / moles of primary feed component in feed stream"
-        yield_dict = targets.get("yield", {})
-        # If no explicit yield target info given, make an assumption:
-        feed_stream = "CO2-IN" # or maybe "SYNGAS"? What to use?
-        feed_comp = "CO2"
-        if "feed_stream" in yield_dict:
-            feed_stream = yield_dict["feed_stream"]
-        if "feed_component" in yield_dict:
-            feed_comp = yield_dict["feed_component"]
-            
-        # Check if we can get mole flows
-        if not streams_df.empty:
-            target_row = streams_df[streams_df["stream_name"] == target_stream]
-            feed_row = streams_df[streams_df["stream_name"] == feed_stream]
-            
-            if not target_row.empty and not feed_row.empty:
-                t_flow = target_row.iloc[0]["mole_flow"]
-                t_frac = target_row.iloc[0].get(f"{comp}_mole_frac")
-                f_flow = feed_row.iloc[0]["mole_flow"]
-                f_frac = feed_row.iloc[0].get(f"{feed_comp}_mole_frac")
-                
-                if pd.notna(t_flow) and pd.notna(t_frac) and pd.notna(f_flow) and pd.notna(f_frac) and f_flow * f_frac > 0:
-                    kpis["yield_fraction"] = (t_flow * t_frac) / (f_flow * f_frac)
-                    
-        kpis["convergence_status"] = extract_diagnostics(aspen)["convergence_status"]
-        
-    except Exception as e:
-        logger.warning(f"Error calculating KPIs: {e}")
-        
-    return kpis
 
-def extract_results(aspen: Any, spec: Union[PlantSpecification, Dict]) -> Dict[str, Any]:
+def _pick_product_stream(streams_df: pd.DataFrame) -> Optional[pd.Series]:
+    if streams_df.empty:
+        return None
+
+    stream_name_col = _resolve_column_case_insensitive(streams_df, "stream_name")
+    if stream_name_col is None:
+        return None
+
+    meoh_mask = streams_df[stream_name_col].astype(str).str.upper() == "MEOH-PRO"
+    if meoh_mask.any():
+        return streams_df.loc[meoh_mask].iloc[0]
+
+    methanol_col = _resolve_column_case_insensitive(streams_df, "CH3OH_mass_frac")
+    if methanol_col is not None:
+        methanol_values = pd.to_numeric(streams_df[methanol_col], errors="coerce")
+        if methanol_values.notna().any():
+            best_index = methanol_values.idxmax()
+            return streams_df.loc[best_index]
+
+    mass_flow_col = _resolve_column_case_insensitive(streams_df, "mass_flow")
+    if mass_flow_col is not None:
+        mass_flow_values = pd.to_numeric(streams_df[mass_flow_col], errors="coerce")
+        if mass_flow_values.notna().any():
+            best_index = mass_flow_values.idxmax()
+            return streams_df.loc[best_index]
+    return None
+
+
+def _target_purity_expression(spec_dict: Dict[str, Any]) -> str:
+    targets = spec_dict.get("targets")
+    if not isinstance(targets, dict):
+        return DEFAULT_PURITY_EXPRESSION
+
+    purity = targets.get("purity")
+    if purity is None:
+        return DEFAULT_PURITY_EXPRESSION
+    if isinstance(purity, dict):
+        expression = purity.get("expression")
+        if expression:
+            return str(expression)
+        return DEFAULT_PURITY_EXPRESSION
+    return DEFAULT_PURITY_EXPRESSION
+
+
+def _target_yield_config(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
+    targets = spec_dict.get("targets")
+    if not isinstance(targets, dict):
+        return {}
+    yield_target = targets.get("yield")
+    if isinstance(yield_target, dict):
+        return yield_target
+    return {}
+
+
+def _optional_text(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _stream_names_list(value: Any) -> List[str]:
+    if isinstance(value, str):
+        stream_name = _optional_text(value)
+        return [stream_name] if stream_name else []
+    if isinstance(value, (list, tuple, set)):
+        names: List[str] = []
+        for stream_name in value:
+            cleaned = _optional_text(stream_name)
+            if cleaned:
+                names.append(cleaned)
+        return names
+    return []
+
+
+def _stream_row_by_name(streams_df: pd.DataFrame, stream_name: str) -> Optional[pd.Series]:
+    stream_name_col = _resolve_column_case_insensitive(streams_df, "stream_name")
+    if stream_name_col is None:
+        return None
+    stream_mask = streams_df[stream_name_col].astype(str).str.upper() == stream_name.upper()
+    if not stream_mask.any():
+        return None
+    return streams_df.loc[stream_mask].iloc[0]
+
+
+def _component_mole_flow_from_row(
+    streams_df: pd.DataFrame, row: Optional[pd.Series], component_id: Optional[str]
+) -> Optional[float]:
+    if row is None or not component_id:
+        return None
+
+    mole_flow_col = _resolve_column_case_insensitive(streams_df, "mole_flow")
+    component_mole_frac_col = _resolve_column_case_insensitive(streams_df, f"{component_id}_mole_frac")
+    if mole_flow_col is None or component_mole_frac_col is None:
+        return None
+
+    mole_flow = _as_float(row.get(mole_flow_col))
+    mole_fraction = _as_float(row.get(component_mole_frac_col))
+    if mole_flow is None or mole_fraction is None:
+        return None
+    return mole_flow * mole_fraction
+
+
+def _feed_component_mole_flow(
+    streams_df: pd.DataFrame,
+    feed_streams: Sequence[str],
+    component_id: Optional[str],
+    aggregation: str = "sum",
+) -> Optional[float]:
+    if streams_df.empty or not feed_streams or not component_id:
+        return None
+
+    stream_name_col = _resolve_column_case_insensitive(streams_df, "stream_name")
+    if stream_name_col is None:
+        return None
+
+    feed_names_upper = {str(name).upper() for name in feed_streams if str(name).strip()}
+    if not feed_names_upper:
+        return None
+
+    stream_names_upper = streams_df[stream_name_col].astype(str).str.upper()
+    feed_rows = streams_df.loc[stream_names_upper.isin(feed_names_upper)]
+    if feed_rows.empty:
+        return None
+
+    available_feed_names = set(feed_rows[stream_name_col].astype(str).str.upper())
+    if not feed_names_upper.issubset(available_feed_names):
+        return None
+
+    component_flows: List[float] = []
+    for _, feed_row in feed_rows.iterrows():
+        component_flow = _component_mole_flow_from_row(streams_df, feed_row, component_id)
+        if component_flow is None:
+            return None
+        component_flows.append(component_flow)
+
+    if not component_flows:
+        return None
+    if aggregation == "max":
+        return max(component_flows)
+    return float(sum(component_flows))
+
+
+def calculate_kpis(
+    aspen: Any,
+    spec: Union[PlantSpecification, Dict[str, Any]],
+    streams_df: pd.DataFrame,
+    blocks_df: pd.DataFrame,
+) -> Dict[str, Any]:
+    spec_dict = _spec_to_dict(spec)
+    diagnostics = extract_diagnostics(aspen)
+
+    production_rate_tpd: Optional[float] = None
+    yield_fraction: Optional[float] = None
+    product_row = _pick_product_stream(streams_df)
+
+    if product_row is not None:
+        mass_flow = _as_float(product_row.get("mass_flow"))
+        if mass_flow is not None:
+            production_rate_tpd = mass_flow * 24.0 / 1000.0
+
+    purity_expression = _target_purity_expression(spec_dict)
+    purity_fraction = _evaluate_purity(streams_df, purity_expression)
+
+    default_yield_component: Optional[str] = None
     try:
-        if isinstance(spec, PlantSpecification):
-            spec_dict = spec.model_dump()
-        else:
-            spec_dict = spec
-            
-        component_ids = [c.get("id") for c in spec_dict.get("components", []) if "id" in c]
-        
-        stream_names = _get_element_names(aspen, r"\Data\Streams")
-        block_names = _get_element_names(aspen, r"\Data\Blocks")
-        
-        streams_df = extract_stream_properties(aspen, stream_names, component_ids)
-        blocks_df = extract_block_performance(aspen, block_names)
-        
-        mat_bal = calculate_material_balance(aspen, spec_dict)
-        nrg_bal = calculate_energy_balance(aspen, spec_dict)
+        default_yield_component, _, _ = _parse_purity_expression(purity_expression)
+    except ValueError:
+        default_yield_component = None
+
+    yield_target = _target_yield_config(spec_dict)
+    yield_component = _optional_text(yield_target.get("component")) or default_yield_component
+
+    yield_product_stream = _optional_text(yield_target.get("stream")) or _optional_text(
+        yield_target.get("product_stream")
+    )
+    yield_product_row = (
+        _stream_row_by_name(streams_df, yield_product_stream) if yield_product_stream else product_row
+    )
+
+    selected_feed_streams, _ = _identify_feed_product_streams(spec_dict)
+    feed_streams_override = _stream_names_list(yield_target.get("feed_streams"))
+    if not feed_streams_override:
+        feed_streams_override = _stream_names_list(yield_target.get("feed_stream"))
+    if feed_streams_override:
+        selected_feed_streams = feed_streams_override
+
+    feed_aggregation = (
+        _optional_text(yield_target.get("feed_aggregation")) or _optional_text(yield_target.get("feed_basis")) or "sum"
+    ).lower()
+    if feed_aggregation not in {"sum", "max"}:
+        feed_aggregation = "sum"
+
+    product_component_mole_flow = _component_mole_flow_from_row(streams_df, yield_product_row, yield_component)
+    feed_component_mole_flow = _feed_component_mole_flow(
+        streams_df, selected_feed_streams, yield_component, aggregation=feed_aggregation
+    )
+    if (
+        product_component_mole_flow is not None
+        and feed_component_mole_flow is not None
+        and feed_component_mole_flow > 0
+    ):
+        yield_fraction = product_component_mole_flow / feed_component_mole_flow
+
+    duty_kw = _numeric_series(blocks_df, "duty_kw").dropna()
+    energy_consumption_mw = float(duty_kw.abs().sum() / 1000.0) if not duty_kw.empty else 0.0
+
+    return {
+        "production_rate_tpd": production_rate_tpd,
+        "purity_fraction": purity_fraction,
+        "energy_consumption_mw": energy_consumption_mw,
+        "yield_fraction": yield_fraction,
+        "convergence_status": diagnostics.get("convergence_status", "unknown"),
+    }
+
+
+def extract_results(
+    aspen: Any,
+    spec: Union[PlantSpecification, Dict[str, Any]],
+    energy_balance_view: str = ENERGY_BALANCE_VIEW_LEGACY,
+) -> Dict[str, Any]:
+    try:
+        spec_dict = _spec_to_dict(spec)
+    except Exception as exc:
+        raise ExtractionError(str(exc)) from exc
+
+    try:
+        component_ids = _component_ids(spec_dict)
+        stream_names = _stream_names(spec_dict) or _get_element_names(aspen, r"\Data\Streams")
+        block_specs = _block_specs(spec_dict)
+        if not block_specs:
+            block_specs = [(name, None) for name in _get_element_names(aspen, r"\Data\Blocks")]
+
+        stream_rows = [_extract_stream_row(aspen, stream_name, component_ids) for stream_name in stream_names]
+        streams_df = pd.DataFrame(stream_rows, columns=_streams_columns(component_ids))
+
+        block_rows = [_extract_block_row(aspen, name, block_type) for name, block_type in block_specs]
+        blocks_df = pd.DataFrame(
+            block_rows,
+            columns=["block_name", "block_type", "duty", "duty_kw", "duty_mw", "net_work_kw", "conversion", "efficiency"],
+        )
+
+        material_balance = calculate_material_balance(aspen, spec_dict)
+        energy_balance = _energy_balance_from_blocks(blocks_df, energy_balance_view=energy_balance_view)
+        diagnostics = extract_diagnostics(aspen)
         kpis = calculate_kpis(aspen, spec_dict, streams_df, blocks_df)
-        diags = extract_diagnostics(aspen)
-        
+
         metadata = {
-            "extracted_at": datetime.datetime.now().isoformat(),
-            "stream_count": len(stream_names),
-            "block_count": len(block_names)
+            "extracted_at": datetime.datetime.now().isoformat(timespec="seconds"),
+            "stream_count": int(len(streams_df)),
+            "block_count": int(len(blocks_df)),
+            "component_count": int(len(component_ids)),
         }
-        
+
         return {
             "streams": streams_df,
             "blocks": blocks_df,
-            "material_balance": mat_bal,
-            "energy_balance": nrg_bal,
+            "material_balance": material_balance,
+            "energy_balance": energy_balance,
             "kpis": kpis,
-            "diagnostics": diags,
-            "metadata": metadata
+            "diagnostics": diagnostics,
+            "metadata": metadata,
         }
-    except Exception as e:
-        raise ExtractionError(str(e))
+    except Exception as exc:
+        raise ExtractionError(f"Failed to extract simulation results: {exc}") from exc

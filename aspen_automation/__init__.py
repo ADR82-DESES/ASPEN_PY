@@ -6,6 +6,7 @@ from .extractor import extract_results
 from .inp_generator import generate_inp
 from .session import run_simulation_session, SessionResult
 from .reporter import generate_reports
+from .acceptance import validate_acceptance, print_acceptance_report, load_template
 
 __all__ = [
     "load_spec", 
@@ -22,5 +23,8 @@ __all__ = [
     "generate_reports",
     "generate_inp",
     "run_simulation_session",
-    "SessionResult"
+    "SessionResult",
+    "validate_acceptance",
+    "print_acceptance_report",
+    "load_template",
 ]

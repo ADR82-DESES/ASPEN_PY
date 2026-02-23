@@ -151,19 +151,21 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                       f"Reaction set '{block.reactions}' referenced but not defined",
                       "Add the reaction set to reaction_sets or update block.reactions")
 
+        valid_stream_references = stream_names | produced_streams
+
         if block.split_fractions:
             for j, split in enumerate(block.split_fractions):
-                if split.stream not in stream_names:
+                if split.stream not in valid_stream_references:
                     add_error("error", f"blocks[{i}].split_fractions[{j}].stream",
                               f"Stream '{split.stream}' referenced in FSPLIT but not defined",
-                              "Add stream to streams section or update split_fractions")
+                              "Add stream to streams section, define it in flowsheet outputs, or update split_fractions")
 
         if block.sep_fractions:
             for j, sep in enumerate(block.sep_fractions):
-                if sep.stream not in stream_names:
+                if sep.stream not in valid_stream_references:
                     add_error("error", f"blocks[{i}].sep_fractions[{j}].stream",
                               f"Stream '{sep.stream}' referenced in SEP but not defined",
-                              "Add stream to streams section or update sep_fractions")
+                              "Add stream to streams section, define it in flowsheet outputs, or update sep_fractions")
                 if sep.component not in comp_ids:
                     add_error("error", f"blocks[{i}].sep_fractions[{j}].component",
                               f"Component '{sep.component}' referenced in SEP but not defined",

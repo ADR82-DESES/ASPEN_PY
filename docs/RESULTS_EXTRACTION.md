@@ -1,87 +1,150 @@
 # Results Extraction
 
-This document describes `extract_results(aspen, spec)` from `aspen_automation.extractor`.
+`aspen_automation.extractor.extract_results(aspen, spec, energy_balance_view="legacy")` extracts Aspen Plus COM tree data and returns a structured result object with pandas DataFrames.
 
-## Function
+## Return Shape
 
 ```python
-extract_results(aspen, spec) -> dict
+{
+    "streams": pd.DataFrame,
+    "blocks": pd.DataFrame,
+    "material_balance": pd.DataFrame,
+    "energy_balance": pd.DataFrame,
+    "kpis": dict,
+    "diagnostics": dict,
+    "metadata": dict,
+}
 ```
 
-- `aspen`: Aspen Plus COM document instance.
-- `spec`: `PlantSpecification` or equivalent dict.
-- Returns a dictionary with DataFrames (`streams`, `blocks`, `material_balance`, `energy_balance`) plus `kpis`, `diagnostics`, and `metadata`.
+## COM Paths Used
 
-## COM Tree Paths
+### Stream properties
 
-| Property | Path pattern |
-| :--- | :--- |
-| `TEMP_OUT` | `\Data\Streams\{stream}\Output\TEMP_OUT\MIXED` |
-| `PRES_OUT` | `\Data\Streams\{stream}\Output\PRES_OUT\MIXED` |
-| `MASSFLMX` | `\Data\Streams\{stream}\Output\MASSFLMX\MIXED` |
-| `MOLEFLMX` | `\Data\Streams\{stream}\Output\MOLEFLMX\MIXED` |
-| `MOLEFRAC` | `\Data\Streams\{stream}\Output\MOLEFRAC\MIXED\{component}` |
-| `MASSFRAC` | `\Data\Streams\{stream}\Output\MASSFRAC\MIXED\{component}` |
+- `\Data\Streams\{stream}\Output\TEMP_OUT\MIXED`
+- `\Data\Streams\{stream}\Output\PRES_OUT\MIXED`
+- `\Data\Streams\{stream}\Output\MASSFLMX\MIXED`
+- `\Data\Streams\{stream}\Output\MOLEFLMX\MIXED`
+- `\Data\Streams\{stream}\Output\MOLEFRAC\MIXED\{component}`
+- `\Data\Streams\{stream}\Output\MASSFRAC\MIXED\{component}`
 
-## Streams DataFrame Schema
+### Block performance
+
+- `\Data\Blocks\{block}\Input\TYPE`
+- `\Data\Blocks\{block}\Output\QNET` (fallback: `DUTY`)
+- `\Data\Blocks\{block}\Output\WNET`
+- `\Data\Blocks\{block}\Output\CONV`
+- `\Data\Blocks\{block}\Output\EFF`
+
+### Convergence diagnostics
+
+- `\Data\Results Summary\Run-Status\Output\PER_ERROR`
+- `\Data\Results Summary\Run-Status\Output\NERROR`
+- `\Data\Results Summary\Run-Status\Output\NWARN`
+
+Missing COM nodes are handled safely and converted to `None`/`NaN` (no crash).
+
+## DataFrame Schemas
+
+### `streams`
 
 Base columns:
 
-| Column | Type | Units / meaning |
-| :--- | :--- | :--- |
-| `stream_name` | `str` | Aspen stream identifier |
-| `temperature` | `float \| None` | stream temperature |
-| `pressure` | `float \| None` | stream pressure |
-| `mass_flow` | `float \| None` | mixed-stream mass flow |
-| `mole_flow` | `float \| None` | mixed-stream mole flow |
+- `stream_name`
+- `temperature`
+- `pressure`
+- `mass_flow`
+- `mole_flow`
 
-Dynamic component columns (for each component id in spec):
+Per component (from `spec.components[*].id`):
 
-| Column pattern | Type | Meaning |
-| :--- | :--- | :--- |
-| `{component}_mole_frac` | `float \| None` | mole fraction in stream |
-| `{component}_mass_frac` | `float \| None` | mass fraction in stream |
+- `{component}_mole_frac`
+- `{component}_mass_frac`
 
-## Blocks DataFrame Schema
+### `blocks`
 
-| Column | Type | Meaning |
-| :--- | :--- | :--- |
-| `block_name` | `str` | Aspen block identifier |
-| `block_type` | `str \| None` | Aspen block type |
-| `duty` | `float \| None` | block duty (`QNET`/`DUTY`) |
-| `conversion` | `float \| None` | conversion value |
-| `efficiency` | `float \| None` | efficiency value |
+- `block_name`
+- `block_type`
+- `duty` (alias of `duty_kw`)
+- `duty_kw`
+- `duty_mw`
+- `net_work_kw`
+- `conversion`
+- `efficiency`
 
-## KPI Dictionary
+### `material_balance`
+
+- `component_id`
+- `component` (compatibility alias)
+- `input_kmol_hr`
+- `output_kmol_hr`
+- `closure_pct`
+- `closure_%` (compatibility alias)
+
+Feed streams and product streams are inferred from flowsheet topology:
+
+- feeds: streams used as inputs but never produced as outputs
+- products: streams produced as outputs but never reused as inputs
+
+### `energy_balance`
+
+Default (`energy_balance_view="legacy"`):
+
+- `block_name` (includes per-block rows plus `TOTAL`)
+- `duty` (alias of `duty_kw`)
+- `duty_kw`
+- `duty_mw`
+
+Optional summary (`energy_balance_view="summary"`):
+
+- `category` in `["Heat Input", "Heat Output", "Net Work"]`
+- `value_mw`
+
+## KPI Definitions
 
 `kpis` contains:
 
-| Key | Type | Units / meaning |
-| :--- | :--- | :--- |
-| `production_rate_tpd` | `float \| None` | tons/day |
-| `purity_fraction` | `float \| None` | fraction (0-1) |
-| `energy_consumption_mw` | `float \| None` | MW |
-| `yield_fraction` | `float \| None` | fraction (0-1) |
-| `convergence_status` | `str \| None` | simulation status |
+- `production_rate_tpd`: selected product stream `mass_flow * 24 / 1000`
+- `purity_fraction`: value from purity expression evaluation
+- `energy_consumption_mw`: `sum(abs(duty_kw)) / 1000`
+- `yield_fraction`: `product_mole_flow / max(feed_mole_flow)`
+- `convergence_status`: `"converged" | "failed" | "unknown"`
+
+Product stream selection priority:
+
+1. stream named `MEOH-PRO`
+2. stream with max `CH3OH_mass_frac`
+3. stream with max `mass_flow`
 
 ## Purity Expression Syntax
 
-Grammar:
+Format:
 
 ```text
-<expression> := <component> <basis> "in" <stream>
-<basis> := "wt%" | "mol%" | "mass fraction" | "mole fraction"
+<component> <basis> in <stream>
 ```
+
+Supported basis tokens:
+
+- `wt%`, `mass%`, `weight%`, `mass fraction`
+- `mol%`, `mole%`, `mole fraction`
 
 Examples:
 
 - `CH3OH wt% in MEOH-PRO`
-- `H2O mol% in WATER-OUT`
+- `CH3OH mol% in MEOH-PRO`
 
-## Usage Example
+If `spec.targets.purity` is absent, `purity_fraction` is `None`.
+
+## Usage
 
 ```python
 from aspen_automation import extract_results
 
 results = extract_results(aspen, spec)
+print(results["streams"].head())
+print(results["kpis"])
+
+# Optional: aggregated category view for energy balance
+summary_results = extract_results(aspen, spec, energy_balance_view="summary")
+print(summary_results["energy_balance"])
 ```
