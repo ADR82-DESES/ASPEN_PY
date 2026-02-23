@@ -105,9 +105,9 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
 
     is_flowsheet_empty = not spec_obj.streams and not spec_obj.blocks
     if not spec_obj.streams:
-        raise ValidationError({"valid": False, "errors": [{"severity": "error", "message": "Spec must contain at least one stream"}]})
+        raise ValidationError("Spec must contain at least one stream", {"valid": False, "errors": [{"severity": "error", "message": "Spec must contain at least one stream"}]})
     if not spec_obj.blocks:
-        raise ValidationError({"valid": False, "errors": [{"severity": "error", "message": "Spec must contain at least one block"}]})
+        raise ValidationError("Spec must contain at least one block", {"valid": False, "errors": [{"severity": "error", "message": "Spec must contain at least one block"}]})
 
     profile_generation = len(spec_obj.blocks) >= 100 or len(spec_obj.flowsheet) >= 100
     start_time = time.perf_counter() if profile_generation else None
@@ -181,14 +181,14 @@ def _ensure_spec(spec: Union[PlantSpecification, Dict[str, Any]]) -> PlantSpecif
     if isinstance(spec, PlantSpecification):
         report = validate_spec(spec.model_dump())
         if not report["valid"]:
-            raise ValidationError(report)
+            raise ValidationError("Validation failed", report)
         _warn_optional_fields(spec)
         return spec
 
     if isinstance(spec, dict):
         report = validate_spec(spec)
         if not report["valid"]:
-            raise ValidationError(report)
+            raise ValidationError("Validation failed", report)
         spec_obj = PlantSpecification(**spec)
         _warn_optional_fields(spec_obj)
         return spec_obj

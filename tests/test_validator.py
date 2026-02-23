@@ -32,7 +32,7 @@ def test_rule3_invalid_stream_connectivity():
     report = validate_spec(data)
     assert not report["valid"]
     error_msgs = [e["message"] for e in report["errors"]]
-    assert any("Stream 'UNDEFINED-STREAM' referenced but not defined" in m for m in error_msgs)
+    assert any("Undefined input stream" in m for m in error_msgs)
 
 def test_rule4_composition_sum():
     data = load_fixture("invalid_composition.yaml")

@@ -78,18 +78,19 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                                   f"Component '{stoic.component}' used in reaction but not defined",
                                   f"Add component '{stoic.component}' to components section")
 
+    # Gather produced streams
+    produced_streams = set()
+    for conn in spec.flowsheet:
+        for outstream in conn.outputs:
+            produced_streams.add(outstream)
+
     # Rule 3: Stream Connectivity
     for i, conn in enumerate(spec.flowsheet):
         for j, instream in enumerate(conn.inputs):
-            if instream not in stream_names:
+            if instream not in stream_names and instream not in produced_streams:
                 add_error("error", f"flowsheet[{i}].inputs[{j}]",
-                          f"Stream '{instream}' referenced but not defined",
-                          f"Add stream '{instream}' to streams section")
-        for j, outstream in enumerate(conn.outputs):
-            if outstream not in stream_names:
-                add_error("error", f"flowsheet[{i}].outputs[{j}]",
-                          f"Stream '{outstream}' referenced but not defined",
-                          f"Add stream '{outstream}' to streams section")
+                          f"Undefined input stream '{instream}' for block '{conn.block}'",
+                          f"Define stream '{instream}' in the streams section or as an output of another block")
 
     # Rule 5: Block References
     for i, conn in enumerate(spec.flowsheet):

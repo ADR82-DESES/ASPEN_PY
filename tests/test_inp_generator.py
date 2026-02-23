@@ -71,19 +71,21 @@ def test_generate_minimal_inp(minimal_spec):
     assert "TEMP=150.0" in inp
 
 
-def test_generate_complex_inp(valid_spec_data):
-    inp = generate_inp(valid_spec_data)
+def test_generate_complex_inp():
+    path = os.path.join(FIXTURE_DIR, "methanol_atr.yaml")
+    spec = load_spec(path)
+    inp = generate_inp(spec)
     report = validate_inp(inp)
     assert report["valid"]
 
-    assert "TITLE 'Methanol Plant 10k TPD'" in inp
+    assert "TITLE 'Methanol Production Plant'" in inp
     assert "COMPONENTS" in inp
     assert "CH4 METHANE" in inp
     assert "PROPERTIES RK-SOAVE" in inp
     assert "FLOWSHEET" in inp
     assert "BLOCK MIX-FEED" in inp
-    assert "STREAM NG-FEED" in inp
-    assert "BLOCK B-ATR RGIBBS" in inp
+    assert "STREAM NAT-GAS" in inp
+    assert "BLOCK REFORMER" in inp
 
 
 def test_inp_unit_conversion():

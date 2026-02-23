@@ -1,58 +1,86 @@
 import pytest
-from aspen_automation.schema import PlantSpecification, Stream, Component, Metadata, UnitSystem, Properties
-from pydantic import ValidationError
+import os
+import yaml
+from aspen_automation.schema import validate_spec
+from aspen_automation.parser import load_spec
 
-def test_valid_stream():
-    s = Stream(
-        name="FEED",
-        temperature=25.0,
-        pressure=1.0,
-        mass_flow=100.0,
-        composition={"H2O": 1.0}
-    )
-    assert s.name == "FEED"
-    assert s.composition["H2O"] == 1.0
+FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
+
+def load_fixture(filename):
+    filepath = os.path.join(FIXTURES_DIR, filename)
+    with open(filepath, 'r') as f:
+        return yaml.safe_load(f)
+
+def test_valid_plant():
+    spec = load_fixture("valid_plant.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is True
+    assert len(report["errors"]) == 0
+
+def test_methanol_plant_validates():
+    spec = load_fixture("methanol_atr.yaml")
+    report = validate_spec(spec)
+    if not report["valid"]:
+        print(f"\nVALIDATION ERRORS: {report['errors']}")
+    assert report["valid"] is True
+    assert len(report["errors"]) == 0
+
+def test_missing_metadata():
+    spec = load_fixture("valid_plant.yaml")
+    del spec["metadata"]
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Missing required top-level section 'metadata'" in e["message"] for e in report["errors"])
+
+def test_missing_components_section():
+    spec = load_fixture("invalid_missing_section.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Missing required top-level section 'components'" in e["message"] for e in report["errors"])
+
+def test_invalid_units():
+    spec = load_fixture("invalid_units.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Invalid pressure unit" in e["message"] for e in report["errors"])
+
+def test_invalid_component_reference():
+    spec = load_fixture("invalid_component_ref.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Undefined component 'UNKNOWN_COMP'" in e["message"] for e in report["errors"])
+
+def test_invalid_stream_reference():
+    spec = load_fixture("invalid_stream_ref.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Undefined input stream 'S_UNKNOWN'" in e["message"] for e in report["errors"])
+
+def test_invalid_block_reference():
+    spec = load_fixture("invalid_block_ref.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Undefined block 'B_UNKNOWN'" in e["message"] for e in report["errors"])
 
 def test_invalid_composition_sum():
-    with pytest.raises(ValidationError) as excinfo:
-        Stream(
-            name="FEED",
-            temperature=25.0,
-            pressure=1.0,
-            mass_flow=100.0,
-            composition={"H2O": 0.5, "CH4": 0.4} # Sum is 0.9
-        )
-    assert "Composition sum is 0.9" in str(excinfo.value)
+    spec = load_fixture("invalid_composition_sum.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("expected 1.0" in e["message"] for e in report["errors"])
 
-def test_missing_flow():
-    with pytest.raises(ValidationError) as excinfo:
-        Stream(
-            name="FEED",
-            temperature=25.0,
-            pressure=1.0,
-            composition={"H2O": 1.0}
-            # missing volume/mass/mole flow
-        )
-    assert "Either mass_flow or mole_flow must be provided" in str(excinfo.value)
+def test_missing_required_fields():
+    spec = load_fixture("invalid_missing_field.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Missing required field 'temperature'" in e["message"] for e in report["errors"])
 
-def test_plant_spec_minimal():
-    metadata = Metadata(
-        title="Test",
-        units=UnitSystem(pressure="bar", temperature="C", flow="kg/hr")
-    )
-    props = Properties(method="IDEAL")
-    spec = PlantSpecification(
-        metadata=metadata,
-        components=[],
-        properties=props,
-        flowsheet=[],
-        streams=[],
-        blocks=[]
-    )
-    assert spec.metadata.title == "Test"
+def test_invalid_types():
+    spec = load_fixture("invalid_types.yaml")
+    report = validate_spec(spec)
+    assert report["valid"] is False
+    assert any("Field 'temperature' must be a number" in e["message"] for e in report["errors"])
 
-def test_forbid_extra_fields():
-    with pytest.raises(ValidationError) as excinfo:
-        Component(id="C1", name="Comp1", extra_field="not_allowed")
-    assert "extra_field" in str(excinfo.value)
-    assert "Extra inputs are not permitted" in str(excinfo.value)
+def test_empty_spec():
+    report = validate_spec({})
+    assert report["valid"] is False
+    assert len(report["errors"]) >= 6 # Missing all 6 required sections

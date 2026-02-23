@@ -1,17 +1,13 @@
 metadata:
-  title: "Bad Units Plant"
+  title: "Invalid Units"
   units:
-    pressure: "barr" # Invalid
-    temperature: "celsius" # Invalid
-    flow: "kgph" # Invalid
+    pressure: "invalid_pressure" # Invalid
+    temperature: "invalid_temp"
+    flow: "invalid_flow"
 
-components:
-  - id: "CH4"
-    name: "METHANE"
-
+components: []
 properties:
-  method: "RK-SOAVE"
-
+  method: "IDEAL"
+blocks: []
 flowsheet: []
 streams: []
-blocks: []

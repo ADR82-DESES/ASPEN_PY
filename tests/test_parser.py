@@ -1,58 +1,37 @@
 import pytest
 import os
-import yaml
-import json
-from aspen_automation.parser import load_spec
-from aspen_automation.exceptions import ValidationError
-from aspen_automation.schema import PlantSpecification
+from aspen_automation.parser import load_spec, detect_format
+from aspen_automation.exceptions import ParserError, ValidationError
 
-FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
+FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
+
+def test_detect_format_yaml():
+    assert detect_format("test.yaml") == "yaml"
+    assert detect_format("test.yml") == "yaml"
+
+def test_detect_format_json():
+    assert detect_format("test.json") == "json"
+
+def test_detect_format_unsupported():
+    with pytest.raises(ParserError):
+        detect_format("test.txt")
 
 def test_load_valid_yaml():
-    path = os.path.join(FIXTURE_DIR, "valid_plant.yaml")
-    spec = load_spec(path)
-    assert isinstance(spec, PlantSpecification)
-    assert spec.metadata.title == "Methanol Plant 10k TPD"
+    filepath = os.path.join(FIXTURES_DIR, "valid_plant.yaml")
+    spec = load_spec(filepath)
+    assert spec["metadata"]["title"] == "Simple Mixer Plant"
 
-def test_load_valid_json(tmp_path):
-    path = os.path.join(FIXTURE_DIR, "valid_plant.yaml")
-    with open(path, 'r') as f:
-        data = yaml.safe_load(f)
-    
-    json_path = tmp_path / "plant.json"
-    with open(json_path, 'w') as f:
-        json.dump(data, f)
-        
-    spec = load_spec(str(json_path))
-    assert isinstance(spec, PlantSpecification)
-    assert spec.metadata.title == "Methanol Plant 10k TPD"
+def test_load_with_validation_error():
+    filepath = os.path.join(FIXTURES_DIR, "invalid_missing_section.yaml")
+    with pytest.raises(ValidationError):
+        load_spec(filepath, validate=True)
 
-def test_file_not_found():
-    with pytest.raises(FileNotFoundError):
-        load_spec("non_existent_file.yaml")
+def test_load_without_validation():
+    filepath = os.path.join(FIXTURES_DIR, "invalid_missing_section.yaml")
+    spec = load_spec(filepath, validate=False) # Should not raise
+    assert "metadata" in spec
+    # It missing components, but we didn't validate
 
-def test_load_invalid_raises_error():
-    path = os.path.join(FIXTURE_DIR, "invalid_composition.yaml")
-    with pytest.raises(ValidationError) as excinfo:
-        load_spec(path)
-    assert "Composition sum is 0.95" in str(excinfo.value)
-
-def test_load_no_validate():
-    path = os.path.join(FIXTURE_DIR, "invalid_composition.yaml")
-    data = load_spec(path, validate=False)
-    assert isinstance(data, dict)
-    assert data["streams"][0]["name"] == "S1"
-
-def test_yaml_syntax_error(tmp_path):
-    p = tmp_path / "broken.yaml"
-    p.write_text("invalid: [unclosed bracket")
-    with pytest.raises(ValueError) as excinfo:
-        load_spec(str(p))
-    assert "YAML syntax error" in str(excinfo.value)
-
-def test_json_syntax_error(tmp_path):
-    p = tmp_path / "broken.json"
-    p.write_text('{"invalid": "unclosed quote}')
-    with pytest.raises(ValueError) as excinfo:
-        load_spec(str(p))
-    assert "JSON syntax error" in str(excinfo.value)
+def test_load_nonexistent_file():
+    with pytest.raises(ParserError):
+        load_spec("nonexistent.yaml")

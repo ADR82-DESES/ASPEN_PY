@@ -4,6 +4,7 @@ import os
 from typing import Any, Dict
 
 import pandas as pd
+from .schema import PlantSpecification
 
 
 def _create_run_dir(output_dir: str) -> str:
@@ -31,8 +32,20 @@ def _write_json_reports(results: Dict[str, Any], run_dir: str) -> None:
         f.write(json.dumps(results.get("diagnostics", {}), indent=2, default=str))
 
 
+def _extract_spec_metadata(spec: Any) -> Dict[str, Any]:
+    if isinstance(spec, dict):
+        metadata = spec.get("metadata", {})
+        return metadata if isinstance(metadata, dict) else {}
+
+    if isinstance(spec, PlantSpecification):
+        metadata = spec.model_dump().get("metadata", {})
+        return metadata if isinstance(metadata, dict) else {}
+
+    return {}
+
+
 def _write_html_summary(results: Dict[str, Any], spec: Any, run_dir: str) -> None:
-    metadata = spec.get("metadata", {}) if isinstance(spec, dict) else {}
+    metadata = _extract_spec_metadata(spec)
     title = metadata.get("title", "Aspen Run Summary")
 
     kpis = results.get("kpis", {}) or {}
@@ -107,7 +120,7 @@ def _df_to_markdown_table(df: pd.DataFrame) -> str:
 
 
 def _write_markdown_summary(results: Dict[str, Any], spec: Any, run_dir: str) -> None:
-    metadata = spec.get("metadata", {}) if isinstance(spec, dict) else {}
+    metadata = _extract_spec_metadata(spec)
     title = metadata.get("title", "Aspen Run Summary")
     kpis = results.get("kpis", {}) or {}
 

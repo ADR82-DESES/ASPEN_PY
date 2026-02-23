@@ -1,49 +1,39 @@
-from typing import List, Dict, Any
-
 class ValidationError(Exception):
-    """Custom exception for validation failures with detailed report."""
-    def __init__(self, report: Dict[str, Any]):
+    """Raised when specification validation fails."""
+    def __init__(self, message: str, report: dict):
         self.report = report
-        self.errors = report.get("errors", [])
-        super().__init__(self._format_message())
+        super().__init__(message)
 
-    def _format_message(self) -> str:
-        error_count = len([e for e in self.errors if e["severity"] == "error"])
-        warning_count = len([e for e in self.errors if e["severity"] == "warning"])
-        
-        msg = f"Validation failed with {error_count} errors and {warning_count} warnings:\n"
-        
-        for error in self.errors:
-            severity = f"[{error['severity'].upper()}]"
-            location = error.get("location", "unknown")
-            message = error.get("message", "No details")
-            suggestion = error.get("suggestion", "")
-            
-            msg += f"\n{severity} {location}\n"
-            msg += f"  {message}\n"
-            if suggestion:
-                msg += f"  \u2192 {suggestion}\n"
-        
-        return msg
+class ParserError(Exception):
+    """Raised when parsing fails."""
+    pass
+
+class SchemaError(Exception):
+    """Raised when schema structure is invalid."""
+    pass
+
+class ExtractionError(Exception):
+    """Raised when COM tree navigation fails to retrieve a required result node."""
+    def __init__(self, message: str, path: str = None):
+        self.path = path
+        super().__init__(message)
 
 class AspenConnectionError(Exception):
-    """Raised when connection to Aspen Plus fails."""
-    def __init__(self, message: str, details: Any = None):
+    """Raised when a connection to Aspen Plus cannot be established or drops."""
+    def __init__(self, message: str, details: Exception = None):
         self.details = details
         super().__init__(message)
 
 class BuildError(Exception):
-    """Raised when simulation build (INP/COM) fails."""
-    def __init__(self, message: str, build_mode: str, mechanism_tried: str, diagnostics: Any = None):
+    """Raised when the flowsheet simulation fails to initialize or load properly."""
+    def __init__(self, message: str, build_mode: str = "unknown", mechanism_tried: str = "unknown", diagnostics: dict = None):
         self.build_mode = build_mode
         self.mechanism_tried = mechanism_tried
-        self.diagnostics = diagnostics
+        self.diagnostics = diagnostics or {}
         super().__init__(message)
 
 class SimulationError(Exception):
-    """Raised when simulation execution fails."""
-    def __init__(self, message: str, convergence_status: str, diagnostics: Any = None):
+    """Raised when the simulation run fails or times out."""
+    def __init__(self, message: str, convergence_status: str = "unknown"):
         self.convergence_status = convergence_status
-        self.diagnostics = diagnostics
         super().__init__(message)
-
