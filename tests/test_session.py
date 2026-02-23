@@ -291,3 +291,31 @@ def test_spec_plant_specification_validates(mock_validate, mock_win32, spec, out
 
     with pytest.raises(ValueError, match="Invalid PlantSpecification"):
         run_simulation_session(spec, build_mode="com-only", output_dir=output_dir)
+
+
+@patch("aspen_automation.session.win32")
+def test_connection_error_soft_fail(mock_win32, spec, output_dir):
+    mock_win32.Dispatch.side_effect = AspenConnectionError("Cannot connect")
+
+    result = run_simulation_session(
+        spec,
+        build_mode="com-only",
+        output_dir=output_dir,
+        raise_on_connection_error=False,
+    )
+
+    assert result.convergence_status == "failed"
+    assert "error" in result.diagnostics
+
+
+@patch("aspen_automation.session.win32")
+def test_connection_error_raises(mock_win32, spec, output_dir):
+    mock_win32.Dispatch.side_effect = AspenConnectionError("Cannot connect")
+
+    with pytest.raises(AspenConnectionError):
+        run_simulation_session(
+            spec,
+            build_mode="com-only",
+            output_dir=output_dir,
+            raise_on_connection_error=True,
+        )

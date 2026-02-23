@@ -281,7 +281,8 @@ def run_simulation_session(
     output_dir: str = "results/",
     visible: bool = True,
     timeout_seconds: int = 300,
-    keep_alive: bool = False
+    keep_alive: bool = False,
+    raise_on_connection_error: bool = False
 ) -> SessionResult:
     """
     Orchestrates the simulation session.
@@ -289,6 +290,8 @@ def run_simulation_session(
     Args:
         spec: A :class:`PlantSpecification` object, a dict representation of
             one, or a path string to a YAML/JSON spec file.
+        raise_on_connection_error: If True, re-raises AspenConnectionError
+            instead of returning a soft-failed SessionResult.
     """
     result = SessionResult()
 
@@ -351,6 +354,8 @@ def run_simulation_session(
         # Re-raise argument errors immediately
         raise
     except AspenConnectionError as e:
+        if raise_on_connection_error:
+            raise
         log(f"Connection Error: {e}")
         result.diagnostics["error"] = str(e)
         result.convergence_status = "failed"

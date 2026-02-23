@@ -101,14 +101,14 @@ FLOWSHEET
 ### STREAM
 - Always includes `SUBSTREAM MIXED`.
 - Temperature/pressure and flow values are on a continuation line.
-- Composition uses `MASS-FRAC` or `MOLE-FRAC` with `/` terminators.
+- The generator always emits `MOLE-FRAC` for composition.
 
 Example:
 ```inp
 STREAM NG-FEED
     SUBSTREAM MIXED TEMP=40 PRES=30 &
         MASS-FLOW=220000
-    MASS-FRAC
+    MOLE-FRAC
         CH4 1.0 /
 ```
 

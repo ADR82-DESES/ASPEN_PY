@@ -1,10 +1,26 @@
 from .parser import load_spec
 from .validator import validate_spec
-from .exceptions import ValidationError, AspenConnectionError, BuildError, SimulationError
 from .schema import PlantSpecification
-from .inp_generator import generate_inp, validate_inp
-
+from .exceptions import ValidationError, ParserError, SchemaError, ExtractionError, AspenConnectionError, BuildError, SimulationError
+from .extractor import extract_results
+from .inp_generator import generate_inp
 from .session import run_simulation_session, SessionResult
+from .reporter import generate_reports
 
-__all__ = ["load_spec", "validate_spec", "ValidationError", "PlantSpecification", "generate_inp", "validate_inp", "run_simulation_session", "SessionResult", "AspenConnectionError", "BuildError", "SimulationError"]
-
+__all__ = [
+    "load_spec", 
+    "validate_spec", 
+    "PlantSpecification",
+    "ValidationError", 
+    "ParserError", 
+    "SchemaError", 
+    "ExtractionError",
+    "AspenConnectionError",
+    "BuildError",
+    "SimulationError",
+    "extract_results",
+    "generate_reports",
+    "generate_inp",
+    "run_simulation_session",
+    "SessionResult"
+]
