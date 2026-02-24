@@ -39,15 +39,20 @@ Reference files:
 ### Usage
 
 ```python
-from aspen_automation import load_spec, generate_inp, load_template
+from aspen_automation import run_simulation, load_template
 
-# Option 1: load directly from path
-spec = load_spec("templates/methanol_plant_atr.yaml")
-
-# Option 2: load by template name
+# Load by template name (or use load_spec with a file path)
 spec = load_template("methanol_plant_atr")
 
-# Generate Aspen INP content
-inp_text = generate_inp(spec)
-print(inp_text[:200])
+results = run_simulation(
+    spec,
+    build_mode="auto",
+    output_dir="results/",
+    visible=False,
+)
+
+print(results["kpis"]["convergence_status"])
+print(results["kpis"]["production_rate_tpd"])
+print(results["acceptance"]["passed"])
+print(results["report_dir"])
 ```

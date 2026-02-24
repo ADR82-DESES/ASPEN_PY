@@ -319,3 +319,50 @@ def test_connection_error_raises(mock_win32, spec, output_dir):
             output_dir=output_dir,
             raise_on_connection_error=True,
         )
+
+
+@patch("aspen_automation.session.generate_inp")
+@patch("aspen_automation.session.win32")
+@patch("aspen_automation.session._cleanup_session")
+def test_cleanup_forced_on_raised_error_with_keep_alive(
+    mock_cleanup, mock_win32, mock_gen, spec, output_dir, mock_aspen
+):
+    mock_win32.Dispatch.return_value = mock_aspen
+    mock_aspen.InitFromFile2.side_effect = Exception("Init failed")
+
+    with pytest.raises(BuildError, match="Init failed"):
+        run_simulation_session(
+            spec,
+            build_mode="inp-only",
+            output_dir=output_dir,
+            keep_alive=True,
+        )
+
+    args = mock_cleanup.call_args.args
+    assert args[0] is mock_aspen
+    assert args[1] == output_dir
+    assert args[2].endswith("temp_simulation.inp")
+    assert args[3] is False
+
+
+@patch("aspen_automation.session.win32")
+@patch("aspen_automation.session._cleanup_session")
+def test_cleanup_forced_on_connection_error_raise_with_keep_alive(
+    mock_cleanup, mock_win32, spec, output_dir
+):
+    mock_win32.Dispatch.side_effect = AspenConnectionError("Cannot connect")
+
+    with pytest.raises(AspenConnectionError):
+        run_simulation_session(
+            spec,
+            build_mode="com-only",
+            output_dir=output_dir,
+            keep_alive=True,
+            raise_on_connection_error=True,
+        )
+
+    args = mock_cleanup.call_args.args
+    assert args[0] is None
+    assert args[1] == output_dir
+    assert args[2].endswith("temp_simulation.inp")
+    assert args[3] is False

@@ -7,6 +7,7 @@ from .inp_generator import generate_inp
 from .session import run_simulation_session, SessionResult
 from .reporter import generate_reports
 from .acceptance import validate_acceptance, print_acceptance_report, load_template
+from .runner import run_simulation
 
 __all__ = [
     "load_spec", 
@@ -24,6 +25,7 @@ __all__ = [
     "generate_inp",
     "run_simulation_session",
     "SessionResult",
+    "run_simulation",
     "validate_acceptance",
     "print_acceptance_report",
     "load_template",

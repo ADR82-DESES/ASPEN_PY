@@ -328,6 +328,7 @@ def run_simulation_session(
     inp_path = os.path.join(output_dir, inp_filename)
     
     aspen = None
+    force_cleanup = False
     try:
         # Connect
         aspen = _connect_aspen(visible=visible, suppress_dialogs=True)
@@ -350,10 +351,12 @@ def run_simulation_session(
         result.convergence_status = status
         result.simulation_time_seconds = sim_time
         
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         # Re-raise argument errors immediately
+        force_cleanup = True
         raise
     except AspenConnectionError as e:
+        force_cleanup = True
         if raise_on_connection_error:
             raise
         log(f"Connection Error: {e}")
@@ -362,18 +365,22 @@ def run_simulation_session(
     except BuildError as e:
         # --- Comment 2: re-raise BuildError so callers see it ---
         log(f"Build Error: {e}")
+        force_cleanup = True
         raise
     except SimulationError as e:
+        force_cleanup = True
         log(f"Simulation Error: {e}")
         result.diagnostics["error"] = str(e)
         result.convergence_status = e.convergence_status
     except Exception as e:
+        force_cleanup = True
         log(f"Unexpected Error: {e}")
         result.diagnostics["error"] = f"Unexpected error: {e}"
         result.convergence_status = "failed"
     finally:
-        _cleanup_session(aspen, output_dir, inp_path, keep_alive)
-        if not keep_alive:
+        effective_keep_alive = keep_alive and not force_cleanup
+        _cleanup_session(aspen, output_dir, inp_path, effective_keep_alive)
+        if not effective_keep_alive:
             result.aspen = None
         
     return result
