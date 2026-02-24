@@ -362,7 +362,17 @@ def test_reactions_section_and_block_link():
             {
                 "id": "SET1",
                 "reactions": [
-                    {"id": 1, "stoichiometry": [{"component": "A", "coefficient": -1}, {"component": "B", "coefficient": 1}]}
+                    {
+                        "id": 1,
+                        "stoichiometry": [{"component": "A", "coefficient": -1}, {"component": "B", "coefficient": 1}],
+                        "parameters": {
+                            "reaction_type": "EQUIL",
+                            "phase": "V",
+                            "equilibrium_form": "LNK-1/T",
+                            "equilibrium_basis": "FUGACITY",
+                            "equilibrium_constants": [1.0, -1000.0, 0.0, 0.0]
+                        }
+                    }
                 ]
             }
         ],
@@ -373,7 +383,8 @@ def test_reactions_section_and_block_link():
 
     inp = generate_inp(spec)
     assert "REACTIONS RXN-SET1 REQUIL" in inp
-    assert "REAC-DATA 1" in inp
+    assert "REAC-DATA 1 EQUIL PHASE=V KBASIS=FUGACITY KFORM=LNK-1/T" in inp
+    assert "K-STOIC 1 1.0 -1000.0 0.0 0.0" in inp
     assert "BLOCK R1 REQUIL" in inp
     assert "REACTIONS RXN-SET1" in inp
 
@@ -657,5 +668,4 @@ BLOCK B1 HEATER
     # - CHEMISTRY: found at Y. check Y > Z? No (since Y < Z in bad input). Error!
     
     assert any("Section 'CHEMISTRY' is out of order" in e for e in errors)
-
 

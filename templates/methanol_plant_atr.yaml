@@ -77,7 +77,147 @@ streams:
     pressure: 30
     mass_flow: 264000
     composition:
-      O2: 1.0
+      O2: 0.995
+      N2: 0.005
+  - name: "ATR-IN"
+    temperature: 150
+    pressure: 30
+    mass_flow: 632500
+    composition:
+      CH4: 0.455
+      H2O: 0.273
+      O2: 0.271
+      N2: 0.001
+  - name: "HOT-SYN"
+    temperature: 1000
+    pressure: 30
+    mass_flow: 632500
+    composition:
+      H2: 0.48
+      CO: 0.18
+      CO2: 0.09
+      H2O: 0.2
+      CH4: 0.05
+  - name: "COLD-SYN"
+    temperature: 40
+    pressure: 30
+    mass_flow: 632500
+    composition:
+      H2: 0.48
+      CO: 0.18
+      CO2: 0.09
+      H2O: 0.2
+      CH4: 0.05
+  - name: "DRY-GAS"
+    temperature: 40
+    pressure: 30
+    mass_flow: 520000
+    composition:
+      H2: 0.62
+      CO: 0.2
+      CO2: 0.1
+      CH4: 0.06
+      H2O: 0.02
+  - name: "WATER-DR"
+    temperature: 40
+    pressure: 30
+    mass_flow: 112500
+    composition:
+      H2O: 0.985
+      CH3OH: 0.005
+      CO2: 0.005
+      CH4: 0.005
+  - name: "HP-GAS"
+    temperature: 120
+    pressure: 80
+    mass_flow: 520000
+    composition:
+      H2: 0.62
+      CO: 0.2
+      CO2: 0.1
+      CH4: 0.06
+      H2O: 0.02
+  - name: "RECYCLE"
+    temperature: 40
+    pressure: 80
+    mass_flow: 1558000
+    composition:
+      H2: 0.66
+      CO: 0.14
+      CO2: 0.12
+      CH4: 0.06
+      H2O: 0.02
+  - name: "R-IN"
+    temperature: 220
+    pressure: 80
+    mass_flow: 2078000
+    composition:
+      H2: 0.65
+      CO: 0.155
+      CO2: 0.115
+      CH4: 0.06
+      H2O: 0.02
+  - name: "R-OUT"
+    temperature: 250
+    pressure: 80
+    mass_flow: 2090000
+    composition:
+      H2: 0.58
+      CO: 0.1
+      CO2: 0.11
+      CH4: 0.07
+      H2O: 0.08
+      CH3OH: 0.06
+  - name: "GAS-PURG"
+    temperature: 40
+    pressure: 80
+    mass_flow: 1640000
+    composition:
+      H2: 0.66
+      CO: 0.14
+      CO2: 0.12
+      CH4: 0.06
+      H2O: 0.02
+  - name: "CRUDE-ME"
+    temperature: 40
+    pressure: 80
+    mass_flow: 460000
+    composition:
+      CH3OH: 0.905
+      H2O: 0.085
+      CO2: 0.005
+      CO: 0.003
+      H2: 0.002
+  - name: "PURGE"
+    temperature: 40
+    pressure: 80
+    mass_flow: 82000
+    composition:
+      H2: 0.66
+      CO: 0.14
+      CO2: 0.12
+      CH4: 0.06
+      H2O: 0.02
+  - name: "MEOH-PRO"
+    temperature: 40
+    pressure: 1.5
+    mass_flow: 416666.7
+    composition:
+      CH3OH: 0.9985
+      H2O: 0.001
+      CO2: 0.0003
+      CO: 0.0001
+      CH4: 0.0001
+  - name: "WASTE-H2O"
+    temperature: 45
+    pressure: 1.2
+    mass_flow: 43333.3
+    composition:
+      H2O: 0.96
+      CH3OH: 0.03
+      CO2: 0.005
+      CO: 0.003
+      H2: 0.002
 
 blocks:
   - name: "MIX-FEED"
@@ -146,6 +286,12 @@ chemistry:
             coefficient: -2
           - component: "CH3OH"
             coefficient: 1
+        parameters:
+          reaction_type: "EQUIL"
+          phase: "V"
+          equilibrium_form: "LNK-1/T"
+          equilibrium_basis: "FUGACITY"
+          equilibrium_constants: [12.280, -4048.0, 0.0, 0.0]
       - id: 2
         stoichiometry:
           - component: "CO2"
@@ -156,6 +302,12 @@ chemistry:
             coefficient: 1
           - component: "H2O"
             coefficient: 1
+        parameters:
+          reaction_type: "EQUIL"
+          phase: "V"
+          equilibrium_form: "LNK-1/T"
+          equilibrium_basis: "FUGACITY"
+          equilibrium_constants: [10.590, -4800.0, 0.0, 0.0]
 
 reaction_sets:
   - id: "RXN-SET1"

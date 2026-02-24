@@ -126,10 +126,19 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
 
     # Reaction set validation (optional)
     reaction_ids = set()
+    reaction_lookup = {}
+    reaction_locations = {}
     if spec.chemistry:
-        for chem in spec.chemistry:
-            for rxn in chem.reactions:
+        for i, chem in enumerate(spec.chemistry):
+            for j, rxn in enumerate(chem.reactions):
+                loc = f"chemistry[{i}].reactions[{j}]"
+                if rxn.id in reaction_ids:
+                    add_error("error", f"{loc}.id",
+                              f"Duplicate reaction ID '{rxn.id}' found",
+                              "Ensure each reaction has a unique numeric ID across chemistry sections")
                 reaction_ids.add(rxn.id)
+                reaction_lookup[rxn.id] = rxn
+                reaction_locations[rxn.id] = loc
 
     reaction_set_ids = set()
     if spec.reaction_sets:
@@ -144,6 +153,81 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                     add_error("error", f"reaction_sets[{i}].reaction_ids[{j}]",
                               f"Reaction ID '{rxn_id}' referenced but not defined in chemistry",
                               "Add the reaction ID to a chemistry section or update reaction_ids")
+                    continue
+
+                reaction = reaction_lookup.get(rxn_id)
+                reaction_loc = reaction_locations.get(rxn_id, f"reaction_id[{rxn_id}]")
+                if not reaction:
+                    continue
+
+                if rxn_set.block_type.upper() == "REQUIL":
+                    if not reaction.parameters:
+                        add_error(
+                            "error",
+                            f"{reaction_loc}.parameters",
+                            (
+                                f"Reaction ID '{rxn_id}' is used by REQUIL set '{rxn_set.id}' "
+                                "but has no equilibrium parameters"
+                            ),
+                            (
+                                "Provide parameters.reaction_type=EQUIL with equilibrium_form, "
+                                "equilibrium_basis, and equilibrium_constants"
+                            ),
+                        )
+                        continue
+
+                    if reaction.parameters.reaction_type.value != "EQUIL":
+                        add_error(
+                            "error",
+                            f"{reaction_loc}.parameters.reaction_type",
+                            (
+                                f"Reaction ID '{rxn_id}' used by REQUIL set '{rxn_set.id}' "
+                                "must use EQUIL reaction_type"
+                            ),
+                            "Set parameters.reaction_type to 'EQUIL' for REQUIL reaction sets",
+                        )
+
+                    if not reaction.parameters.equilibrium_form:
+                        add_error(
+                            "error",
+                            f"{reaction_loc}.parameters.equilibrium_form",
+                            (
+                                f"Reaction ID '{rxn_id}' used by REQUIL set '{rxn_set.id}' "
+                                "is missing equilibrium_form"
+                            ),
+                            "Set parameters.equilibrium_form (for example, 'LNK-1/T')",
+                        )
+
+                    if not reaction.parameters.equilibrium_basis:
+                        add_error(
+                            "error",
+                            f"{reaction_loc}.parameters.equilibrium_basis",
+                            (
+                                f"Reaction ID '{rxn_id}' used by REQUIL set '{rxn_set.id}' "
+                                "is missing equilibrium_basis"
+                            ),
+                            "Set parameters.equilibrium_basis (for example, 'FUGACITY')",
+                        )
+
+                    if not reaction.parameters.equilibrium_constants:
+                        add_error(
+                            "error",
+                            f"{reaction_loc}.parameters.equilibrium_constants",
+                            (
+                                f"Reaction ID '{rxn_id}' used by REQUIL set '{rxn_set.id}' "
+                                "is missing equilibrium_constants"
+                            ),
+                            "Provide four constants in parameters.equilibrium_constants",
+                        )
+
+                if reaction.parameters and reaction.parameters.reaction_type.value == "KINETIC":
+                    if not reaction.parameters.rate_basis:
+                        add_error(
+                            "error",
+                            f"{reaction_loc}.parameters.rate_basis",
+                            f"KINETIC reaction ID '{rxn_id}' is missing rate_basis",
+                            "Set parameters.rate_basis (for example, 'MOLARITY')",
+                        )
 
     for i, block in enumerate(spec.blocks):
         if block.reactions and block.reactions not in reaction_set_ids:

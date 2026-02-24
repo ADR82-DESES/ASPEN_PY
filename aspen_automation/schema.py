@@ -378,10 +378,71 @@ class ChemistryStoichiometry(BaseModel):
     component: str
     coefficient: float
 
+
+class ReactionParameterType(str, enum.Enum):
+    EQUIL = "EQUIL"
+    KINETIC = "KINETIC"
+
+
+class ReactionParameters(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reaction_type: ReactionParameterType = ReactionParameterType.EQUIL
+    phase: Optional[str] = None
+
+    equilibrium_form: Optional[str] = None
+    equilibrium_basis: Optional[str] = None
+    equilibrium_constants: Optional[List[float]] = None
+
+    rate_basis: Optional[str] = None
+    pre_exponential_factor: Optional[float] = None
+    activation_energy: Optional[float] = None
+    temperature_exponent: Optional[float] = None
+
+    @field_validator("phase", "equilibrium_form", "equilibrium_basis", "rate_basis")
+    @classmethod
+    def normalize_string_fields(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Field cannot be empty when provided")
+        return cleaned.upper()
+
+    @field_validator("equilibrium_constants")
+    @classmethod
+    def validate_equilibrium_constants(cls, value: Optional[List[float]]) -> Optional[List[float]]:
+        if value is None:
+            return value
+        if len(value) != 4:
+            raise ValueError("equilibrium_constants must contain exactly 4 values (A, B, C, D)")
+        return value
+
+    @model_validator(mode="after")
+    def validate_parameter_consistency(self) -> "ReactionParameters":
+        if self.reaction_type == ReactionParameterType.EQUIL:
+            if self.pre_exponential_factor is not None or self.activation_energy is not None:
+                raise ValueError("pre_exponential_factor and activation_energy are only valid for KINETIC reactions")
+            if self.temperature_exponent is not None:
+                raise ValueError("temperature_exponent is only valid for KINETIC reactions")
+            if self.rate_basis is not None:
+                raise ValueError("rate_basis is only valid for KINETIC reactions")
+
+        if self.reaction_type == ReactionParameterType.KINETIC:
+            if self.pre_exponential_factor is None or self.activation_energy is None:
+                raise ValueError("KINETIC reactions require pre_exponential_factor and activation_energy")
+            if self.equilibrium_constants is not None:
+                raise ValueError("equilibrium_constants are only valid for EQUIL reactions")
+            if self.equilibrium_form is not None or self.equilibrium_basis is not None:
+                raise ValueError("equilibrium_form and equilibrium_basis are only valid for EQUIL reactions")
+
+        return self
+
+
 class Reaction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: int
     stoichiometry: List[ChemistryStoichiometry]
+    parameters: Optional[ReactionParameters] = None
 
 class Chemistry(BaseModel):
     model_config = ConfigDict(extra="forbid")

@@ -10,6 +10,8 @@ from .schema import (
     Component,
     Chemistry,
     Properties,
+    Reaction,
+    ReactionParameters,
     ReactionSet,
 )
 from .validator import validate_spec
@@ -157,9 +159,10 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
             sections.append(_generate_chemistry(chem))
 
     # 12. REACTIONS (Optional)
+    reaction_lookup = _build_reaction_lookup(spec_obj.chemistry)
     if spec_obj.reaction_sets:
         for reaction_set in spec_obj.reaction_sets:
-            sections.append(_generate_reactions(reaction_set))
+            sections.append(_generate_reactions(reaction_set, reaction_lookup))
 
     inp_content = "\n\n".join(sections)
 
@@ -203,6 +206,16 @@ def _warn_optional_fields(spec: PlantSpecification) -> None:
         warnings.warn("Reaction sets provided without chemistry definitions.", UserWarning)
     if spec.chemistry and not spec.reaction_sets:
         warnings.warn("Chemistry provided without reaction sets; REACTIONS section will be omitted.", UserWarning)
+
+
+def _build_reaction_lookup(chemistry_sections: Optional[List[Chemistry]]) -> Dict[int, Reaction]:
+    lookup: Dict[int, Reaction] = {}
+    if not chemistry_sections:
+        return lookup
+    for chemistry in chemistry_sections:
+        for reaction in chemistry.reactions:
+            lookup[reaction.id] = reaction
+    return lookup
 
 
 def _generate_title(title: str) -> str:
@@ -443,11 +456,54 @@ def _generate_chemistry(chem: Chemistry) -> str:
     return "\n".join(lines)
 
 
-def _generate_reactions(reaction_set: ReactionSet) -> str:
+def _generate_reactions(reaction_set: ReactionSet, reaction_lookup: Dict[int, Reaction]) -> str:
     lines = [f"REACTIONS {reaction_set.id} {reaction_set.block_type}"]
     for rxn_id in reaction_set.reaction_ids:
-        lines.append(f"    REAC-DATA {rxn_id}")
+        reaction = reaction_lookup.get(rxn_id)
+        params = reaction.parameters if reaction else None
+        lines.append(_generate_reac_data_line(rxn_id, params))
+        lines.extend(_generate_reaction_parameter_lines(rxn_id, params))
     return "\n".join(lines)
+
+
+def _generate_reac_data_line(rxn_id: int, params: Optional[ReactionParameters]) -> str:
+    if not params:
+        return f"    REAC-DATA {rxn_id}"
+
+    tokens = [f"    REAC-DATA {rxn_id}", params.reaction_type.value]
+    if params.phase:
+        tokens.append(f"PHASE={params.phase}")
+
+    if params.reaction_type.value == "EQUIL":
+        if params.equilibrium_basis:
+            tokens.append(f"KBASIS={params.equilibrium_basis}")
+        if params.equilibrium_form:
+            tokens.append(f"KFORM={params.equilibrium_form}")
+    elif params.reaction_type.value == "KINETIC" and params.rate_basis:
+        tokens.append(f"CBASIS={params.rate_basis}")
+
+    return " ".join(tokens)
+
+
+def _generate_reaction_parameter_lines(rxn_id: int, params: Optional[ReactionParameters]) -> List[str]:
+    if not params:
+        return []
+
+    lines: List[str] = []
+    if params.equilibrium_constants:
+        constants = " ".join(_format_value(val) for val in params.equilibrium_constants)
+        lines.append(f"    K-STOIC {rxn_id} {constants}")
+
+    if params.pre_exponential_factor is not None and params.activation_energy is not None:
+        rate_values = [
+            _format_value(params.pre_exponential_factor),
+            _format_value(params.activation_energy),
+        ]
+        if params.temperature_exponent is not None:
+            rate_values.append(_format_value(params.temperature_exponent))
+        lines.append(f"    RATE-CON {rxn_id} {' '.join(rate_values)}")
+
+    return lines
 
 
 def _generate_comments(text: str) -> str:
