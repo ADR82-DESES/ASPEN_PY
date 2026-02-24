@@ -42,8 +42,9 @@ def validate_acceptance(results: Dict[str, Any], spec: SpecInput) -> Dict[str, A
     checks: List[Check] = []
 
     kpis = results.get("kpis", {}) if isinstance(results, dict) else {}
-    convergence_status = str(kpis.get("convergence_status", "unknown"))
-    converged = convergence_status == "converged"
+    raw_status = kpis.get("convergence_status", "unknown")
+    convergence_status = str(raw_status).strip() if raw_status is not None else "unknown"
+    converged = convergence_status.lower() == "converged"
     checks.append(
         {
             "name": "Convergence",
@@ -64,37 +65,62 @@ def validate_acceptance(results: Dict[str, Any], spec: SpecInput) -> Dict[str, A
     tolerance = 0.02 if tolerance is None else tolerance
     actual_tpd = _coerce_float(kpis.get("production_rate_tpd"))
 
-    if target_tpd is not None and actual_tpd is not None:
-        lower_bound = target_tpd * (1.0 - tolerance)
-        upper_bound = target_tpd * (1.0 + tolerance)
-        production_ok = lower_bound <= actual_tpd <= upper_bound
-        checks.append(
-            {
-                "name": "Production Rate",
-                "passed": production_ok,
-                "actual": f"{actual_tpd:.1f} TPD",
-                "expected": f"{target_tpd:.0f} TPD +/- {tolerance*100:.1f}%",
-                "message": "Within tolerance" if production_ok else "Outside tolerance",
-            }
-        )
+    if target_tpd is not None:
+        if actual_tpd is None:
+            checks.append(
+                {
+                    "name": "Production Rate",
+                    "passed": False,
+                    "actual": "n/a",
+                    "expected": f"{target_tpd:.0f} TPD +/- {tolerance*100:.1f}%",
+                    "message": "Missing KPI production_rate_tpd",
+                }
+            )
+        else:
+            lower_bound = target_tpd * (1.0 - tolerance)
+            upper_bound = target_tpd * (1.0 + tolerance)
+            production_ok = lower_bound <= actual_tpd <= upper_bound
+            checks.append(
+                {
+                    "name": "Production Rate",
+                    "passed": production_ok,
+                    "actual": f"{actual_tpd:.1f} TPD",
+                    "expected": f"{target_tpd:.0f} TPD +/- {tolerance*100:.1f}%",
+                    "message": "Within tolerance" if production_ok else "Outside tolerance",
+                }
+            )
 
     # Check 3: Product purity against minimum.
     purity_cfg = targets.get("purity", {})
     purity_cfg = purity_cfg if isinstance(purity_cfg, dict) else {}
+    # Accept both schema field (min_value) and legacy field (min).
     min_purity = _coerce_float(purity_cfg.get("min_value"))
+    if min_purity is None:
+        min_purity = _coerce_float(purity_cfg.get("min"))
     actual_purity = _coerce_float(kpis.get("purity_fraction"))
 
-    if min_purity is not None and actual_purity is not None:
-        purity_ok = actual_purity >= min_purity
-        checks.append(
-            {
-                "name": "Methanol Purity",
-                "passed": purity_ok,
-                "actual": f"{actual_purity*100:.2f}%",
-                "expected": f">={min_purity*100:.2f}%",
-                "message": "Meets specification" if purity_ok else "Below specification",
-            }
-        )
+    if min_purity is not None:
+        if actual_purity is None:
+            checks.append(
+                {
+                    "name": "Methanol Purity",
+                    "passed": False,
+                    "actual": "n/a",
+                    "expected": f">={min_purity*100:.2f}%",
+                    "message": "Missing KPI purity_fraction",
+                }
+            )
+        else:
+            purity_ok = actual_purity >= min_purity
+            checks.append(
+                {
+                    "name": "Methanol Purity",
+                    "passed": purity_ok,
+                    "actual": f"{actual_purity*100:.2f}%",
+                    "expected": f">={min_purity*100:.2f}%",
+                    "message": "Meets specification" if purity_ok else "Below specification",
+                }
+            )
 
     return {"passed": all(check["passed"] for check in checks), "checks": checks}
 

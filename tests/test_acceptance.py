@@ -51,6 +51,15 @@ def test_fail_not_converged() -> None:
     assert _check_by_name(acceptance, "Convergence")["passed"] is False
 
 
+def test_pass_convergence_case_insensitive() -> None:
+    results = _base_results()
+    results["kpis"]["convergence_status"] = "Converged"
+    acceptance = validate_acceptance(results, _base_spec())
+
+    assert acceptance["passed"] is True
+    assert _check_by_name(acceptance, "Convergence")["passed"] is True
+
+
 def test_fail_production_below_tolerance() -> None:
     results = _base_results()
     results["kpis"]["production_rate_tpd"] = 9799.9
@@ -110,9 +119,10 @@ def test_missing_production_kpi() -> None:
     results["kpis"]["production_rate_tpd"] = None
     acceptance = validate_acceptance(results, _base_spec())
 
-    names = {check["name"] for check in acceptance["checks"]}
-    assert "Production Rate" not in names
-    assert acceptance["passed"] is True
+    production_check = _check_by_name(acceptance, "Production Rate")
+    assert production_check["passed"] is False
+    assert production_check["message"] == "Missing KPI production_rate_tpd"
+    assert acceptance["passed"] is False
 
 
 def test_missing_purity_kpi() -> None:
@@ -120,9 +130,10 @@ def test_missing_purity_kpi() -> None:
     results["kpis"]["purity_fraction"] = None
     acceptance = validate_acceptance(results, _base_spec())
 
-    names = {check["name"] for check in acceptance["checks"]}
-    assert "Methanol Purity" not in names
-    assert acceptance["passed"] is True
+    purity_check = _check_by_name(acceptance, "Methanol Purity")
+    assert purity_check["passed"] is False
+    assert purity_check["message"] == "Missing KPI purity_fraction"
+    assert acceptance["passed"] is False
 
 
 def test_no_targets_in_spec() -> None:
@@ -138,3 +149,20 @@ def test_checks_structure() -> None:
 
     for check in acceptance["checks"]:
         assert required_keys.issubset(check.keys())
+
+
+def test_purity_legacy_min_key_supported() -> None:
+    spec = {
+        "targets": {
+            "production_rate_tpd": 10000,
+            "tolerance": 0.02,
+            "purity": {
+                "expression": "CH3OH wt% in MEOH-PRO",
+                "min": 0.9985,
+            },
+        }
+    }
+    acceptance = validate_acceptance(_base_results(), spec)
+
+    assert acceptance["passed"] is True
+    assert _check_by_name(acceptance, "Methanol Purity")["passed"] is True
