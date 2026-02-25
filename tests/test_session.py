@@ -236,19 +236,27 @@ def test_13_invalid_mode(spec, output_dir):
 # Comment 3: _verify_flowsheet
 # ---------------------------------------------------------------------------
 
-def test_verify_flowsheet_passes_when_streams_node_present():
+def test_verify_flowsheet_passes_when_both_nodes_present():
     """Should not raise when \\Data\\Streams node is found."""
     aspen = MagicMock()
-    aspen.Tree.FindNode.return_value = MagicMock()  # truthy -> present
+    aspen.Tree.FindNode.side_effect = [MagicMock(), MagicMock()]
     _verify_flowsheet(aspen)  # must not raise
-    aspen.Tree.FindNode.assert_called_once_with(r"\Data\Streams")
+    assert aspen.Tree.FindNode.call_count == 2
 
 
-def test_verify_flowsheet_raises_build_error_when_missing():
+def test_verify_flowsheet_raises_build_error_when_streams_missing():
     """Should raise BuildError when \\Data\\Streams node is None."""
     aspen = MagicMock()
     aspen.Tree.FindNode.return_value = None
     with pytest.raises(BuildError, match="Streams"):
+        _verify_flowsheet(aspen)
+
+
+def test_verify_flowsheet_raises_build_error_when_blocks_missing():
+    """Should raise BuildError when \\Data\\Blocks node is None."""
+    aspen = MagicMock()
+    aspen.Tree.FindNode.side_effect = [MagicMock(), None]
+    with pytest.raises(BuildError, match="Blocks"):
         _verify_flowsheet(aspen)
 
 
