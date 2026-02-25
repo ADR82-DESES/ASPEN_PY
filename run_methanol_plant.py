@@ -12,19 +12,19 @@ def connect_to_aspen(filepath, visible=True):
     return aspen
 
 if __name__ == "__main__":
-    # We will use the BKP file since it's the standard archive format along with apw. Let's use APW.
     filepath = r"c:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant.apw"
     full_path = os.path.abspath(filepath)
     stem = os.path.splitext(os.path.basename(full_path))[0]
     
     print(f"INFO: Connecting to Aspen Plus and opening {filepath}...")
     aspen = connect_to_aspen(filepath, visible=True)
+    
     blocks_node = aspen.Tree.FindNode(r"\Data\Blocks")
     if blocks_node is None:
         print("ERROR: NO_BLOCKS — The loaded APW has no blocks (Blocks section missing). Aborting.")
         aspen.Quit()
         sys.exit(1)
-    
+        
     print("INFO: Reinitializing simulation...")
     aspen.Reinit()
     
@@ -41,7 +41,6 @@ if __name__ == "__main__":
         if per_error_node is not None:
             val = per_error_node.Value
             if val == 0:
-                # --- Clean convergence path ---
                 print("OK: CONVERGED — PER_ERROR = 0")
                 output_path = os.path.join(os.path.dirname(full_path), f"{stem}_output.apw")
                 try:
@@ -51,27 +50,24 @@ if __name__ == "__main__":
                     print(f"ERROR: OUTPUT_SAVE_FAILED — {save_exc}")
                     aspen.Quit()
                     sys.exit(2)
-                # Fall through to the clean-exit tail below
             else:
-                # --- Warnings/errors path ---
                 print(f"WARNING: NOT_CONVERGED — PER_ERROR = {val}")
                 print("WARNING: OUTPUT_NOT_SAVED")
                 aspen.Quit()
                 sys.exit(3)
         else:
-            # --- Status unknown (node missing) path ---
             print("WARNING: STATUS_UNKNOWN")
             print("WARNING: OUTPUT_NOT_SAVED")
             aspen.Quit()
             sys.exit(4)
+    except SystemExit:
+        raise
     except Exception:
-        # --- Status unknown (exception reading node) path ---
         print("WARNING: STATUS_UNKNOWN")
         print("WARNING: OUTPUT_NOT_SAVED")
         aspen.Quit()
         sys.exit(4)
 
-    # Reached only on clean convergence + successful save
     print("INFO: Closing Aspen Plus...")
     aspen.Quit()
     print("OK: Done.")
