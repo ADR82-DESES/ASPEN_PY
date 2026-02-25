@@ -76,16 +76,25 @@ def _connect_aspen(visible: bool = True, suppress_dialogs: bool = True) -> Any:
         raise AspenConnectionError(f"Failed to connect to Aspen Plus: {e}", details=e)
 
 def _verify_flowsheet(aspen: Any) -> None:
-    """Verifies that the flowsheet loaded correctly by checking the Streams node.
+    """Verifies that the flowsheet loaded correctly by checking the Streams and Blocks nodes.
 
     Raises:
         BuildError: If the \\Data\\Streams node is absent, indicating an invalid load.
+        BuildError: If the \\Data\\Blocks node is absent, indicating the APW may be empty.
     """
     streams_node = aspen.Tree.FindNode(r"\Data\Streams")
     if streams_node is None:
         raise BuildError(
             "Flowsheet verification failed: \\Data\\Streams node not found. "
             "The simulation file may not have loaded correctly.",
+            build_mode="unknown",
+            mechanism_tried="_verify_flowsheet",
+        )
+
+    blocks_node = aspen.Tree.FindNode(r"\Data\Blocks")
+    if blocks_node is None:
+        raise BuildError(
+            "Flowsheet verification failed: \\Data\\Blocks node not found. The APW may be empty.",
             build_mode="unknown",
             mechanism_tried="_verify_flowsheet",
         )
