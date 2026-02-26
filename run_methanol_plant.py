@@ -15,6 +15,7 @@ if __name__ == "__main__":
     filepath = r"c:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant.apw"
     full_path = os.path.abspath(filepath)
     stem = os.path.splitext(os.path.basename(full_path))[0]
+    RUN_TIMEOUT_SECONDS = 1800
     
     print(f"INFO: Connecting to Aspen Plus and opening {filepath}...")
     aspen = connect_to_aspen(filepath, visible=True)
@@ -30,8 +31,17 @@ if __name__ == "__main__":
     
     print("INFO: Running simulation asynchronously...")
     aspen.Engine.Run2(1) # RunAsync
+    start_time = time.time()
     
     while aspen.Engine.IsRunning:
+        if time.time() - start_time > RUN_TIMEOUT_SECONDS:
+            try:
+                aspen.Engine.Stop()
+            except Exception:
+                pass
+            print(f"ERROR: TIMEOUT - Simulation exceeded {RUN_TIMEOUT_SECONDS}s limit. Aborting.")
+            aspen.Quit()
+            sys.exit(5)
         time.sleep(1)
         
     print("INFO: Simulation finished.")

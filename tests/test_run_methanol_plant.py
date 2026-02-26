@@ -1,7 +1,7 @@
 import sys
 import os
 import runpy
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 import pytest
 
 def _run_script(mock_aspen, capsys):
@@ -72,3 +72,14 @@ def test_04_success(capsys):
     assert exit_code == 0
     assert "OK: CONVERGED" in stdout
     assert "OK: OUTPUT_SAVED" in stdout
+
+def test_05_timeout(capsys):
+    mock_aspen = MagicMock()
+    mock_aspen.Engine.IsRunning = True
+    mock_aspen.Tree.FindNode.return_value = MagicMock()
+
+    with patch("time.time", side_effect=[0, 1801]):
+        exit_code, stdout = _run_script(mock_aspen, capsys)
+
+    assert exit_code == 5
+    assert "ERROR: TIMEOUT" in stdout
