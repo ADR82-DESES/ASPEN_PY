@@ -1,83 +1,149 @@
+from __future__ import annotations
+
+import datetime
+import json
 import os
 import sys
-import time
-import win32com.client as win32
 
-def connect_to_aspen(filepath, visible=True):
-    aspen = win32.Dispatch('Apwn.Document') 
-    full_path = os.path.abspath(filepath)
-    aspen.InitFromArchive2(full_path)
-    aspen.Visible = visible
-    aspen.SuppressDialogs = 1 
-    return aspen
+SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR)
+
+from aspen_automation import extract_results, generate_inp, load_spec, run_simulation_session
+from aspen_automation.exceptions import (
+    BuildError,
+    ExtractionError,
+    ValidationError,
+)
+from aspen_automation.session import _cleanup_session
+
+RUN_TIMEOUT_SECONDS = 1800
+BASE_DIR = SCRIPT_DIR
+YAML_PATH = os.path.join(BASE_DIR, "templates", "methanol_plant_atr.yaml")
+PLANT_DIR = os.path.join(BASE_DIR, "Methanol Plant")
+GENERATED_INP_PATH = os.path.join(PLANT_DIR, "MethanolPlant_generated.inp")
+OUTPUT_APW_PATH = os.path.join(PLANT_DIR, "MethanolPlant_output.apw")
+RESULTS_DIR = os.path.join(PLANT_DIR, "results")
+SESSION_TEMP_DIR = os.path.join(PLANT_DIR, "_session_tmp")
+SESSION_TEMP_INP_PATH = os.path.join(SESSION_TEMP_DIR, "temp_simulation.inp")
+
+
+def _log(level: str, message: str) -> None:
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    print(f"[{timestamp}] {level}: {message}")
+
+
+def _log_session_result(session_result) -> None:
+    _log(
+        "INFO",
+        (
+            "SESSION_BUILD_COMPLETE - "
+            f"build_mode={session_result.build_mode}, "
+            f"build_mechanism={session_result.build_mechanism_used}"
+        ),
+    )
+
+    if session_result.build_fallback_attempted:
+        _log(
+            "WARNING",
+            "BUILD_FALLBACK_ATTEMPTED - Primary build path failed; fallback path was attempted.",
+        )
+        init_error = session_result.diagnostics.get("InitFromFile2_error")
+        if init_error:
+            _log("WARNING", f"BUILD_PRIMARY_ERROR - {init_error}")
+
+    _log(
+        "INFO",
+        (
+            "SESSION_RUN_COMPLETE - "
+            f"status={session_result.convergence_status}, "
+            f"simulation_time_seconds={session_result.simulation_time_seconds:.2f}"
+        ),
+    )
+
+
+def _write_results(results, simulation_time_seconds: float) -> None:
+    streams_path = os.path.join(RESULTS_DIR, "streams.csv")
+    blocks_path = os.path.join(RESULTS_DIR, "blocks.csv")
+    kpis_path = os.path.join(RESULTS_DIR, "kpis.json")
+
+    results["streams"].to_csv(streams_path, index=False)
+    results["blocks"].to_csv(blocks_path, index=False)
+
+    kpis = results.get("kpis")
+    if not isinstance(kpis, dict):
+        kpis = {}
+    else:
+        kpis = dict(kpis)
+    kpis["simulation_time_seconds"] = simulation_time_seconds
+
+    with open(kpis_path, "w", encoding="utf-8") as handle:
+        json.dump(kpis, handle, indent=2)
+
+
+def main() -> int:
+    aspen = None
+
+    try:
+        os.makedirs(PLANT_DIR, exist_ok=True)
+        os.makedirs(RESULTS_DIR, exist_ok=True)
+
+        _log("INFO", f"Loading plant specification from YAML: {YAML_PATH}")
+        spec = load_spec(YAML_PATH)
+
+        _log("INFO", f"Generating INP debug artifact: {GENERATED_INP_PATH}")
+        generate_inp(spec, output_path=GENERATED_INP_PATH)
+
+        _log("INFO", "SESSION_START - Connecting to Aspen Plus and running simulation session.")
+        session_result = run_simulation_session(
+            spec,
+            build_mode="auto",
+            output_dir=SESSION_TEMP_DIR,
+            keep_alive=True,
+            timeout_seconds=RUN_TIMEOUT_SECONDS,
+            visible=True,
+        )
+        _log_session_result(session_result)
+        aspen = session_result.aspen
+
+        if aspen is None:
+            raise RuntimeError("Session did not return a live Aspen object.")
+
+        if session_result.convergence_status == "timeout":
+            _log("ERROR", f"TIMEOUT — Simulation exceeded {RUN_TIMEOUT_SECONDS}s")
+            return 5
+
+        try:
+            _log("INFO", f"Saving output APW: {OUTPUT_APW_PATH}")
+            aspen.SaveAs(OUTPUT_APW_PATH)
+            _log("OK", f"OUTPUT_SAVED - {OUTPUT_APW_PATH}")
+        except Exception as save_exc:
+            _log("ERROR", f"OUTPUT_SAVE_FAILED — {save_exc}")
+            return 2
+
+        try:
+            _log("INFO", "Extracting simulation results...")
+            results = extract_results(aspen, spec)
+            _write_results(results, simulation_time_seconds=session_result.simulation_time_seconds)
+            _log("OK", f"Results saved to {RESULTS_DIR}")
+        except ExtractionError as extraction_exc:
+            _log("WARNING", f"EXTRACTION_FAILED — {extraction_exc}")
+            return 0
+
+        return 0
+
+    except ValidationError as spec_exc:
+        _log("ERROR", f"SPEC_INVALID — {spec_exc}")
+        return 1
+    except BuildError as build_exc:
+        _log("ERROR", f"BUILD_FAILED — {build_exc}")
+        return 3
+    except Exception as unexpected_exc:
+        _log("ERROR", f"UNEXPECTED — {unexpected_exc}")
+        return 1
+    finally:
+        _cleanup_session(aspen, output_dir=SESSION_TEMP_DIR, keep_alive=False)
+
 
 if __name__ == "__main__":
-    filepath = r"c:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant.apw"
-    full_path = os.path.abspath(filepath)
-    stem = os.path.splitext(os.path.basename(full_path))[0]
-    RUN_TIMEOUT_SECONDS = 1800
-    
-    print(f"INFO: Connecting to Aspen Plus and opening {filepath}...")
-    aspen = connect_to_aspen(filepath, visible=True)
-    
-    blocks_node = aspen.Tree.FindNode(r"\Data\Blocks")
-    if blocks_node is None:
-        print("ERROR: NO_BLOCKS — The loaded APW has no blocks (Blocks section missing). Aborting.")
-        aspen.Quit()
-        sys.exit(1)
-        
-    print("INFO: Reinitializing simulation...")
-    aspen.Reinit()
-    
-    print("INFO: Running simulation asynchronously...")
-    aspen.Engine.Run2(1) # RunAsync
-    start_time = time.time()
-    
-    while aspen.Engine.IsRunning:
-        if time.time() - start_time > RUN_TIMEOUT_SECONDS:
-            try:
-                aspen.Engine.Stop()
-            except Exception:
-                pass
-            print(f"ERROR: TIMEOUT - Simulation exceeded {RUN_TIMEOUT_SECONDS}s limit. Aborting.")
-            aspen.Quit()
-            sys.exit(5)
-        time.sleep(1)
-        
-    print("INFO: Simulation finished.")
-    
-    try:
-        per_error_node = aspen.Tree.FindNode(r"\Data\Results Summary\Run-Status\Output\PER_ERROR")
-        if per_error_node is not None:
-            val = per_error_node.Value
-            if val == 0:
-                print("OK: CONVERGED — PER_ERROR = 0")
-                output_path = os.path.join(os.path.dirname(full_path), f"{stem}_output.apw")
-                try:
-                    aspen.SaveAs(output_path)
-                    print(f"OK: OUTPUT_SAVED — {output_path}")
-                except Exception as save_exc:
-                    print(f"ERROR: OUTPUT_SAVE_FAILED — {save_exc}")
-                    aspen.Quit()
-                    sys.exit(2)
-            else:
-                print(f"WARNING: NOT_CONVERGED — PER_ERROR = {val}")
-                print("WARNING: OUTPUT_NOT_SAVED")
-                aspen.Quit()
-                sys.exit(3)
-        else:
-            print("WARNING: STATUS_UNKNOWN")
-            print("WARNING: OUTPUT_NOT_SAVED")
-            aspen.Quit()
-            sys.exit(4)
-    except SystemExit:
-        raise
-    except Exception:
-        print("WARNING: STATUS_UNKNOWN")
-        print("WARNING: OUTPUT_NOT_SAVED")
-        aspen.Quit()
-        sys.exit(4)
-
-    print("INFO: Closing Aspen Plus...")
-    aspen.Quit()
-    print("OK: Done.")
+    sys.exit(main())

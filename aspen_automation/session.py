@@ -15,10 +15,12 @@ from .validator import validate_spec
 # Comment 4: Cleanup and logging behaviors
 logger = logging.getLogger("aspen_automation.session")
 
-def log(msg: str) -> None:
+def log(msg: str, level: str = "INFO") -> None:
+    normalized_level = level.upper()
+    log_level = getattr(logging, normalized_level, logging.INFO)
     timestamp = datetime.datetime.now().strftime("%H:%M:%S")
-    print(f"[{timestamp}] {msg}")
-    logger.info(msg)
+    print(f"[{timestamp}] {normalized_level}: {msg}")
+    logger.log(log_level, msg)
 
 # Import Guard
 try:
@@ -145,7 +147,7 @@ def _build_com_only(spec: Union[PlantSpecification, Dict[str, Any]], aspen: Any,
         pass
     
     msg = "COM-only build depends on external config/library defaults"
-    log(f"WARNING: {msg}")
+    log(msg, level="WARNING")
     result.diagnostics["warning"] = msg
     result.build_mechanism_used = "COM"
     result.diagnostics["build_mechanism"] = "COM"
@@ -175,7 +177,7 @@ def _build_auto(spec: Union[PlantSpecification, Dict[str, Any]], path: str, aspe
         return
     except Exception as e:
         # Fallback
-        log(f"InitFromFile2 failed: {e}. Attempting fallback...")
+        log(f"InitFromFile2 failed: {e}. Attempting fallback...", level="WARNING")
         result.build_fallback_attempted = True
         result.diagnostics["InitFromFile2_error"] = str(e)
 
@@ -197,7 +199,7 @@ def _build_auto(spec: Union[PlantSpecification, Dict[str, Any]], path: str, aspe
         raise
     except Exception as e:
         msg = f"Auto build failed. InitFromFile2 and Import both failed. Last error: {e}"
-        log(msg)
+        log(msg, level="ERROR")
         raise BuildError(msg, build_mode="auto", mechanism_tried="Import", diagnostics=result.diagnostics)
 
 # Comment 3: Simulation run flow
@@ -212,15 +214,26 @@ def _run_simulation(aspen: Any, timeout: int = 300) -> tuple[str, float]:
         aspen.Engine.Run2(1) # 1 = Async
         
         start_time = time.time()
+        next_progress_log = 15.0
         while True:
             elapsed = time.time() - start_time
             if elapsed > timeout:
                 aspen.Engine.Stop()
-                log(f"Simulation timed out after {elapsed:.2f}s")
+                log(f"Simulation timed out after {elapsed:.2f}s", level="WARNING")
                 return "timeout", elapsed
             
             if not aspen.Engine.IsRunning:
                 break
+
+            if elapsed >= next_progress_log:
+                remaining = max(timeout - elapsed, 0.0)
+                log(
+                    (
+                        "Simulation still running... "
+                        f"elapsed={elapsed:.0f}s, remaining_budget={remaining:.0f}s"
+                    )
+                )
+                next_progress_log += 15.0
                 
             time.sleep(1)
             
@@ -368,22 +381,22 @@ def run_simulation_session(
         force_cleanup = True
         if raise_on_connection_error:
             raise
-        log(f"Connection Error: {e}")
+        log(f"Connection Error: {e}", level="ERROR")
         result.diagnostics["error"] = str(e)
         result.convergence_status = "failed"
     except BuildError as e:
         # --- Comment 2: re-raise BuildError so callers see it ---
-        log(f"Build Error: {e}")
+        log(f"Build Error: {e}", level="ERROR")
         force_cleanup = True
         raise
     except SimulationError as e:
         force_cleanup = True
-        log(f"Simulation Error: {e}")
+        log(f"Simulation Error: {e}", level="ERROR")
         result.diagnostics["error"] = str(e)
         result.convergence_status = e.convergence_status
     except Exception as e:
         force_cleanup = True
-        log(f"Unexpected Error: {e}")
+        log(f"Unexpected Error: {e}", level="ERROR")
         result.diagnostics["error"] = f"Unexpected error: {e}"
         result.convergence_status = "failed"
     finally:
