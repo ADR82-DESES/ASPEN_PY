@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Aspen Plus generated / runtime artifacts
+Methanol Plant/results/
+Methanol Plant/_session_tmp/
+Methanol Plant/MethanolPlant_output.*
+Methanol Plant/MethanolPlant_generated.inp
+
+# Ad-hoc debug / exploration scripts
+debug_aspen.py
+explore_tree2.py
+save_aspen_output.py

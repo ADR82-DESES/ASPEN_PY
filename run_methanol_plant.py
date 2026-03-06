@@ -28,13 +28,13 @@ SESSION_TEMP_DIR = os.path.join(PLANT_DIR, "_session_tmp")
 SESSION_TEMP_INP_PATH = os.path.join(SESSION_TEMP_DIR, "temp_simulation.inp")
 
 
-def _log(level: str, message: str) -> None:
+def log(level: str, message: str) -> None:
     timestamp = datetime.datetime.now().strftime("%H:%M:%S")
     print(f"[{timestamp}] {level}: {message}")
 
 
 def _log_session_result(session_result) -> None:
-    _log(
+    log(
         "INFO",
         (
             "SESSION_BUILD_COMPLETE - "
@@ -44,15 +44,15 @@ def _log_session_result(session_result) -> None:
     )
 
     if session_result.build_fallback_attempted:
-        _log(
+        log(
             "WARNING",
             "BUILD_FALLBACK_ATTEMPTED - Primary build path failed; fallback path was attempted.",
         )
         init_error = session_result.diagnostics.get("InitFromFile2_error")
         if init_error:
-            _log("WARNING", f"BUILD_PRIMARY_ERROR - {init_error}")
+            log("WARNING", f"BUILD_PRIMARY_ERROR - {init_error}")
 
-    _log(
+    log(
         "INFO",
         (
             "SESSION_RUN_COMPLETE - "
@@ -63,6 +63,8 @@ def _log_session_result(session_result) -> None:
 
 
 def _write_results(results, simulation_time_seconds: float) -> None:
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+
     streams_path = os.path.join(RESULTS_DIR, "streams.csv")
     blocks_path = os.path.join(RESULTS_DIR, "blocks.csv")
     kpis_path = os.path.join(RESULTS_DIR, "kpis.json")
@@ -82,19 +84,19 @@ def _write_results(results, simulation_time_seconds: float) -> None:
 
 
 def main() -> int:
+    session_result = None
     aspen = None
 
     try:
         os.makedirs(PLANT_DIR, exist_ok=True)
-        os.makedirs(RESULTS_DIR, exist_ok=True)
 
-        _log("INFO", f"Loading plant specification from YAML: {YAML_PATH}")
+        log("INFO", f"Loading plant specification from YAML: {YAML_PATH}")
         spec = load_spec(YAML_PATH)
 
-        _log("INFO", f"Generating INP debug artifact: {GENERATED_INP_PATH}")
+        log("INFO", f"Generating INP debug artifact: {GENERATED_INP_PATH}")
         generate_inp(spec, output_path=GENERATED_INP_PATH)
 
-        _log("INFO", "SESSION_START - Connecting to Aspen Plus and running simulation session.")
+        log("INFO", "SESSION_START - Connecting to Aspen Plus and running simulation session.")
         session_result = run_simulation_session(
             spec,
             build_mode="auto",
@@ -109,40 +111,57 @@ def main() -> int:
         if aspen is None:
             raise RuntimeError("Session did not return a live Aspen object.")
 
-        if session_result.convergence_status == "timeout":
-            _log("ERROR", f"TIMEOUT — Simulation exceeded {RUN_TIMEOUT_SECONDS}s")
+        status = str(session_result.convergence_status).strip().lower()
+        if status == "timeout":
+            log("ERROR", f"TIMEOUT - Simulation exceeded {RUN_TIMEOUT_SECONDS}s")
             return 5
+        if status == "failed":
+            log("ERROR", "SIMULATION_FAILED - Aspen run finished but did not converge.")
+            return 3
+        if status == "unknown":
+            log(
+                "ERROR",
+                f"SIMULATION_STATUS_UNKNOWN - Aspen run returned unsupported status: {session_result.convergence_status!r}",
+            )
+            return 3
+        if status != "converged":
+            log(
+                "ERROR",
+                f"SIMULATION_STATUS_UNKNOWN - Aspen run returned unsupported status: {session_result.convergence_status!r}",
+            )
+            return 3
 
         try:
-            _log("INFO", f"Saving output APW: {OUTPUT_APW_PATH}")
+            log("INFO", f"Saving output APW: {OUTPUT_APW_PATH}")
             aspen.SaveAs(OUTPUT_APW_PATH)
-            _log("OK", f"OUTPUT_SAVED - {OUTPUT_APW_PATH}")
+            log("OK", f"OUTPUT_SAVED - {OUTPUT_APW_PATH}")
         except Exception as save_exc:
-            _log("ERROR", f"OUTPUT_SAVE_FAILED — {save_exc}")
+            log("ERROR", f"OUTPUT_SAVE_FAILED - {save_exc}")
             return 2
 
         try:
-            _log("INFO", "Extracting simulation results...")
+            log("INFO", "Extracting simulation results...")
             results = extract_results(aspen, spec)
             _write_results(results, simulation_time_seconds=session_result.simulation_time_seconds)
-            _log("OK", f"Results saved to {RESULTS_DIR}")
+            log("OK", f"Results saved to {RESULTS_DIR}")
         except ExtractionError as extraction_exc:
-            _log("WARNING", f"EXTRACTION_FAILED — {extraction_exc}")
+            log("WARNING", f"EXTRACTION_FAILED - {extraction_exc}")
             return 0
 
         return 0
 
     except ValidationError as spec_exc:
-        _log("ERROR", f"SPEC_INVALID — {spec_exc}")
+        log("ERROR", f"SPEC_INVALID - {spec_exc}")
         return 1
     except BuildError as build_exc:
-        _log("ERROR", f"BUILD_FAILED — {build_exc}")
+        log("ERROR", f"BUILD_FAILED - {build_exc}")
         return 3
     except Exception as unexpected_exc:
-        _log("ERROR", f"UNEXPECTED — {unexpected_exc}")
+        log("ERROR", f"UNEXPECTED - {unexpected_exc}")
         return 1
     finally:
-        _cleanup_session(aspen, output_dir=SESSION_TEMP_DIR, keep_alive=False)
+        if aspen is not None:
+            _cleanup_session(aspen, output_dir=SESSION_TEMP_DIR, keep_alive=False)
 
 
 if __name__ == "__main__":
