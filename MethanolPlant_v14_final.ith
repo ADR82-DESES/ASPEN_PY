@@ -1,0 +1,285 @@
+
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + +                                                                         + +
+ + +                      ASPEN PLUS CALCULATION HISTORY                     + +
+ + +                                                                         + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+
+ ASPEN PLUS IS A TRADEMARK OF           HOTLINE:
+ ASPEN TECHNOLOGY, INC.                 U.S.A. 888/996-7100
+ 781/221-6400                           EUROPE (44) 1189-226555
+
+ PLATFORM: WIN-X64                                       MARCH 12, 2026      
+ VERSION: 40.0   Build 359                               THURSDAY    
+ INSTALLATION:                                           2:54:20 P.M.        
+
+ THIS COPY OF ASPEN PLUS LICENSED TO UNIVERSIDAD DE CANTABRIA        
+
+
+      ASPEN PLUS (R) IS A PROPRIETARY PRODUCT OF ASPEN TECHNOLOGY, INC.
+      (ASPENTECH), AND MAY BE USED ONLY UNDER AGREEMENT WITH ASPENTECH.
+      RESTRICTED RIGHTS LEGEND:  USE, REPRODUCTION, OR DISCLOSURE BY THE
+      U.S. GOVERNMENT IS SUBJECT TO RESTRICTIONS SET FORTH IN 
+      (i) FAR 52.227-14, Alt. III, (ii) FAR 52.227-19, (iii) DFARS 
+      252.227-7013(c)(1)(ii), or (iv) THE ACCOMPANYING LICENSE AGREEMENT,
+      AS APPLICABLE. FOR PURPOSES OF THE FAR, THIS SOFTWARE SHALL BE DEEMED
+      TO BE "UNPUBLISHED" AND LICENSED WITH DISCLOSURE PROHIBITIONS.
+      CONTRACTOR/SUBCONTRACTOR: ASPEN TECHNOLOGY, INC. 20 CROSBY DRIVE,
+      BEDFORD, MA 01730.
+ *** INPUT ECHO(ES) ***
+
+ >>CURRENT RUN
+
+   ORIGINAL RUN                           MARCH 12, 2026      
+   2:54:20 P.M.                           THURSDAY    
+   INPUT FILE: C:\Users\domingueza\ASPEN_PY\MethanolPlant_v14_final.inp
+   OUTPUT PDF: MethanolPlant_v14_final                                                          VERSION:  1
+   LOCATED IN: C:\Users\domingueza\ASPEN_PY\
+   PDF SIZE: FILE (PSIZE)=    0 RECORDS.   IN-CORE =   256 RECORDS.
+
+          1    TITLE 'Methanol Plant 10k TPD'
+          2
+          3    ; 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR)
+          4
+          5    IN-UNITS MET PRESSURE=BAR TEMPERATURE=C FLOW='KG/HR'
+          6
+          7    DEF-STREAMS CONVEN ALL
+          8
+          9    DATABANKS 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
+         10            'APV140 INORGANIC' / 'NOASPENPCD'
+         11
+         12    PROP-SOURCES 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
+         13            'APV140 INORGANIC'
+         14
+         15    COMPONENTS
+         16        CH4 METHANE /
+         17        H2O WATER /
+         18        O2 OXYGEN /
+         19        CO CARBON-MONOXIDE /
+         20        CO2 CARBON-DIOXIDE /
+         21        H2 HYDROGEN /
+         22        CH3OH METHANOL /
+         23        N2 NITROGEN /
+         24
+         25    PROPERTIES RK-SOAVE
+         26
+         27    FLOWSHEET
+         28        BLOCK MIX-FEED IN=NG-FEED STEAM O2-FEED OUT=ATR-IN
+         29        BLOCK B-ATR IN=ATR-IN OUT=HOT-SYN
+         30        BLOCK B-COOL IN=HOT-SYN OUT=COLD-SYN
+         31        BLOCK B-FLASH IN=COLD-SYN OUT=DRY-GAS WATER-DR
+         32        BLOCK B-COMP IN=DRY-GAS OUT=HP-GAS
+         33        BLOCK MIX-LOOP IN=HP-GAS RECYCLE OUT=R-IN
+         34        BLOCK B-SYN IN=R-IN OUT=R-OUT
+         35        BLOCK B-SEP IN=R-OUT OUT=GAS-PURG CRUDE-ME
+         36        BLOCK SPLIT IN=GAS-PURG OUT=PURGE RECYCLE
+         37        BLOCK B-DIST IN=CRUDE-ME OUT=MEOH-PRO WASTE-H2
+         38
+         39    STREAM NG-FEED
+         40        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 MASS-FLOW=220000.0
+         41        MOLE-FRAC CH4 1.0
+         42
+         43    STREAM STEAM
+         44        SUBSTREAM MIXED TEMP=250.0 PRES=35.0 MASS-FLOW=148500.0
+         45        MOLE-FRAC H2O 1.0
+         46
+         47    STREAM O2-FEED
+         48        SUBSTREAM MIXED TEMP=150.0 PRES=30.0 MASS-FLOW=264000.0
+         49        MOLE-FRAC O2 0.995
+         50        MOLE-FRAC N2 0.005
+         51
+         52    STREAM ATR-IN
+         53        SUBSTREAM MIXED TEMP=150.0 PRES=30.0 MASS-FLOW=632500.0
+         54        MOLE-FRAC CH4 0.455
+         55        MOLE-FRAC H2O 0.273
+         56        MOLE-FRAC O2 0.271
+         57        MOLE-FRAC N2 0.001
+         58
+         59    STREAM HOT-SYN
+         60        SUBSTREAM MIXED TEMP=1000.0 PRES=30.0 MASS-FLOW=632500.0
+         61        MOLE-FRAC H2 0.48
+         62        MOLE-FRAC CO 0.18
+         63        MOLE-FRAC CO2 0.09
+         64        MOLE-FRAC H2O 0.2
+         65        MOLE-FRAC CH4 0.05
+         66
+         67    STREAM COLD-SYN
+         68        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 MASS-FLOW=632500.0
+         69        MOLE-FRAC H2 0.48
+         70        MOLE-FRAC CO 0.18
+         71        MOLE-FRAC CO2 0.09
+         72        MOLE-FRAC H2O 0.2
+         73        MOLE-FRAC CH4 0.05
+         74
+         75    STREAM DRY-GAS
+         76        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 MASS-FLOW=520000.0
+         77        MOLE-FRAC H2 0.62
+         78        MOLE-FRAC CO 0.2
+         79        MOLE-FRAC CO2 0.1
+         80        MOLE-FRAC CH4 0.06
+         81        MOLE-FRAC H2O 0.02
+         82
+         83    STREAM WATER-DR
+         84        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 MASS-FLOW=112500.0
+         85        MOLE-FRAC H2O 0.985
+         86        MOLE-FRAC CH3OH 0.005
+         87        MOLE-FRAC CO2 0.005
+         88        MOLE-FRAC CH4 0.005
+         89
+         90    STREAM HP-GAS
+         91        SUBSTREAM MIXED TEMP=120.0 PRES=80.0 MASS-FLOW=520000.0
+         92        MOLE-FRAC H2 0.62
+         93        MOLE-FRAC CO 0.2
+         94        MOLE-FRAC CO2 0.1
+         95        MOLE-FRAC CH4 0.06
+         96        MOLE-FRAC H2O 0.02
+         97
+         98    STREAM RECYCLE
+         99        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 MASS-FLOW=1558000.0
+        100        MOLE-FRAC H2 0.66
+        101        MOLE-FRAC CO 0.14
+        102        MOLE-FRAC CO2 0.12
+        103        MOLE-FRAC CH4 0.06
+        104        MOLE-FRAC H2O 0.02
+        105
+        106    STREAM R-IN
+        107        SUBSTREAM MIXED TEMP=220.0 PRES=80.0 MASS-FLOW=2078000.0
+        108        MOLE-FRAC H2 0.65
+        109        MOLE-FRAC CO 0.155
+        110        MOLE-FRAC CO2 0.115
+        111        MOLE-FRAC CH4 0.06
+        112        MOLE-FRAC H2O 0.02
+        113
+        114    STREAM R-OUT
+        115        SUBSTREAM MIXED TEMP=250.0 PRES=80.0 MASS-FLOW=2090000.0
+        116        MOLE-FRAC H2 0.58
+        117        MOLE-FRAC CO 0.1
+        118        MOLE-FRAC CO2 0.11
+        119        MOLE-FRAC CH4 0.07
+        120        MOLE-FRAC H2O 0.08
+        121        MOLE-FRAC CH3OH 0.06
+        122
+        123    STREAM GAS-PURG
+        124        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 MASS-FLOW=1640000.0
+        125        MOLE-FRAC H2 0.66
+        126        MOLE-FRAC CO 0.14
+        127        MOLE-FRAC CO2 0.12
+        128        MOLE-FRAC CH4 0.06
+        129        MOLE-FRAC H2O 0.02
+        130
+        131    STREAM CRUDE-ME
+        132        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 MASS-FLOW=460000.0
+        133        MOLE-FRAC CH3OH 0.905
+        134        MOLE-FRAC H2O 0.085
+        135        MOLE-FRAC CO2 0.005
+        136        MOLE-FRAC CO 0.003
+        137        MOLE-FRAC H2 0.002
+        138
+        139    STREAM PURGE
+        140        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 MASS-FLOW=82000.0
+        141        MOLE-FRAC H2 0.66
+        142        MOLE-FRAC CO 0.14
+        143        MOLE-FRAC CO2 0.12
+        144        MOLE-FRAC CH4 0.06
+        145        MOLE-FRAC H2O 0.02
+        146
+        147    STREAM MEOH-PRO
+        148        SUBSTREAM MIXED TEMP=40.0 PRES=1.5 MASS-FLOW=416666.7
+        149        MOLE-FRAC CH3OH 0.9985
+        150        MOLE-FRAC H2O 0.001
+        151        MOLE-FRAC CO2 0.0003
+        152        MOLE-FRAC CO 0.0001
+        153        MOLE-FRAC CH4 0.0001
+        154
+        155    STREAM WASTE-H2
+        156        SUBSTREAM MIXED TEMP=45.0 PRES=1.2 MASS-FLOW=43333.3
+        157        MOLE-FRAC H2O 0.96
+        158        MOLE-FRAC CH3OH 0.03
+        159        MOLE-FRAC CO2 0.005
+        160        MOLE-FRAC CO 0.003
+        161        MOLE-FRAC H2 0.002
+        162
+        163    BLOCK MIX-FEED MIXER
+        164
+        165    BLOCK B-ATR RGIBBS
+        166        PARAM TEMP=1000.0 PRES=30.0
+        167
+        168    BLOCK B-COOL HEATER
+        169        PARAM TEMP=40.0 PRES=0.0
+        170
+        171    BLOCK B-FLASH FLASH2
+        172        PARAM TEMP=40.0 PRES=0.0
+        173
+        174    BLOCK B-COMP COMPR
+        175        PARAM PRES=80.0 TYPE=ISENTROPIC SEFF=0.85
+        176
+        177    BLOCK MIX-LOOP MIXER
+        178
+        179    BLOCK B-SYN RGIBBS
+        180        PARAM TEMP=250.0 PRES=80.0
+        181
+        182    BLOCK B-SEP FLASH2
+        183        PARAM TEMP=40.0 PRES=0.0
+        184
+        185    BLOCK SPLIT FSPLIT
+        186        FRAC RECYCLE 0.95
+        187        FRAC PURGE 0.05
+        188
+        189    BLOCK B-DIST SEP
+        190        FRAC STRM=MEOH-PRO COMP=CH3OH FRAC=0.99
+        191        FRAC STRM=MEOH-PRO COMP=H2O FRAC=0.001
+ *** INPUT TRANSLATOR MESSAGES ***
+
+  *** THIS RUN USES THE PROPERTIES ENTERPRISE DATABASE ***
+      SQLLOCALDB.APESV140 : (DATAVERSION - 40.0.0.13)                         
+      SQLLOCALDB.APV140 : (DATAVERSION - 40.0.0.13)                           
+      SQLLOCALDB.FACTV140 : (DATAVERSION - 40.0.0.12)                         
+      SQLLOCALDB.NISTV140 : (DATAVERSION - 40.0.0.12)                         
+
+      INFORMATION WHILE RETRIEVING AND CHECKING PARAMETER VALUES                
+                                                               (GTDATA.3)       
+      BINARY PARAMETERS RKSKBV (DATA SET 1) FOR MODELS ESRKS/ESRKSTD            
+      ARE RETRIEVED FROM EOS DATABANK. DATABANK NAME = EOS-LIT.                 
+ 
+ 
+*** FLOWSHEET ANALYSIS MESSAGES ***
+
+ FLOWSHEET CONNECTIVITY BY STREAMS       
+
+   STREAM     SOURCE     DEST           STREAM     SOURCE     DEST
+   O2-FEED    ----       MIX-FEED       STEAM      ----       MIX-FEED
+   NG-FEED    ----       MIX-FEED       ATR-IN     MIX-FEED   B-ATR   
+   HOT-SYN    B-ATR      B-COOL         COLD-SYN   B-COOL     B-FLASH 
+   DRY-GAS    B-FLASH    B-COMP         WATER-DR   B-FLASH    ----    
+   HP-GAS     B-COMP     MIX-LOOP       R-IN       MIX-LOOP   B-SYN   
+   R-OUT      B-SYN      B-SEP          GAS-PURG   B-SEP      SPLIT   
+   CRUDE-ME   B-SEP      B-DIST         PURGE      SPLIT      ----    
+   RECYCLE    SPLIT      MIX-LOOP       MEOH-PRO   B-DIST     ----    
+   WASTE-H2   B-DIST     ----                                         
+
+ FLOWSHEET CONNECTIVITY BY BLOCKS        
+
+   BLOCK        INLETS                         OUTLETS
+   MIX-FEED     NG-FEED STEAM O2-FEED          ATR-IN                      
+   B-ATR        ATR-IN                         HOT-SYN                     
+   B-COOL       HOT-SYN                        COLD-SYN                    
+   B-FLASH      COLD-SYN                       DRY-GAS WATER-DR            
+   B-COMP       DRY-GAS                        HP-GAS                      
+   MIX-LOOP     HP-GAS RECYCLE                 R-IN                        
+   B-SYN        R-IN                           R-OUT                       
+   B-SEP        R-OUT                          GAS-PURG CRUDE-ME           
+   SPLIT        GAS-PURG                       PURGE RECYCLE               
+   B-DIST       CRUDE-ME                       MEOH-PRO WASTE-H2           
+
+      BLOCK $OLVER01 (METHOD: WEGSTEIN) HAS BEEN DEFINED TO CONVERGE
+               STREAMS: RECYCLE
+
+      COMPUTATION ORDER FOR THE FLOWSHEET IS:
+      MIX-FEED B-ATR B-COOL B-FLASH B-COMP 
+      $OLVER01 MIX-LOOP B-SYN B-SEP SPLIT 
+      (RETURN $OLVER01) 
+      B-DIST 
+
+ PDF updated                                                                      TIME =      1.17

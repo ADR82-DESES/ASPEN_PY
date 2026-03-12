@@ -57,7 +57,7 @@ flowsheet:
     outputs: ["PURGE", "RECYCLE"]
   - block: "B-DIST"
     inputs: ["CRUDE-ME"]
-    outputs: ["MEOH-PRO", "WASTE-H2O"]
+    outputs: ["MEOH-PRO", "WASTE-H2"]
 
 streams:
   - name: "NG-FEED"
@@ -208,7 +208,7 @@ streams:
       CO2: 0.0003
       CO: 0.0001
       CH4: 0.0001
-  - name: "WASTE-H2O"
+  - name: "WASTE-H2"
     temperature: 45
     pressure: 1.2
     mass_flow: 43333.3

@@ -1,0 +1,10 @@
+SLAVE:
+INPUT: _2040uiu.inm
+MODNAME: apmain
+RUNID: _2040uiu
+NEW_RUNID: _2040uiu
+OLD_RUNID: _2040uiu
+PDF: _2040uiu.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+DBCONN: _2040uiu.ads

@@ -1,0 +1,247 @@
+MM "40.0" FLAVOR "NO" VERSION "40.0" DATETIME "Wed Mar 11 17:10:38 2026" 
+MACHINE "WIN-NT/VC"  ; 
+startlibrary
+version1
+NumLibs = 1
+Built-In
+NumCats = 12
+Mixers/Splitters
+active
+Separators
+active
+Exchangers
+active
+Columns
+active
+Reactors
+active
+Pressure Changers
+active
+Manipulators
+active
+Solids
+active
+Solids Separators
+active
+Controllers
+active
+Batch Models
+active
+User Models
+active
+endlibrary
+; 
+0
+? SETUP MAIN ? ? SETUP GLOBAL ? ? SETUP "SIM-OPTIONS" ? ; "ENG_MOLE" ; ? 
+COMPONENTS MAIN ? ? COMPONENTS "COMP-LIST" GLOBAL ? ? SOLVE ? \ "RUN-MODE" 
+MODE = SIM \ ? "DYN-OPTIONS" ? ? FLOWSHEET GLOBAL ? ? PROPERTIES MAIN ? \ 
+GPROPERTIES PARCON = -2 \ ? PROPERTIES PARAMETERS BINARY SCALAR "MLQKIJ-1" ? 
+; "ENG_MOLE" ; \ PROP-LIST PARAMNAME = MLQKIJ SETNO = 1 \ ? PROPERTIES 
+PARAMETERS BINARY SCALAR "RKTKIJ-1" ? ; "ENG_MOLE" ; \ PROP-LIST PARAMNAME = 
+RKTKIJ SETNO = 1 \ ? PROPERTIES PARAMETERS BINARY "T-DEPENDENT" "ANDKIJ-1" ? 
+; "ENG_MOLE" ; \ PROP-LIST PARAMNAME = ANDKIJ SETNO = 1 UNITROW = 0 TUNITROW
+ = 22 TUNITLABEL = F NEL = 2 \ ? PROPERTIES PARAMETERS BINARY "T-DEPENDENT" 
+"ANDMIJ-1" ? ; "ENG_MOLE" ; \ PROP-LIST PARAMNAME = ANDMIJ SETNO = 1 UNITROW
+ = 0 TUNITROW = 22 TUNITLABEL = F NEL = 2 \ ? PROPERTIES PARAMETERS BINARY 
+"T-DEPENDENT" "MUKIJ-1" ? ; "ENG_MOLE" ; \ PROP-LIST PARAMNAME = MUKIJ SETNO
+ = 1 UNITROW = 0 TUNITROW = 22 TUNITLABEL = F NEL = 6 \ ? PROPERTIES 
+PARAMETERS BINARY "T-DEPENDENT" "MULIJ-1" ? ; "ENG_MOLE" ; \ PROP-LIST 
+PARAMNAME = MULIJ SETNO = 1 UNITROW = 0 TUNITROW = 22 TUNITLABEL = F NEL = 11 
+\ ? "STREAM-NAMES" ? ? "STREAM-GROUP" All ? \ DESCRIPTION DESCRIPTION = 
+"All streams" \ ? "STREAM-GROUP" Boundary ? \ DESCRIPTION DESCRIPTION = 
+"Boundary streams" \ ? "STREAM-GROUP" Charge ? \ DESCRIPTION DESCRIPTION = 
+"Charge streams" \ ? "STREAM-GROUP" Feeds ? \ DESCRIPTION DESCRIPTION = 
+"Feed streams" \ ? "STREAM-GROUP" Initial ? \ DESCRIPTION DESCRIPTION = 
+"Streams with user-specified values entered" \ ? "STREAM-GROUP" Products ? 
+\ DESCRIPTION DESCRIPTION = "Product streams" \ ? "STREAM-GROUP" Tears ? \ 
+DESCRIPTION DESCRIPTION = 
+"Tear streams manipulated by the convergence algorithms" \ ? "EO-VARS" ? ? 
+"EO-CONV-OPTI" ? \ DMO-PARAMS MODE = DEFAULT \ \ DMO-PARAMS MODE = SIMULATION 
+\ \ DMO-PARAMS MODE = "PARAMETER-ESTIMATION" \ \ DMO-PARAMS MODE = 
+RECONCILIATION \ \ DMO-PARAMS MODE = OPTIMIZATION \ \ LSSQP-PARAMS MODE-L = 
+DEFAULT \ \ LSSQP-PARAMS MODE-L = SIMULATION \ \ LSSQP-PARAMS MODE-L = 
+"PARAMETER-ESTIMATION" \ \ LSSQP-PARAMS MODE-L = RECONCILIATION \ \ 
+LSSQP-PARAMS MODE-L = OPTIMIZATION \ \ NSOLVE-PARAM NSOLVE-MODE = DEFAULT \ 
+\ NSOLVE-PARAM NSOLVE-MODE = SIMULATION \ \ NSOLVE-PARAM NSOLVE-MODE = 
+"PARAMETER-ESTIMATION" \ \ XSLP-PARAMS XSLP-MODE = DEFAULT \ \ XSLP-PARAMS 
+XSLP-MODE = SIMULATION \ \ XSLP-PARAMS XSLP-MODE = "PARAMETER-ESTIMATION" \ 
+\ XSLP-PARAMS XSLP-MODE = RECONCILIATION \ \ XSLP-PARAMS XSLP-MODE = 
+OPTIMIZATION \ 
+
+ GRAPHICS_BACKUP
+PFS V 5.00
+$CONFIG
+paramdata APV140 ENRTL-RK
+paramdata APV140 VLE-IG
+paramdata APV140 VLE-RK
+paramdata APV140 VLE-HOC
+paramdata APV140 LLE-LIT
+paramdata APV140 LLE-ASPEN
+paramdata APV140 VLE-LIT
+paramdata APV140 BINARY
+paramdata APV140 HENRY-AP
+paramdata APV140 PITZER
+paramdata APV140 EOS-LIT
+paramdata APV140 HENRY-AP
+paramdata APV140 SRK-ASPEN
+paramdata APV140 PC-SAFT
+paramdata APV140 POLYPCSF
+paramdata APV140 HYSYS
+paramdata APESV140 AP-EOS
+paramdata NISTV140 NIST-HOC
+paramdata NISTV140 NIST-IG
+paramdata NISTV140 NIST-RK
+paramdata NISTV140 NIST-EOS
+purebank APV140 PURE40
+purebank APV140 AQUEOUS
+purebank APV140 SOLIDS
+purebank APV140 INORGANIC
+purebank APESV140 AP-EOS
+purebank NISTV140 NIST-TRC
+regdbank 0
+ftn_check 1
+autoblockid 1
+autostreamid 1
+showblockid 1
+showstreamid 1
+autoplacement 1
+grid 2
+gridresolution 0.100000
+scale 0
+streamprefix S
+blockprefix B
+labelscale 1.000000
+3DOn 1
+qwformat %.0f
+wformat %.0f
+tempformat %.0f
+presformat %.0f
+flowformat %.0f
+strmqwformat %.0f
+strmwformat %.0f
+vflowformat %.0f
+mflowformat %.0f
+vfracformat %.2f
+pseudobatch 0
+partial 1
+animation 1
+runanyway 0
+globalqw 0
+globalw 0
+globaltemp 0
+globalpres 0
+globalflow 0
+globalstrmqw 0
+globalstrmw 0
+globalvflow 0
+globalmflow 0
+globalvfrac 0
+globalshowcalcerror 1
+globalshowcalcwarning 1
+globalshowdisabled 1
+tooldrawvisible 0
+browserheight 7530
+browserwidth 10725
+browsertreewidth 2450
+polyplusenabled 1
+dynaplusenabled 1
+bfracenabled 1
+rtfenabled 1
+rspenabled 1
+initializeicarus 0
+pinchenabled 0
+linklimit 5000
+material_color 0
+material_style 0
+material_width 1
+material_termid  
+heat_color 0
+heat_style 2
+heat_width 1
+heat_termid Q
+work_color 0
+work_style 1
+work_width 1
+work_termid W
+connections_color 9
+connections_style 3
+connections_width 1
+connections_termid C
+measurements_color 4
+measurements_style 3
+measurements_width 1
+measurements_termid M
+power_color 10
+power_style 5
+power_width 1
+power_termid I
+displayeoconn 0
+displaycalcs 0
+displaytransfers 0
+displaymeas 0
+displaydesignspecs 0
+displaycalccons 0
+displaymeascons 0
+displayothercons 0
+displayeomeas 1
+displayeomeastype 2
+displayothermanipconn 0
+showeoviews 0
+eoautosave 1
+allow_system_userprops 0
+copy_estimation 1
+copy_retrieved 1
+purge_incomp_params 0
+set_default_biparams 0
+set_default_dataset1 0
+set_default_dataset0 1
+bestinput 0
+autosmrun 0
+genallpropset 0
+strmresformdefault 0
+roottype 0
+exchangerfile 1
+streamformat 1
+runsettingfile 1
+usermodelfile 1
+fortranfile 0
+timeout 1000
+auto_evaluate 0
+customglobaldatapropset1 0 | Custom1 | * | %.2f | 0 | 6
+customglobaldatapropset2 0 | Custom2 | * | %.2f | 1 | 7
+customglobaldatapropset3 0 | Custom3 | * | %.2f | 2 | 8
+customglobaldatapropset4 0 | Custom4 | * | %.2f | 4 | 9
+customglobaldatapropset5 0 | Custom5 | * | %.2f | 5 | 10
+customglobaldatapropset6 0 | Custom6 | * | %.2f | 6 | 11
+customglobaldatapropset7 0 | Custom7 | * | %.2f | 7 | 12
+economics_active 0
+ignoreEOVarNameFixupsOnImport 1
+tpsaupgrade 0
+#
+PFSVData
+# of PFS Objects = 1
+SIZE -3 3 -3 3
+LEGEND
+Version: 2
+Unfixed
+# of PFS Objects = 0
+VIEWPORT -8.640223 6.182121 3.300000 -1.198323
+LAYOUT
+TableFormat 1
+Pages 1 1 1 1
+PAGESETUP
+PAPERSIZE 
+PAPERSOURCE 
+ORIENTATION -1
+PRINTPAGENO 1 1
+LEFTMARGIN 10mm
+RIGHTMARGIN 10mm
+TOPMARGIN 10mm
+BOTTOMMARGIN 10mm
+VISIBILITY 0.030000
+PFDFLAG 255 255
+PFDMODE 0
+SCALE 0.012291
+$_ADS_FILE
+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
+$_END_ADS_FILE

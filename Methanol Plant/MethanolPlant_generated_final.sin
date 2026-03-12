@@ -1,0 +1,169 @@
+ >>ORIGINAL RUN                           MARCH 11, 2026      
+   6:11:00 P.M.                           WEDNESDAY   
+   INPUT FILE: C:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant_generated_final.inp
+   OUTPUT PDF: MethanolPlant_generated_final                                                    VERSION:  1
+   LOCATED IN: C:\Users\domingueza\ASPEN_PY\Methanol Plant\
+          1    TITLE 'Methanol Plant 10k TPD'
+          2
+          3    ; 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR)
+          4
+          5    IN-UNITS MET PRESSURE=BAR TEMPERATURE=C FLOW='KG/HR'
+          6
+          7    DEF-STREAMS CONVEN ALL
+          8
+          9    DATABANKS 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
+         10            'APV140 INORGANIC' / 'NOASPENPCD'
+         11
+         12    PROP-SOURCES 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
+         13            'APV140 INORGANIC'
+         14
+         15    COMPONENTS
+         16        CH4 METHANE /
+         17        H2O WATER /
+         18        O2 OXYGEN /
+         19        CO CARBON-MONOXIDE /
+         20        CO2 CARBON-DIOXIDE /
+         21        H2 HYDROGEN /
+         22        CH3OH METHANOL /
+         23        N2 NITROGEN /
+         24
+         25    PROPERTIES RK-SOAVE
+         26
+         27    FLOWSHEET
+         28        BLOCK MIX-FEED IN=NG-FEED STEAM O2-FEED OUT=ATR-IN
+         29        BLOCK B-ATR IN=ATR-IN OUT=HOT-SYN
+         30        BLOCK B-COOL IN=HOT-SYN OUT=COLD-SYN
+         31        BLOCK B-FLASH IN=COLD-SYN OUT=DRY-GAS WATER-DR
+         32        BLOCK B-COMP IN=DRY-GAS OUT=HP-GAS
+         33        BLOCK MIX-LOOP IN=HP-GAS RECYCLE OUT=R-IN
+         34        BLOCK B-SYN IN=R-IN OUT=R-OUT
+         35        BLOCK B-SEP IN=R-OUT OUT=GAS-PURG CRUDE-ME
+         36        BLOCK SPLIT IN=GAS-PURG OUT=PURGE RECYCLE
+         37        BLOCK B-DIST IN=CRUDE-ME OUT=MEOH-PRO WASTE-H2O
+         38
+         39    STREAM NG-FEED
+         40        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         41            MASS-FLOW=220000.0
+         42        MOLE-FRAC MIXED CH4 1.0 /
+         43
+         44    STREAM STEAM
+         45        SUBSTREAM MIXED TEMP=250.0 PRES=35.0 &
+         46            MASS-FLOW=148500.0
+         47        MOLE-FRAC MIXED H2O 1.0 /
+         48
+         49    STREAM O2-FEED
+         50        SUBSTREAM MIXED TEMP=150.0 PRES=30.0 &
+         51            MASS-FLOW=264000.0
+         52        MOLE-FRAC MIXED O2 0.995 / N2 0.005 /
+         53
+         54    STREAM ATR-IN
+         55        SUBSTREAM MIXED TEMP=150.0 PRES=30.0 &
+         56            MASS-FLOW=632500.0
+         57        MOLE-FRAC MIXED CH4 0.455 / H2O 0.273 / O2 0.271 / N2 0.001 /
+         58
+         59    STREAM HOT-SYN
+         60        SUBSTREAM MIXED TEMP=1000.0 PRES=30.0 &
+         61            MASS-FLOW=632500.0
+         62        MOLE-FRAC MIXED H2 0.48 / CO 0.18 / CO2 0.09 / H2O 0.2 / CH4 0.05 /
+         63
+         64    STREAM COLD-SYN
+         65        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         66            MASS-FLOW=632500.0
+         67        MOLE-FRAC MIXED H2 0.48 / CO 0.18 / CO2 0.09 / H2O 0.2 / CH4 0.05 /
+         68
+         69    STREAM DRY-GAS
+         70        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         71            MASS-FLOW=520000.0
+         72        MOLE-FRAC MIXED H2 0.62 / CO 0.2 / CO2 0.1 / CH4 0.06 / H2O 0.02 /
+         73
+         74    STREAM WATER-DR
+         75        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         76            MASS-FLOW=112500.0
+         77        MOLE-FRAC MIXED H2O 0.985 / CH3OH 0.005 / CO2 0.005 / CH4 0.005 /
+         78
+         79    STREAM HP-GAS
+         80        SUBSTREAM MIXED TEMP=120.0 PRES=80.0 &
+         81            MASS-FLOW=520000.0
+         82        MOLE-FRAC MIXED H2 0.62 / CO 0.2 / CO2 0.1 / CH4 0.06 / H2O 0.02 /
+         83
+         84    STREAM RECYCLE
+         85        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+         86            MASS-FLOW=1558000.0
+         87        MOLE-FRAC MIXED H2 0.66 / CO 0.14 / CO2 0.12 / CH4 0.06 / H2O 0.02 /
+         88
+         89    STREAM R-IN
+         90        SUBSTREAM MIXED TEMP=220.0 PRES=80.0 &
+         91            MASS-FLOW=2078000.0
+         92        MOLE-FRAC MIXED H2 0.65 / CO 0.155 / CO2 0.115 / CH4 0.06 / H2O 0.02 /
+         93
+         94    STREAM R-OUT
+         95        SUBSTREAM MIXED TEMP=250.0 PRES=80.0 &
+         96            MASS-FLOW=2090000.0
+         97        MOLE-FRAC MIXED H2 0.58 / CO 0.1 / CO2 0.11 / CH4 0.07 / H2O 0.08 / CH3OH 0.06 /
+         98
+         99    STREAM GAS-PURG
+        100        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+        101            MASS-FLOW=1640000.0
+        102        MOLE-FRAC MIXED H2 0.66 / CO 0.14 / CO2 0.12 / CH4 0.06 / H2O 0.02 /
+        103
+        104    STREAM CRUDE-ME
+        105        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+        106            MASS-FLOW=460000.0
+        107        MOLE-FRAC MIXED CH3OH 0.905 / H2O 0.085 / CO2 0.005 / CO 0.003 / H2 0.002 /
+        108
+        109    STREAM PURGE
+        110        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+        111            MASS-FLOW=82000.0
+        112        MOLE-FRAC MIXED H2 0.66 / CO 0.14 / CO2 0.12 / CH4 0.06 / H2O 0.02 /
+        113
+        114    STREAM MEOH-PRO
+        115        SUBSTREAM MIXED TEMP=40.0 PRES=1.5 &
+        116            MASS-FLOW=416666.7
+        117        MOLE-FRAC MIXED CH3OH 0.9985 / H2O 0.001 / CO2 0.0003 / CO 0.0001 / CH4 0.0001 /
+        118
+        119    STREAM WASTE-H2O
+        120        SUBSTREAM MIXED TEMP=45.0 PRES=1.2 &
+        121            MASS-FLOW=43333.3
+        122        MOLE-FRAC MIXED H2O 0.96 / CH3OH 0.03 / CO2 0.005 / CO 0.003 / H2 0.002 /
+        123
+        124    BLOCK MIX-FEED MIXER
+        125
+        126    BLOCK B-ATR RGIBBS
+        127        PARAM TEMP=1000.0 PRES=30.0
+        128
+        129    BLOCK B-COOL HEATER
+        130        PARAM TEMP=40.0 PRES=0.0
+        131
+        132    BLOCK B-FLASH FLASH2
+        133        PARAM TEMP=40.0 PRES=0.0
+        134
+        135    BLOCK B-COMP COMPR
+        136        PARAM PRES=80.0 TYPE=ISENTROPIC EFF=0.85
+        137
+        138    BLOCK MIX-LOOP MIXER
+        139
+        140    BLOCK B-SYN REQUIL
+        141        PARAM TEMP=250.0 PRES=80.0
+        142        REACTIONS RXN-SET1
+        143
+        144    BLOCK B-SEP FLASH2
+        145        PARAM TEMP=40.0 PRES=0.0
+        146
+        147    BLOCK SPLIT FSPLIT
+        148        FRAC RECYCLE 0.95
+        149        FRAC PURGE 0.05
+        150
+        151    BLOCK B-DIST SEP
+        152        PARAM
+        153        FRAC STRM=MEOH-PRO SUBSTRM=MIXED COMP=CH3OH FRAC=0.99 &
+        154        FRAC STRM=MEOH-PRO SUBSTRM=MIXED COMP=H2O FRAC=0.001 &
+        155
+        156    CHEMISTRY GLOBAL
+        157        STOIC 1 CO -1.0 / H2 -2.0 / CH3OH 1.0 /
+        158        STOIC 2 CO2 -1.0 / H2 -3.0 / CH3OH 1.0 / H2O 1.0 /
+        159
+        160    REACTIONS RXN-SET1 REQUIL
+        161        REAC-DATA 1
+        162        K-STOIC 1 12.28 -4048.0 0.0 0.0
+        163        REAC-DATA 2
+        164        K-STOIC 2 10.59 -4800.0 0.0 0.0

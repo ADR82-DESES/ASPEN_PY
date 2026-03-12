@@ -1,0 +1,37 @@
+;
+;Input Summary created by Aspen Plus Rel. 40.0 at 13:47:34 Wed Mar 11, 2026
+;Directory C:\Users\domingueza\ASPEN_PY\Methanol Plant  Filename C:\Users\domingueza\ASPEN_PY\Methanol Plant\exported_syntax.inp
+;
+
+
+DYNAMICS
+    DYNAMICS RESULTS=ON
+
+IN-UNITS ENG SHORT-LENGTH=in 
+
+DEF-STREAMS CONVEN ALL 
+
+DATABANKS 'APV140 PURE40' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' &
+         / 'APV140 INORGANIC' / 'APESV140 AP-EOS' /  &
+        'NISTV140 NIST-TRC' / NOASPENPCD
+
+PROP-SOURCES 'APV140 PURE40' / 'APV140 AQUEOUS' /  &
+        'APV140 SOLIDS' / 'APV140 INORGANIC' / 'APESV140 AP-EOS' &
+         / 'NISTV140 NIST-TRC'
+
+SOLVE 
+    RUN-MODE MODE=SIM 
+
+FLOWSHEET 
+
+PROPERTIES 
+
+EO-CONV-OPTI 
+
+STREAM-REPOR MOLEFLOW 
+;
+;
+;
+;
+;
+;

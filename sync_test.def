@@ -1,0 +1,11 @@
+MMBACKUP:
+INPUT: sync_test.inm
+MODNAME: apmain
+RUNID: sync_test
+NEW_RUNID: sync_test
+OLD_RUNID: sync_test
+PDF: sync_test.appdf
+USERNAME: domingueza
+XMOD: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\xeq\apmain
+SPONLY:
+DBCONN: _1023bjb.ads

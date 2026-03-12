@@ -1,0 +1,525 @@
+
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + +                                                                         + +
+ + +                      ASPEN PLUS CALCULATION HISTORY                     + +
+ + +                                                                         + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+
+ ASPEN PLUS IS A TRADEMARK OF           HOTLINE:
+ ASPEN TECHNOLOGY, INC.                 U.S.A. 888/996-7100
+ 781/221-6400                           EUROPE (44) 1189-226555
+
+ PLATFORM: WIN-X64                                       MARCH 11, 2026      
+ VERSION: 40.0   Build 359                               WEDNESDAY   
+ INSTALLATION:                                           6:11:00 P.M.        
+
+ THIS COPY OF ASPEN PLUS LICENSED TO UNIVERSIDAD DE CANTABRIA        
+
+
+      ASPEN PLUS (R) IS A PROPRIETARY PRODUCT OF ASPEN TECHNOLOGY, INC.
+      (ASPENTECH), AND MAY BE USED ONLY UNDER AGREEMENT WITH ASPENTECH.
+      RESTRICTED RIGHTS LEGEND:  USE, REPRODUCTION, OR DISCLOSURE BY THE
+      U.S. GOVERNMENT IS SUBJECT TO RESTRICTIONS SET FORTH IN 
+      (i) FAR 52.227-14, Alt. III, (ii) FAR 52.227-19, (iii) DFARS 
+      252.227-7013(c)(1)(ii), or (iv) THE ACCOMPANYING LICENSE AGREEMENT,
+      AS APPLICABLE. FOR PURPOSES OF THE FAR, THIS SOFTWARE SHALL BE DEEMED
+      TO BE "UNPUBLISHED" AND LICENSED WITH DISCLOSURE PROHIBITIONS.
+      CONTRACTOR/SUBCONTRACTOR: ASPEN TECHNOLOGY, INC. 20 CROSBY DRIVE,
+      BEDFORD, MA 01730.
+ *** INPUT ECHO(ES) ***
+
+ >>CURRENT RUN
+
+   ORIGINAL RUN                           MARCH 11, 2026      
+   6:11:00 P.M.                           WEDNESDAY   
+   INPUT FILE: C:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant_generated_final.inp
+   OUTPUT PDF: MethanolPlant_generated_final                                                    VERSION:  1
+   LOCATED IN: C:\Users\domingueza\ASPEN_PY\Methanol Plant\
+   PDF SIZE: FILE (PSIZE)=    0 RECORDS.   IN-CORE =   256 RECORDS.
+
+          1    TITLE 'Methanol Plant 10k TPD'
+          2
+          3    ; 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR)
+          4
+          5    IN-UNITS MET PRESSURE=BAR TEMPERATURE=C FLOW='KG/HR'
+          6
+          7    DEF-STREAMS CONVEN ALL
+          8
+          9    DATABANKS 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
+         10            'APV140 INORGANIC' / 'NOASPENPCD'
+         11
+         12    PROP-SOURCES 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
+         13            'APV140 INORGANIC'
+         14
+         15    COMPONENTS
+         16        CH4 METHANE /
+         17        H2O WATER /
+         18        O2 OXYGEN /
+         19        CO CARBON-MONOXIDE /
+         20        CO2 CARBON-DIOXIDE /
+         21        H2 HYDROGEN /
+         22        CH3OH METHANOL /
+         23        N2 NITROGEN /
+         24
+         25    PROPERTIES RK-SOAVE
+         26
+         27    FLOWSHEET
+         28        BLOCK MIX-FEED IN=NG-FEED STEAM O2-FEED OUT=ATR-IN
+         29        BLOCK B-ATR IN=ATR-IN OUT=HOT-SYN
+         30        BLOCK B-COOL IN=HOT-SYN OUT=COLD-SYN
+         31        BLOCK B-FLASH IN=COLD-SYN OUT=DRY-GAS WATER-DR
+         32        BLOCK B-COMP IN=DRY-GAS OUT=HP-GAS
+         33        BLOCK MIX-LOOP IN=HP-GAS RECYCLE OUT=R-IN
+         34        BLOCK B-SYN IN=R-IN OUT=R-OUT
+         35        BLOCK B-SEP IN=R-OUT OUT=GAS-PURG CRUDE-ME
+         36        BLOCK SPLIT IN=GAS-PURG OUT=PURGE RECYCLE
+         37        BLOCK B-DIST IN=CRUDE-ME OUT=MEOH-PRO WASTE-H2O
+         38
+         39    STREAM NG-FEED
+         40        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         41            MASS-FLOW=220000.0
+         42        MOLE-FRAC MIXED CH4 1.0 /
+         43
+         44    STREAM STEAM
+         45        SUBSTREAM MIXED TEMP=250.0 PRES=35.0 &
+         46            MASS-FLOW=148500.0
+         47        MOLE-FRAC MIXED H2O 1.0 /
+         48
+         49    STREAM O2-FEED
+         50        SUBSTREAM MIXED TEMP=150.0 PRES=30.0 &
+         51            MASS-FLOW=264000.0
+         52        MOLE-FRAC MIXED O2 0.995 / N2 0.005 /
+         53
+         54    STREAM ATR-IN
+         55        SUBSTREAM MIXED TEMP=150.0 PRES=30.0 &
+         56            MASS-FLOW=632500.0
+         57        MOLE-FRAC MIXED CH4 0.455 / H2O 0.273 / O2 0.271 / N2 0.001 /
+         58
+         59    STREAM HOT-SYN
+         60        SUBSTREAM MIXED TEMP=1000.0 PRES=30.0 &
+         61            MASS-FLOW=632500.0
+         62        MOLE-FRAC MIXED H2 0.48 / CO 0.18 / CO2 0.09 / H2O 0.2 / CH4 0.05 /
+         63
+         64    STREAM COLD-SYN
+         65        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         66            MASS-FLOW=632500.0
+         67        MOLE-FRAC MIXED H2 0.48 / CO 0.18 / CO2 0.09 / H2O 0.2 / CH4 0.05 /
+         68
+         69    STREAM DRY-GAS
+         70        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         71            MASS-FLOW=520000.0
+         72        MOLE-FRAC MIXED H2 0.62 / CO 0.2 / CO2 0.1 / CH4 0.06 / H2O 0.02 /
+         73
+         74    STREAM WATER-DR
+         75        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 &
+         76            MASS-FLOW=112500.0
+         77        MOLE-FRAC MIXED H2O 0.985 / CH3OH 0.005 / CO2 0.005 / CH4 0.005 /
+         78
+         79    STREAM HP-GAS
+         80        SUBSTREAM MIXED TEMP=120.0 PRES=80.0 &
+         81            MASS-FLOW=520000.0
+         82        MOLE-FRAC MIXED H2 0.62 / CO 0.2 / CO2 0.1 / CH4 0.06 / H2O 0.02 /
+         83
+         84    STREAM RECYCLE
+         85        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+         86            MASS-FLOW=1558000.0
+         87        MOLE-FRAC MIXED H2 0.66 / CO 0.14 / CO2 0.12 / CH4 0.06 / H2O 0.02 /
+         88
+         89    STREAM R-IN
+         90        SUBSTREAM MIXED TEMP=220.0 PRES=80.0 &
+         91            MASS-FLOW=2078000.0
+         92        MOLE-FRAC MIXED H2 0.65 / CO 0.155 / CO2 0.115 / CH4 0.06 / H2O 0.02 /
+         93
+         94    STREAM R-OUT
+         95        SUBSTREAM MIXED TEMP=250.0 PRES=80.0 &
+         96            MASS-FLOW=2090000.0
+         97        MOLE-FRAC MIXED H2 0.58 / CO 0.1 / CO2 0.11 / CH4 0.07 / H2O 0.08 / CH3OH 0.06 /
+         98
+         99    STREAM GAS-PURG
+        100        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+        101            MASS-FLOW=1640000.0
+        102        MOLE-FRAC MIXED H2 0.66 / CO 0.14 / CO2 0.12 / CH4 0.06 / H2O 0.02 /
+        103
+        104    STREAM CRUDE-ME
+        105        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+        106            MASS-FLOW=460000.0
+        107        MOLE-FRAC MIXED CH3OH 0.905 / H2O 0.085 / CO2 0.005 / CO 0.003 / H2 0.002 /
+        108
+        109    STREAM PURGE
+        110        SUBSTREAM MIXED TEMP=40.0 PRES=80.0 &
+        111            MASS-FLOW=82000.0
+        112        MOLE-FRAC MIXED H2 0.66 / CO 0.14 / CO2 0.12 / CH4 0.06 / H2O 0.02 /
+        113
+        114    STREAM MEOH-PRO
+        115        SUBSTREAM MIXED TEMP=40.0 PRES=1.5 &
+        116            MASS-FLOW=416666.7
+        117        MOLE-FRAC MIXED CH3OH 0.9985 / H2O 0.001 / CO2 0.0003 / CO 0.0001 / CH4 0.0001 /
+        118
+        119    STREAM WASTE-H2O
+        120        SUBSTREAM MIXED TEMP=45.0 PRES=1.2 &
+        121            MASS-FLOW=43333.3
+        122        MOLE-FRAC MIXED H2O 0.96 / CH3OH 0.03 / CO2 0.005 / CO 0.003 / H2 0.002 /
+        123
+        124    BLOCK MIX-FEED MIXER
+        125
+        126    BLOCK B-ATR RGIBBS
+        127        PARAM TEMP=1000.0 PRES=30.0
+        128
+        129    BLOCK B-COOL HEATER
+        130        PARAM TEMP=40.0 PRES=0.0
+        131
+        132    BLOCK B-FLASH FLASH2
+        133        PARAM TEMP=40.0 PRES=0.0
+        134
+        135    BLOCK B-COMP COMPR
+        136        PARAM PRES=80.0 TYPE=ISENTROPIC EFF=0.85
+        137
+        138    BLOCK MIX-LOOP MIXER
+        139
+        140    BLOCK B-SYN REQUIL
+        141        PARAM TEMP=250.0 PRES=80.0
+        142        REACTIONS RXN-SET1
+        143
+        144    BLOCK B-SEP FLASH2
+        145        PARAM TEMP=40.0 PRES=0.0
+        146
+        147    BLOCK SPLIT FSPLIT
+        148        FRAC RECYCLE 0.95
+        149        FRAC PURGE 0.05
+        150
+        151    BLOCK B-DIST SEP
+        152        PARAM
+        153        FRAC STRM=MEOH-PRO SUBSTRM=MIXED COMP=CH3OH FRAC=0.99 &
+        154        FRAC STRM=MEOH-PRO SUBSTRM=MIXED COMP=H2O FRAC=0.001 &
+        155
+        156    CHEMISTRY GLOBAL
+        157        STOIC 1 CO -1.0 / H2 -2.0 / CH3OH 1.0 /
+        158        STOIC 2 CO2 -1.0 / H2 -3.0 / CH3OH 1.0 / H2O 1.0 /
+        159
+        160    REACTIONS RXN-SET1 REQUIL
+        161        REAC-DATA 1
+        162        K-STOIC 1 12.28 -4048.0 0.0 0.0
+        163        REAC-DATA 2
+        164        K-STOIC 2 10.59 -4800.0 0.0 0.0
+ *** INPUT TRANSLATOR MESSAGES ***
+
+  *** THIS RUN USES THE PROPERTIES ENTERPRISE DATABASE ***
+      SQLLOCALDB.APESV140 : (DATAVERSION - 40.0.0.13)                         
+      SQLLOCALDB.APV140 : (DATAVERSION - 40.0.0.13)                           
+      SQLLOCALDB.FACTV140 : (DATAVERSION - 40.0.0.12)                         
+      SQLLOCALDB.NISTV140 : (DATAVERSION - 40.0.0.12)                         
+
+  *** SEVERE ERROR IN THE "CHEMISTRY" PARAGRAPH WHICH BEGINS ON LINE 156        
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "STOIC" SENTENCE                           
+      WHICH BEGINS ON LINE 157.                                                 
+      4 WERE ENTERED, BUT ONLY 3 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+      INFORMATION WHILE RETRIEVING AND CHECKING PARAMETER VALUES                
+                                                               (GTDATA.3)       
+      BINARY PARAMETERS RKSKBV (DATA SET 1) FOR MODELS ESRKS/ESRKSTD            
+      ARE RETRIEVED FROM EOS DATABANK. DATABANK NAME = EOS-LIT.                 
+
+  **  ERROR WHILE PROCESSING CHEMISTRY PARAGRAPHS              (PROCH1.1)       
+      "STOIC" SENTENCE NO.        1 IN CHEMISTRY GLOBAL                         
+      DOES NOT SATISFY MASS BALANCE. THE ABSOLUTE ERROR IS   15.999             
+      CHECK THE STOICHIOMETRY/MW'S.                                             
+
+  *** SEVERE ERROR IN THE "REACTIONS" PARAGRAPH WHICH BEGINS ON LINE 160        
+      FIRST ID: RXN-SET1    SECOND ID: REQUIL                  (GSKWTN.1)       
+      "REQUIL" IS NOT A VALID REACTION MODEL                                    
+      PARAGRAPH IGNORED                                                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 39            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 42.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 39            
+      STREAM NAME: NG-FEED                                     (NORM.1)         
+      COMPONENT FLOWS OR FRACTIONS ARE ZERO                                     
+      IN SUBSTREAM MIXED    OF STREAM NG-FEED                                   
+      VALUES ARE NOT NORMALIZED TO TOTAL FLOW                                   
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 39            
+      STREAM NAME: NG-FEED                                     (NORM.1)         
+      COMPONENT FLOWS OR FRACTIONS ARE ZERO                                     
+      IN SUBSTREAM MIXED    OF STREAM NG-FEED                                   
+      VALUES ARE NOT NORMALIZED TO TOTAL FLOW                                   
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 44            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 47.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 44            
+      STREAM NAME: STEAM                                       (NORM.1)         
+      COMPONENT FLOWS OR FRACTIONS ARE ZERO                                     
+      IN SUBSTREAM MIXED    OF STREAM STEAM                                     
+      VALUES ARE NOT NORMALIZED TO TOTAL FLOW                                   
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 44            
+      STREAM NAME: STEAM                                       (NORM.1)         
+      COMPONENT FLOWS OR FRACTIONS ARE ZERO                                     
+      IN SUBSTREAM MIXED    OF STREAM STEAM                                     
+      VALUES ARE NOT NORMALIZED TO TOTAL FLOW                                   
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 49            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 52.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  **  ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 49                   
+      STREAM NAME: O2-FEED     SKW: MOLE-FRAC                  (ULINT.1)        
+      VALUE ENTERED FOR TERTIARY KEYWORD: CID                                   
+      IS: 9, WHICH IS GREATER THAN THE UPPER                                    
+      LIMIT OF: 8.  VALUE SET TO UPPER LIMIT.                                   
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 49                 
+      STREAM NAME: O2-FEED                                     (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 54            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 57.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  **  ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 54                   
+      STREAM NAME: ATR-IN     SKW: MOLE-FRAC                   (ULINT.1)        
+      VALUE ENTERED FOR TERTIARY KEYWORD: CID                                   
+      IS: 9, WHICH IS GREATER THAN THE UPPER                                    
+      LIMIT OF: 8.  VALUE SET TO UPPER LIMIT.                                   
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 54                 
+      STREAM NAME: ATR-IN                                      (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 59            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 62.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 59                 
+      STREAM NAME: HOT-SYN                                     (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 64            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 67.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 64                 
+      STREAM NAME: COLD-SYN                                    (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 69            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 72.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 69                 
+      STREAM NAME: DRY-GAS                                     (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 74            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 77.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 74                 
+      STREAM NAME: WATER-DR                                    (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 79            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 82.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 79                 
+      STREAM NAME: HP-GAS                                      (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 84            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 87.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 84                 
+      STREAM NAME: RECYCLE                                     (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 89            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 92.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 89                 
+      STREAM NAME: R-IN                                        (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 94            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 97.                                                  
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 94                 
+      STREAM NAME: R-OUT                                       (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 99            
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 102.                                                 
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 99                 
+      STREAM NAME: GAS-PURG                                    (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 104           
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 107.                                                 
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 104                
+      STREAM NAME: CRUDE-ME                                    (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 109           
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 112.                                                 
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 109                
+      STREAM NAME: PURGE                                       (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 114           
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 117.                                                 
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 114                
+      STREAM NAME: MEOH-PRO                                    (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *** SEVERE ERROR IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 119           
+                                                               (BLDSNT.15)      
+      TOO MANY ITEMS ENTERED FOR THE "MOLE-FRAC" SENTENCE                       
+      WHICH BEGINS ON LINE 122.                                                 
+      3 WERE ENTERED, BUT ONLY 2 ARE ALLOWED.                                   
+      SENTENCE IGNORED.                                                         
+
+  *   WARNING IN THE "STREAM" PARAGRAPH WHICH BEGINS ON LINE 119                
+      STREAM NAME: WASTE-H2                                    (SDSMPR.11)      
+      COMPONENT MOLE FRACTIONS ARE NORMALIZED TO UNITY.                         
+
+  *   WARNING DURING FINAL PROCESSING FOR STREAM PARAGRAPHS    (SDSMPR.1)       
+      STREAM STEAM IS A FEED STREAM TO THE FLOWSHEET                            
+      BUT THE FLOWRATE FOR THE STREAM HAS NOT BEEN SPECIFIED                    
+      IN A STREAM PARAGRAPH.                                                    
+
+  *   WARNING DURING FINAL PROCESSING FOR STREAM PARAGRAPHS    (SDSMPR.1)       
+      STREAM NG-FEED IS A FEED STREAM TO THE FLOWSHEET                          
+      BUT THE FLOWRATE FOR THE STREAM HAS NOT BEEN SPECIFIED                    
+      IN A STREAM PARAGRAPH.                                                    
+
+  **  ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 135                   
+      BLOCK NAME: B-COMP    MODEL NAME: COMPR     SKW: PARAM                    
+                                                               (BLDSNT.5)       
+      ITEM (EFF) WHICH PRECEDES EQUALS SIGN                                     
+      IS NOT A VALID TERTIARY KEYWORD.  SENTENCE IGNORED.                       
+
+  **  ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 135                   
+      BLOCK NAME: B-COMP    MODEL NAME: COMPR     SKW: PARAM                    
+                                                               (PITKW.1)        
+      VALUE IS REQUIRED FOR TERTIARY KEYWORD: TYPE                              
+      BUT WAS NOT ENTERED.  PARAGRAPH IGNORED.                                  
+
+  *** SEVERE ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 140            
+      BLOCK NAME: B-SYN    MODEL NAME: REQUIL     TKW: PRES    (BLDSNT.3)       
+      UNRECOGNIZED SECONDARY KEYWORD: "REACTIONS".                              
+      PROBABLE SPELLING ERROR.  INPUT ON THIS LINE IGNORED.                     
+
+  **  ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 140                   
+      BLOCK NAME: B-SYN    MODEL NAME: REQUIL     SKW: PARAM     TKW: PRES      
+                                                               (PITKW.1)        
+      VALUE IS REQUIRED FOR TERTIARY KEYWORD: NREAC                             
+      BUT WAS NOT ENTERED.  PARAGRAPH IGNORED.                                  
+
+  **  ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 151                   
+      BLOCK NAME: B-DIST    MODEL NAME: SEP     SKW: FRAC      (BLDSNT.5)       
+      ITEM (SUBSTRM) WHICH PRECEDES EQUALS SIGN                                 
+      IS NOT A VALID TERTIARY KEYWORD.  SENTENCE IGNORED.                       
+
+  **  ERROR WHILE CHECKING INPUT SPECIFICATIONS                                 
+      BLOCK NAME: B-DIST    MODEL NAME: SEP                    (ZUSP03.23)      
+      THERE ARE NO SPECIFICATIONS GIVEN FOR THE FOLLOWING STREAMS:              
+      MEOH-PRO  WASTE-H2                                                        
+      SPECIFICATIONS SHOULD BE GIVEN FOR ALL BUT ONE OF THE ABOVE STREAMS.      
+
+  *** SEVERE ERROR WHILE CHECKING CONSISTENCY FOR BLOCK: "B-COMP"               
+                                                               (EDBSEM.1)       
+      BLOCK: "B-COMP" APPEARS IN THE FLOWSHEET, BUT                             
+      NO BLOCK PARAGRAPH HAS BEEN ENTERED FOR IT.                               
+
+  *** SEVERE ERROR WHILE CHECKING CONSISTENCY FOR BLOCK: "B-SYN"                
+                                                               (EDBSEM.1)       
+      BLOCK: "B-SYN" APPEARS IN THE FLOWSHEET, BUT                              
+      NO BLOCK PARAGRAPH HAS BEEN ENTERED FOR IT.                               
+
+  ****DUE TO PREVIOUS SEVERE ERROR(S), FLOWSHEET ANALYSIS
+      AND PROGRAM GENERATION WILL NOT TAKE PLACE.
+
+
+ *** SUMMARY OF ERRORS  ***                
+
+                  PHYSICAL
+                  PROPERTY  SYSTEM  SIMULATION
+ TERMINAL ERRORS      0        0         0
+   SEVERE ERRORS      0       26         0
+          ERRORS      0        8         0
+        WARNINGS      0       17         0
+
+
+ SIMULATION PROGRAM CANNOT BE EXECUTED BECAUSE OF
+ ERRORS IN INPUT TRANSLATION, PLEASE CHECK HISTORY FILE
+
+
+ ************************************************
+ *  ASPEN PLUS INPUT TRANSLATOR ENDS EXECUTION  *
+ ************************************************

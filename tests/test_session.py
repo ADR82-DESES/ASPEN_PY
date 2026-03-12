@@ -165,8 +165,9 @@ def test_08_failed_status(mock_win32, spec, output_dir, mock_aspen):
 @patch("aspen_automation.session.time.time")
 def test_09_timeout_status(mock_time, mock_sleep, mock_win32, spec, output_dir, mock_aspen):
     mock_win32.Dispatch.return_value = mock_aspen
-    mock_aspen.Engine.IsRunning = True  # Keep running
-    mock_time.side_effect = [0, 10, 311]  # Advance to trigger timeout > 300
+    # Forces a timeout (> 300)
+    mock_time.side_effect = [0, 5, 10, 311, 312, 313]
+    mock_aspen.Engine.IsRunning = True
 
     result = run_simulation_session(spec, build_mode="com-only", output_dir=output_dir, timeout_seconds=300)
 
@@ -184,6 +185,7 @@ def test_10_is_running_logic(mock_time, mock_sleep, mock_win32, spec, output_dir
 
     # True then False
     type(mock_aspen.Engine).IsRunning = PropertyMock(side_effect=[True, True, False])
+    mock_time.side_effect = range(100) # Plenty of timestamps
 
     run_simulation_session(spec, build_mode="com-only", output_dir=output_dir)
 
@@ -220,6 +222,7 @@ def test_12_visibility(mock_win32, mock_gen, spec, output_dir):
     mock_win32.Dispatch.return_value = mock_aspen_local
 
     run_simulation_session(spec, visible=False, output_dir=output_dir)
+    # Check property setting on the mock
     assert mock_aspen_local.Visible == 0
 
     run_simulation_session(spec, visible=True, output_dir=output_dir)

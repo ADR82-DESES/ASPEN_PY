@@ -1,0 +1,9 @@
+input: C:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant_generated.inp
+runid: MethanolPlant_generated
+username: domingueza
+xmod: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\\xeq\apmain.exe
+xpdflc: C:\Users\domingueza\ASPEN_PY\Methanol Plant\
+xmodlc: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\\xeq
+modname: apmain
+new_runid: MethanolPlant_generated
+old_runid: MethanolPlant_generated

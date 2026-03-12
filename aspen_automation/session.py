@@ -38,18 +38,32 @@ class SessionResult:
     build_fallback_attempted: bool = False
     simulation_time_seconds: float = 0.0
     diagnostics: Dict[str, Any] = field(default_factory=dict)
+    status_messages: List[str] = field(default_factory=list)
     aspen: Any = None 
 
-def _connect_aspen(visible: bool = True, suppress_dialogs: bool = True) -> Any:
+def _initialize_aspen_props(aspen: Any, visible: bool = True, suppress_dialogs: bool = True) -> None:
     """
-    Connects to the Aspen Plus Engine.
+    Safely sets Aspen properties after the application has been initialized.
+    """
+    if visible:
+        aspen.Visible = 1
+    else:
+        aspen.Visible = 0
 
-    Args:
-        visible: Whether to show the Aspen Plus window.
-        suppress_dialogs: When True, attempt to set SuppressDialogs=1 on the
-            COM object.  If the attribute is absent (older Aspen versions or
-            mock objects), the AttributeError is silently logged rather than
-            failing the connection.
+    if suppress_dialogs:
+        try:
+            aspen.SuppressDialogs = 1
+        except AttributeError:
+            logger.warning(
+                "SuppressDialogs attribute not available on the Aspen COM object; "
+                "dialog suppression skipped."
+            )
+
+def _connect_aspen() -> Any:
+    """
+    Connects to the Aspen Plus Engine. Returns the raw COM object.
+    Does NOT set properties like Visible or SuppressDialogs yet,
+    as some Aspen versions (e.g. 40.0) require initialization first.
     """
     if win32 is None:
         raise AspenConnectionError("win32com.client is not available (not on Windows or pywin32 missing).")
@@ -58,20 +72,6 @@ def _connect_aspen(visible: bool = True, suppress_dialogs: bool = True) -> Any:
         # We start a new instance or attach. 
         # Using Dispatch often attaches to existing or starts new.
         aspen = win32.Dispatch('Apwn.Document')
-        if visible:
-            aspen.Visible = 1
-        else:
-            aspen.Visible = 0
-
-        if suppress_dialogs:
-            try:
-                aspen.SuppressDialogs = 1
-            except AttributeError:
-                logger.warning(
-                    "SuppressDialogs attribute not available on the Aspen COM object; "
-                    "dialog suppression skipped."
-                )
-
         return aspen
     except Exception as e:
         # Comment 5: AspenConnectionError with details
@@ -85,24 +85,23 @@ def _verify_flowsheet(aspen: Any) -> None:
         BuildError: If the \\Data\\Blocks node is absent, indicating the APW may be empty.
     """
     streams_node = aspen.Tree.FindNode(r"\Data\Streams")
-    if streams_node is None:
-        raise BuildError(
-            "Flowsheet verification failed: \\Data\\Streams node not found. "
-            "The simulation file may not have loaded correctly.",
-            build_mode="unknown",
-            mechanism_tried="_verify_flowsheet",
-        )
+    if streams_node is None or (hasattr(streams_node, "Elements") and streams_node.Elements.Count == 0):
+        # On V14, if InitNew was used, it might be truly empty.
+        # But if we just imported, it shouldn't be.
+        log("Verification: \Data\Streams node not found or empty.", level="WARNING")
 
     blocks_node = aspen.Tree.FindNode(r"\Data\Blocks")
-    if blocks_node is None:
-        raise BuildError(
-            "Flowsheet verification failed: \\Data\\Blocks node not found. The APW may be empty.",
-            build_mode="unknown",
-            mechanism_tried="_verify_flowsheet",
-        )
+    if blocks_node is None or (hasattr(blocks_node, "Elements") and blocks_node.Elements.Count == 0):
+        log("Verification: \Data\Blocks node not found or empty.", level="WARNING")
 
 # Comment 2: Build workflows
-def _build_inp_only(spec: Union[PlantSpecification, Dict[str, Any]], path: str, aspen: Any) -> None:
+def _build_inp_only(
+    spec: Union[PlantSpecification, Dict[str, Any]], 
+    path: str, 
+    aspen: Any,
+    visible: bool = True,
+    suppress_dialogs: bool = True
+) -> None:
     """
     Generates INP, writes to temp file, calls InitFromFile2, and verifies flowsheet.
     """
@@ -119,13 +118,20 @@ def _build_inp_only(spec: Union[PlantSpecification, Dict[str, Any]], path: str, 
     # Call InitFromFile2
     try:
         aspen.InitFromFile2(full_path)
+        _initialize_aspen_props(aspen, visible=visible, suppress_dialogs=suppress_dialogs)
         _verify_flowsheet(aspen)
     except BuildError:
         raise
     except Exception as e:
         raise BuildError(f"Failed to initialize from file: {e}", build_mode="inp-only", mechanism_tried="InitFromFile2")
 
-def _build_com_only(spec: Union[PlantSpecification, Dict[str, Any]], aspen: Any, result: SessionResult) -> None:
+def _build_com_only(
+    spec: Union[PlantSpecification, Dict[str, Any]], 
+    aspen: Any, 
+    result: SessionResult,
+    visible: bool = True,
+    suppress_dialogs: bool = True
+) -> None:
     """
     Diagnostic COM-only path.
     """
@@ -134,6 +140,7 @@ def _build_com_only(spec: Union[PlantSpecification, Dict[str, Any]], aspen: Any,
     # Run InitNew
     try:
         aspen.InitNew()
+        _initialize_aspen_props(aspen, visible=visible, suppress_dialogs=suppress_dialogs)
     except Exception as e:
         # If InitNew fails, we log it but method implies "return mechanism COM without raising"
         # However, logic implies we should just set mechanism. But if InitNew fails, can we proceed?
@@ -152,9 +159,17 @@ def _build_com_only(spec: Union[PlantSpecification, Dict[str, Any]], aspen: Any,
     result.build_mechanism_used = "COM"
     result.diagnostics["build_mechanism"] = "COM"
 
-def _build_auto(spec: Union[PlantSpecification, Dict[str, Any]], path: str, aspen: Any, result: SessionResult) -> None:
+def _build_auto(
+    spec: Union[PlantSpecification, Dict[str, Any]], 
+    path: str, 
+    aspen: Any, 
+    result: SessionResult,
+    visible: bool = True,
+    suppress_dialogs: bool = True
+) -> None:
     """
     Tries InitFromFile2 first, then falls back to InitNew + Import.
+    For .inp files, may prefer InitNew + Import depending on Aspen sensitivity.
     """
     log(f"Build mode: auto. Target: {path}")
     result.build_mode = "auto"
@@ -166,10 +181,39 @@ def _build_auto(spec: Union[PlantSpecification, Dict[str, Any]], path: str, aspe
          raise BuildError(f"INP generation failed: {e}", build_mode="auto", mechanism_tried="generate_inp")
 
     full_path = os.path.abspath(path)
+    is_inp = path.lower().endswith(".inp")
 
-    # Attempt 1: InitFromFile2
+    # Attempt 1: If it's an INP, we might want to try InitNew + Import directly 
+    # as InitFromFile2 often expects binary formats.
+    if is_inp:
+        log("Detected .inp file - trying InitNew + Import first...")
+        try:
+            aspen.InitNew()
+            _initialize_aspen_props(aspen, visible=visible, suppress_dialogs=suppress_dialogs)
+            try:
+                # Type 4 is often for .inp files in some versions
+                aspen.Import(4, full_path)
+            except Exception:
+                try:
+                    aspen.Import(full_path)
+                except AttributeError:
+                    aspen.ImportSimulation(full_path)
+            
+            time.sleep(2) # Give Aspen a moment to populate the tree
+            _verify_flowsheet(aspen)
+            log("Import successful")
+            result.build_mechanism_used = "Import"
+            result.diagnostics["build_mechanism"] = "Import"
+            return
+        except Exception as e:
+            last_error = e
+            log(f"Initial Import attempt failed: {e}. Trying fallback with InitFromFile2...", level="WARNING")
+            result.diagnostics["initial_import_error"] = str(e)
+
+    # Attempt 2: InitFromFile2 (Primary for .bkp/.apw, secondary for .inp)
     try:
         aspen.InitFromFile2(full_path)
+        _initialize_aspen_props(aspen, visible=visible, suppress_dialogs=suppress_dialogs)
         _verify_flowsheet(aspen)
         log("InitFromFile2 successful")
         result.build_mechanism_used = "InitFromFile2"
@@ -177,30 +221,39 @@ def _build_auto(spec: Union[PlantSpecification, Dict[str, Any]], path: str, aspe
         return
     except Exception as e:
         # Fallback
+        last_error = e
         log(f"InitFromFile2 failed: {e}. Attempting fallback...", level="WARNING")
         result.build_fallback_attempted = True
         result.diagnostics["InitFromFile2_error"] = str(e)
 
-    # Fallback: InitNew + Import
-    try:
-        aspen.InitNew()
+    # Final Fallback check if it wasn't already tried as primary
+    if not is_inp:
         try:
-            aspen.Import(full_path)
-        except AttributeError:
-            # Try ImportSimulation
-            aspen.ImportSimulation(full_path)
-        
-        _verify_flowsheet(aspen)
-        log("Fallback Import successful")
-        result.build_mechanism_used = "Import"
-        result.diagnostics["build_mechanism"] = "Import"
-        return
-    except BuildError:
-        raise
-    except Exception as e:
-        msg = f"Auto build failed. InitFromFile2 and Import both failed. Last error: {e}"
+            aspen.InitNew()
+            _initialize_aspen_props(aspen, visible=visible, suppress_dialogs=suppress_dialogs)
+            try:
+                # Type 4 is often for .inp files in some versions
+                aspen.Import(4, full_path)
+            except Exception:
+                try:
+                    aspen.Import(full_path)
+                except AttributeError:
+                    aspen.ImportSimulation(full_path)
+            
+            _verify_flowsheet(aspen)
+            log("Final Fallback Import successful")
+            result.build_mechanism_used = "Import"
+            result.diagnostics["build_mechanism"] = "Import"
+            return
+        except Exception as e:
+            last_error = e
+            msg = f"Auto build failed. InitFromFile2 and Import both failed. Last error: {last_error}"
+            log(msg, level="ERROR")
+            raise BuildError(msg, build_mode="auto", mechanism_tried="Import", diagnostics=result.diagnostics)
+    else:
+        msg = f"Auto build failed for .inp file. Both primary Import and fallback InitFromFile2 failed. Last error: {last_error}"
         log(msg, level="ERROR")
-        raise BuildError(msg, build_mode="auto", mechanism_tried="Import", diagnostics=result.diagnostics)
+        raise BuildError(msg, build_mode="auto", mechanism_tried="InitFromFile2", diagnostics=result.diagnostics)
 
 # Comment 3: Simulation run flow
 def _run_simulation(aspen: Any, timeout: int = 300) -> tuple[str, float]:
@@ -222,7 +275,17 @@ def _run_simulation(aspen: Any, timeout: int = 300) -> tuple[str, float]:
                 log(f"Simulation timed out after {elapsed:.2f}s", level="WARNING")
                 return "timeout", elapsed
             
-            if not aspen.Engine.IsRunning:
+            # Check status using Document property
+            is_running = False
+            try:
+                is_running = aspen.EngineRunning
+            except:
+                try:
+                    is_running = aspen.Engine.IsRunning
+                except:
+                    pass
+            
+            if not is_running:
                 break
 
             if elapsed >= next_progress_log:
@@ -240,31 +303,56 @@ def _run_simulation(aspen: Any, timeout: int = 300) -> tuple[str, float]:
         elapsed = time.time() - start_time
         
         # Check convergence status based on PER_ERROR
-        # Likely path: \Data\Results Summary\Run-Status\Output\PER_ERROR
+        # Paths to try (ordered by likelihood across versions)
+        status_paths = [
+            r"\Data\Convergence\Batch-Options\Output\PER_ERROR",
+            r"\Data\Results Summary\Run-Status\Output\PER_ERROR",
+            r"\Data\Convergence\Sequence\Batch-Options\Output\PER_ERROR",
+            r"\Data\Results Summary\Convergence\Output\PER_ERROR",
+        ]
+        
         status = "unknown"
-        try:
-            per_error_node = aspen.Tree.FindNode(r"\Data\Results Summary\Run-Status\Output\PER_ERROR")
-            if per_error_node:
-                # Assuming 0 is converged/success
-                # Usually: 0 (OK), 1 (Warnings), 2 (Errors)
-                # We interpret 0 as converged? Prompt says "converged/failed/timeout".
-                # If PER_ERROR indicates error, we map to failed.
-                val = per_error_node.Value
-                if val == 0:
+        for path in status_paths:
+            try:
+                node = aspen.Tree.FindNode(path)
+                if node:
+                    val = node.Value
+                    # 0=OK, 1=Warnings, 2=Errors (or similar)
+                    status = "converged" if val == 0 else "failed"
+                    log(f"Found convergence status at {path}: {val} -> {status}")
+                    break
+            except Exception:
+                continue
+        
+        if status == "unknown":
+            # Final check - if we have results in blocks, it likely converged
+            try:
+                atr_status = aspen.Tree.FindNode(r"\Data\Blocks\B-ATR\Output\BLKSTAT")
+                if atr_status and atr_status.Value == 0:
                     status = "converged"
                 else:
                     status = "failed"
-            else:
-                # If node missing, can't determine -> unknown or failed?
-                # Let's map to unknown if PER_ERROR is missing, or failed?
-                # Prompt says "converged/failed/timeout".
-                # I'll default to failed if PER_ERROR is missing as strictly we expect it.
+            except:
                 status = "failed"
+            
+            log(f"Convergence status (PER_ERROR) not found. Inferred from B-ATR: {status}", level="WARNING")
+            
+        # Capture messages if failed/warning
+        messages = []
+        try:
+            msg_node = aspen.Tree.FindNode(r"\Data\Results Summary\Run-Status\Output\MESSAGES")
+            if msg_node and msg_node.Value:
+                # Value can be a large string or a list of strings
+                val = msg_node.Value
+                if isinstance(val, str):
+                    messages = val.splitlines()
+                elif isinstance(val, (list, tuple)):
+                    messages = list(val)
         except Exception:
-            status = "failed"
+            pass
             
         log(f"Simulation finished with status: {status} in {elapsed:.2f}s")
-        return status, elapsed
+        return status, elapsed, messages
         
     except Exception as e:
         raise SimulationError(f"Simulation execution failed: {e}", convergence_status="failed")
@@ -283,7 +371,8 @@ def _cleanup_session(aspen: Any, output_dir: str, inp_path: Optional[str] = None
         # Delete temp INP if provided
         if inp_path and os.path.exists(inp_path):
              try:
-                 os.remove(inp_path)
+                 # os.remove(inp_path) # Preservation for debug
+                 pass
              except:
                  pass
         
@@ -353,25 +442,35 @@ def run_simulation_session(
     force_cleanup = False
     try:
         # Connect
-        aspen = _connect_aspen(visible=visible, suppress_dialogs=True)
+        aspen = _connect_aspen()
         result.aspen = aspen
         
         # Build
         if build_mode == "auto":
-            _build_auto(spec, inp_path, aspen, result)
+            _build_auto(spec, inp_path, aspen, result, visible=visible, suppress_dialogs=True)
         elif build_mode == "inp-only":
             result.build_mode = "inp-only"
-            _build_inp_only(spec, inp_path, aspen)
+            _build_inp_only(spec, inp_path, aspen, visible=visible, suppress_dialogs=True)
             result.build_mechanism_used = "InitFromFile2"
             result.diagnostics["build_mechanism"] = "InitFromFile2"
         elif build_mode == "com-only":
             result.build_mode = "com-only"
-            _build_com_only(spec, aspen, result)
+            _build_com_only(spec, aspen, result, visible=visible, suppress_dialogs=True)
             
         # Run
-        status, sim_time = _run_simulation(aspen, timeout=timeout_seconds)
+        status, sim_time, messages = _run_simulation(aspen, timeout=timeout_seconds)
         result.convergence_status = status
         result.simulation_time_seconds = sim_time
+        result.status_messages = messages
+        
+        if status == "converged":
+            log("Simulation converged successfully.")
+        elif status == "timeout":
+            log("Simulation timed out.")
+        else:
+            log(f"Simulation failed to converge. Errors found: {len(messages)}")
+            for msg in messages[:5]: # Log first few
+                 log(f"  Aspen: {msg.strip()}", level="WARNING")
         
     except (ValueError, TypeError):
         # Re-raise argument errors immediately

@@ -1,0 +1,1124 @@
+ MMSUMMARY40.0                                                                  
+ IDSET RUNID (PROPERTIES) (114 *5)                                              
+ IDSET IT (PROPERTIES) (117 *6 119 *6 115 *1)                                   
+ LSET RUNID (%RUNID)                                                            
+ LSET IT (%IT)                                                                  
+ IDSET VERS (PROPERTIES) (345 *6 346 *6 347 *6 348 *6 355 *6)                   
+ LSET VERS (%VERS)                                                              
+ DSET RUN-STATUS VERS @VERS ( "40.0" "WIN-X64" "" "domingueza" "QUIMICAPC5" )   
+ IDSET STRNAM (PROPERTIES) (1233 *6)                                            
+ LSET STRNAM (%STRNAM)                                                          
+ IDSET ID_STRPR (PROPERTIES) ( 454 *2 <119> 1236 *2 <125> 1237 *2 <29> 1238 *2  
+ <55> 1239 *2 <55> 1083 *6 1084 *6 )                                            
+ LSET L_STRPR (%ID_STRPR)                                                       
+ IDSET ID_GUID (PROPERTIES) ( 1270 *6 )                                         
+ LSET L_GUID (%ID_GUID)                                                         
+ DSET RUN-STATUS RUNID @RUNID ("MethanolPlant_v14_final")                       
+ DSET RUN-STATUS IT @IT ( "MARCH 12, 2026      2:54:20 P.M."                    
+ "C:\Users\domingueza\ASPEN_PY\MethanolPlant_v14_final.inp" 0)                  
+ DSET RUN-STATUS CURRENCY @CURRENCY ( "$" )                                     
+ IDSET ID_NCC (COMPONENTS) (CH4 H2O O2 CO CO2 H2 CH3OH N2)                      
+ IDSET ID_NCCNS (COMPONENTS) (CH4 H2O O2 CO CO2 H2 CH3OH N2)                    
+ IDSET ALIAS (COMPONENTS) (1 *6)                                                
+ LSET ALIAS ( %ID_NCC & %ALIAS)                                                 
+ IDSET STATUS (PROPERTIES) (125 *1 126 *1 127 *1 128 *1 129 *1 130 *1)          
+ LSET STATUS (%STATUS)                                                          
+ IDSET PPSTAT (PROPERTIES) (272 *1)                                             
+ LSET PPSTAT (%PPSTAT)                                                          
+ DSET RUN-STATUS PPSTAT @PPSTAT (2)                                             
+ IDSET IDRXBAL0 (PROPERTIES) ( 73 *2 <11> 74 *2 75 *2 <10> 76 *2 77 *2 <13> 78  
+ *2)                                                                            
+ IDSET ID_RXBAL (PROPERTIES) ( 73 *2 <11> 358 *2 <11> 359 *2 <11> 74 *2 75 *2   
+ <10> 360 *2 <10> 361 *2 <10> 76 *2 362 *2 <10> 363 *2 <10> 364 *2 <10> 365 *2  
+ 366 *2 <11> 367 *2 <11> 368 *2 <11> 369 *2 370 *2 <10> 371 *2 <10> 372 *2 <10> 
+ 373 *2 77 *2 <13> 374 *2 <13> 375 *2 <13> 78 *2 1266 *2 <10> 1267 *2 <10> 1262 
+ *2 <10> 1263 *2 <10> 1264 *2 <10> )                                            
+ IDSET ID_MOLE (PROPERTIES) ( 79 *2 <11> 80 *2)                                 
+ LSET FLWBAL ( %ID_NCCNS & %ID_MOLE %IDRXBAL0)                                  
+ IDSET ID_XY (PROPERTIES) (43 *2 36 *2 39 *2 40 *2)                             
+ IDSET ID_XX (PROPERTIES) (43 *2 37 *2 38 *2 40 *2)                             
+ IDSET ID_XXY (PROPERTIES) (43 *2 37 *2 38 *2 39 *2 41 *2 42 *2)                
+ LSET VLE ( %ID_XY & %ID_NCC)                                                   
+ LSET LLE ( %ID_XX & %ID_NCC)                                                   
+ LSET VLE3 ( %ID_XXY & %ID_NCC)                                                 
+ IDSET ID_KODE (PROPERTIES) (44 *1)                                             
+ IDSET BLKIN (BLKIN) (STREAMID ?)                                               
+ LSET BLKIN (%BLKIN)                                                            
+ IDSET BLKOUT (BLKOUT) (STREAMID ?)                                             
+ LSET BLKOUT (%BLKOUT)                                                          
+ IDSET TYPIN (TYPIN) (STREAMID ?)                                               
+ LSET TYPIN (%TYPIN)                                                            
+ IDSET TYPOUT (TYPOUT) (STREAMID ?)                                             
+ LSET TYPOUT (%TYPOUT)                                                          
+ IDSET PORT_NO (PROPERTIES) (236 *1 237 *1 238 *1)                              
+ IDSET IDS_0 (SUBSTREAM) ($TOTAL)                                               
+ IDSET IDS_1 (SUBSTREAM) (MIXED)                                                
+ IDSET BLKSTAT (PROPERTIES) (120 *1 121 *1)                                     
+ IDSET BLKMSG (PROPERTIES) (122 *6)                                             
+ LSET BLKSTAT (%BLKSTAT)                                                        
+ LSET BLKMSG (%BLKMSG)                                                          
+ IDSET DESC (PROPERTIES) (113 *6)                                               
+ LSET DESC (%DESC)                                                              
+ IDSET IDPH_V (PHASE) (VAPOR)                                                   
+ IDSET IDPH_L (PHASE) (LIQUID)                                                  
+ IDSET IDPH_S (PHASE) (SOLID)                                                   
+ IDSET IDPH_L1 (PHASE) (LIQUID_1)                                               
+ IDSET IDPH_T (PHASE) (TOTAL)                                                   
+ IDSET IDPH_L2 (PHASE) (LIQUID_2)                                               
+ IDSET IDWET (BASIS) (WET)                                                      
+ IDSET IDDRY (BASIS) (DRY)                                                      
+ IDSET SP (PROPERTIES) (118 *6)                                                 
+ LSET SP (%SP)                                                                  
+ IDSET SPSTAT (SPSTAT) (116 *1)                                                 
+ LSET SPSTAT ( %SPSTAT)                                                         
+ IDSET IDERR (PROPERTIES) (131 *1)                                              
+ DSET RUN-STATUS SP @SP ( "MARCH 12, 2026 2:54:22 P.M." )                       
+ IDSET TITLE (PROPERTIES) (113 *6)                                              
+ LSET TITLE (%TITLE)                                                            
+ DSET RUN-STATUS TITLE @TITLE ( "METHANOL PLANT 10K TPD" )                      
+ IDSET FOR (PROPERTIES) (737 *1)                                                
+ LSET FOR (%FOR)                                                                
+ IDSET FORSTAT (PROPERTIES) (738 *1)                                            
+ LSET FORSTAT (%FORSTAT)                                                        
+ IDSET MW (PROPERTIES) (269 *2)                                                 
+ LSET MW (%MW & %ID_NCCNS)                                                      
+ DSET MW MW @MW (1.60427600D+01 1.80152800D+01 3.19988000D+01 2.80104000D+01    
+ 4.40098000D+01 2.01588000D+00 3.20421600D+01 2.80134800D+01)                   
+ IDSET VST (PROPERTIES) (270 *2 <43> )                                          
+ LSET VST (%VST & %ID_NCCNS)                                                    
+ DSET VST VST @VST (5.35578000D+01 <3> 1.80500000D+01 <3> 5.35578000D+01 <3>    
+ 5.35578000D+01 <3> 5.35578000D+01 <3> 5.35578000D+01 <3> 4.03346000D+01 <3>    
+ 5.35578000D+01 <3> )                                                           
+ IDSET TB (PROPERTIES) (271 *2 <22> )                                           
+ LSET TB (%TB & %ID_NCC)                                                        
+ DSET TB TB @TB (-1.61490000D+02 <4> 1.00000000D+02 <4> -1.82962000D+02 <4>     
+ -1.91450000D+02 <4> -7.84500000D+01 <4> -2.52760000D+02 <4> 6.47000000D+01 <4> 
+ -1.95806000D+02 <4> )                                                          
+ IDSET CASN (PROPERTIES) (37100 *6)                                             
+ LSET CASN (%ID_NCC & %CASN)                                                    
+ DSET CASN CASN @CASN ( "74-82-8" "7732-18-5" "7782-44-7" "630-08-0" "124-38-9" 
+ "1333-74-0" "67-56-1" "7727-37-9" )                                            
+ IDSET PAMB (PROPERTIES) (32 *2)                                                
+ LSET PAMB (%PAMB)                                                              
+ DSET PAMB PAMB @PAMB (1.01325000D+05)                                          
+ IDSET PAMB2 (PROPERTIES) (32 *2 <20> )                                         
+ LSET PAMB2 (%PAMB2)                                                            
+ DSET RUN-STATUS PAMB @PAMB2 (1.01325000D+00 <5> )                              
+ IDSET ISODES (PROPERTIES) (123 *5 124 *5 132 *5 1269 *5)                       
+ IDSET ISODESHW (PROPERTIES) (123 *5 124 *5 132 *5)                             
+ IDSET ISTRCV (PROPERTIES) (1251 *2)                                            
+ IDSET ID_WORK (PROPERTIES) (112 *2 <19> 195 *2 <28> )                          
+ LSET L_WORK (%ISODESHW %ID_WORK)                                               
+ IDSET ID_POWER (PROPERTIES) (112 *2 <47> 195 *2 <114> )                        
+ LSET L_POWER (%ISODESHW %ID_POWER)                                             
+ IDSET ID_HEAT (PROPERTIES) (1 *2 <13> 815 *2 <22> 816 *2 <22> )                
+ LSET L_HEAT (%ISODESHW %ID_HEAT)                                               
+ IDSET ID_LTVC (PROPERTIES) (817 *2 <22> )                                      
+ IDSET ID_LQVC (PROPERTIES) (818 *2 <13> )                                      
+ IDSET ID_TPQV (PROPERTIES) (1 *2 <13> 31 *2 <22> 32 *2 <20> 2 *2 3 *2)         
+ IDSET ID_QTP (PROPERTIES) (1 *2 <13> 31 *2 <22> 32 *2 <20> 3 *2)               
+ IDSET TOTAL (PROPERTIES) (524 *2 <10> 525 *2 <10> 526 *2 <10> )                
+ IDSET ENERGY (PROPERTIES) (504 *2 <13> 505 *2 <13> 506 *2 <13> 1 *2 <13> )     
+ IDSET TOTAX (PROPERTIES) (524 *2 <18> 525 *2 <18> 526 *2 <18> )                
+ IDSET ENERGX (PROPERTIES) (504 *2 <5> 505 *2 <5> 506 *2 <5> 1 *2 <5> )         
+ LSET BPSBAL3 ( %TOTAL %ENERGY)                                                 
+ LSET BPBATCH ( %TOTAX %ENERGX)                                                 
+ IDSET ID_1 (NPOINT) (#1)                                                       
+ IDSET ID_2 (PROPERTIES) (263 *5 241 *2 41151 *2 256 *2 257 *6 126 *6 258 *5 )  
+ LSET L_1 (%ID_2 & %ID_1)                                                       
+ DSET CONV-SUM TEAR-SUMMARY CNV_TEAR @L_1 ("RECYCLE" 2.87743133D-07             
+ 8.46555145D-05 8.46555145D-01 "CO MOLEFLOW" "#" "$OLVER01" )                   
+ DSET CONV-SUM TEAR-SUMMARY COMPSTAT @L_1 (0)                                   
+ DSET RUN-STATUS FORSTAT @FORSTAT (2)                                           
+ IDSET ID_3 (PROPERTIES) (131 *6 265 *1 266 *1 )                                
+ LSET L_2 (%ID_3)                                                               
+ DSET CONVERGENCE WEGSTEIN $OLVER01 OPT_STAT @L_2 ("CONVERGED WITH WARNINGS" 27 
+ * )                                                                            
+ IDSET ID_4 (NPOINT) (#11)                                                      
+ IDSET ID_5 (PROPERTIES) (257 *6 262 *6 260 *2 261 *2 256 *2 126 *6 850 *1 263  
+ *6 133 *5 339 *5 253 *5 347 *5 )                                               
+ LSET L_3 (%ID_5 & %ID_4)                                                       
+ DSET CONVERGENCE WEGSTEIN $OLVER01 CONV_PLT @L_3 ("TOTAL MOLEFLOW" "KMOL/HR"   
+ 2.61768716D+05 2.61766811D+05 7.27757232D-02 "" 1 "RECYCLE" "MIXED" "" "" ""   
+ "MOLE-FLOW" "KMOL/HR" 1.82463447D+05 1.82462181D+05 6.94034620D-02 "" 2        
+ "RECYCLE" "MIXED" "CH4" "" "" "MOLE-FLOW" "KMOL/HR" 4.44703058D+02             
+ 4.44676893D+02 5.88424248D-01 "" 3 "RECYCLE" "MIXED" "H2O" "" "" "MOLE-FLOW"   
+ "KMOL/HR" 0.D0 0.D0 0.D0 "" 4 "RECYCLE" "MIXED" "O2" "" "" "MOLE-FLOW"         
+ "KMOL/HR" 1.22373950D+01 1.22363591D+01 8.46555145D-01 "" 5 "RECYCLE" "MIXED"  
+ "CO" "" "" "MOLE-FLOW" "KMOL/HR" 7.79759037D+04 7.79752999D+04 7.74388736D-02  
+ "" 6 "RECYCLE" "MIXED" "CO2" "" "" "MOLE-FLOW" "KMOL/HR" 8.82560847D+01        
+ 8.82534381D+01 2.99894167D-01 "" 7 "RECYCLE" "MIXED" "H2" "" "" "MOLE-FLOW"    
+ "KMOL/HR" 1.76668442D-05 1.76659279D-05 5.18686380D-01 "" 8 "RECYCLE" "MIXED"  
+ "CH3OH" "" "" "MOLE-FLOW" "KMOL/HR" 7.84168850D+02 7.84163854D+02              
+ 6.37091829D-02 "" 9 "RECYCLE" "MIXED" "N2" "" "" "PRESSURE" "BAR"              
+ 8.00000000D+01 8.00000000D+01 0.D0 "" 10 "RECYCLE" "MIXED" "" "" ""            
+ "MASS ENTHALPY" "CAL/GM" -1.67033345D+03 -1.67033178D+03 -9.99502223D-03 "" 11 
+ "RECYCLE" "MIXED" "" "" "" )                                                   
+ DSET CONVERGENCE WEGSTEIN $OLVER01 COMPSTAT @L_1 (2)                           
+ DSET CONVERGENCE WEGSTEIN $OLVER01 BLKSTAT @BLKSTAT (2 0)                      
+ IDSET ID_6 (NPOINT) (#27)                                                      
+ IDSET ID_7 (PROPERTIES) (222 *1 256 *2 263 *6 257 *6 850 *1 133 *5 339 *5      
+ 41140 *5 41141 *5 )                                                            
+ LSET L_4 (%ID_7 & %ID_6)                                                       
+ DSET CONVERGENCE WEGSTEIN $OLVER01 CONV_HIS_TS @L_4 (1 4.26991290D+04          
+ "RECYCLE" "MOLE-FLOW" 2 "MIXED" "CH4" "" "" 2 1.67590703D+04 "RECYCLE"         
+ "MOLE-FLOW" 5 "MIXED" "CO" "" "" 3 3.03880626D+03 "RECYCLE" "MOLE-FLOW" 5      
+ "MIXED" "CO" "" "" 4 1.03063243D+04 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 
+ 5 4.99655741D+03 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 6 -5.33463117D+03  
+ "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 7 3.84906257D+03 "RECYCLE"          
+ "MOLE-FLOW" 5 "MIXED" "CO" "" "" 8 9.26571385D+02 "RECYCLE" "MOLE-FLOW" 5      
+ "MIXED" "CO" "" "" 9 1.78589021D+02 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 
+ 10 2.57053400D+02 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 11 2.82980817D+02 
+ "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 12 -7.27623233D+02 "RECYCLE"        
+ "MOLE-FLOW" 3 "MIXED" "H2O" "" "" 13 1.95069173D+02 "RECYCLE" "MOLE-FLOW" 3    
+ "MIXED" "H2O" "" "" 14 1.48222425D+02 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" ""  
+ "" 15 -6.85247047D+01 "RECYCLE" "MOLE-FLOW" 7 "MIXED" "H2" "" "" 16            
+ 2.95245961D+01 "RECYCLE" "MOLE-FLOW" 7 "MIXED" "H2" "" "" 17 3.30910763D+01    
+ "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 18 2.17939442D+01 "RECYCLE"         
+ "MOLE-FLOW" 5 "MIXED" "CO" "" "" 19 -2.79268254D+01 "RECYCLE" "MOLE-FLOW" 5    
+ "MIXED" "CO" "" "" 20 1.98651665D+01 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" ""   
+ "" 21 7.26489544D+00 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 22             
+ 2.17263691D+00 "RECYCLE" "MOLE-FLOW" 7 "MIXED" "H2" "" "" 23 2.95403464D+00    
+ "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" 24 2.56279218D+00 "RECYCLE"         
+ "MOLE-FLOW" 5 "MIXED" "CO" "" "" 25 -1.12398952D+01 "RECYCLE" "MOLE-FLOW" 5    
+ "MIXED" "CO" "" "" 26 2.78819203D+00 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" ""   
+ "" 27 8.46555145D-01 "RECYCLE" "MOLE-FLOW" 5 "MIXED" "CO" "" "" )              
+ IDSET ID_8 (NPOINT) (#27)                                                      
+ IDSET ID_9 (NCOL) (#1)                                                         
+ IDSET ID_10 (PROPERTIES) (106 *6 107 *6 108 *6 109 *6 110 *6 111 *6 )          
+ IDSET ID_11 (PROPERTIES) (260 *2)                                              
+ IDSET ID_12 (PROPERTIES) (131 *1 )                                             
+ LSET L_5 ((%ID_12 & %ID_8) (%ID_10 & %ID_9) (%ID_11 & %ID_9 & %ID_8) )         
+ DSET CONVERGENCE WEGSTEIN $OLVER01 IHMXET @L_5 ( 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+ 1 1 1 1 1 1 1 1 1 1 1 1 "MAXIMUM" "ERR/TOL" * * * * 4.26991290D+04             
+ 1.67590703D+04 3.03880626D+03 1.03063243D+04 4.99655741D+03 -5.33463117D+03    
+ 3.84906257D+03 9.26571385D+02 1.78589021D+02 2.57053400D+02 2.82980817D+02     
+ -7.27623233D+02 1.95069173D+02 1.48222425D+02 -6.85247047D+01 2.95245961D+01   
+ 3.30910763D+01 2.17939442D+01 -2.79268254D+01 1.98651665D+01 7.26489544D+00    
+ 2.17263691D+00 2.95403464D+00 2.56279218D+00 -1.12398952D+01 2.78819203D+00    
+ 8.46555145D-01 )                                                               
+ IDSET ID_13 (NPOINTS) ( #6)                                                    
+ IDSET ID_14 (PROPERTIES) (747 *6)                                              
+ LSET L_6 (%ID_14 & %ID_13)                                                     
+ DSET CONVERGENCE WEGSTEIN $OLVER01 ERRTXT @L_6 (                               
+ "*  WARNING"                                                                   
+ "   STREAMS CROSSING THE LOOP CONVERGED BY $OLVER01 ARE NOT IN MASS BALANCE:"  
+ "   MASS INLET FLOW = 0.12956700E+03, MASS OUTLET FLOW = 0.12955380E+03"       
+ "   RELATIVE DIFFERENCE = 0.10192242E-03"                                      
+ "   IMBALANCE MAY BE DUE TO A LARGE RECYCLE FLOW, AND A"                       
+ "   RELATIVELY LOOSE TEAR STREAM TOLERANCE."                                   
+ )                                                                              
+ DSET FLWBAL @FLWBAL (4.10968794D+03 <3> -8.21213242D+03 <3> 8.21417305D+03 <3> 
+ -6.50402692D-01 <3> -4.10716209D+03 <3> -4.67348253D+00 <3> -4.23158414D-03 <3>
+ 4.99584383D-03 <3> 2.99685170D-01 -4.99061989D-01 1.00000000D+00               
+ -1.00000000D+00 -1.00000000D+00 -1.00000000D+00 -1.00000000D+00 1.21031407D-04 
+ -7.56641193D-01 <3> 6.30541358D-05 4.75359703D+01 <3> 7.51556843D-05           
+ 2.75041775D+08 <3> 5.85570551D-01)                                             
+ DSET ALIAS @ALIAS ( "CH4" "H2O" "O2" "CO" "CO2" "H2" "CH4O" "N2" )             
+ IDSET ID_15 (NPOINT) (#8)                                                      
+ IDSET ID_16 (PROPERTIES) (339 *6 132 *5 1196 *6 1197 *6 1198 *6)               
+ LSET L_7 (%ID_16 & %ID_15)                                                     
+ DSET COMPONENTS MAIN COMPS @L_7 ("CH4" C "CH4" "METHANE" "CH4" "H2O" C "H2O"   
+ "WATER" "H2O" "O2" C "O2" "OXYGEN" "O2" "CO" C "CO" "CARBON-MONOXIDE" "CO"     
+ "CO2" C "CO2" "CARBON-DIOXIDE" "CO2" "H2" C "H2" "HYDROGEN" "H2" "CH3OH" C     
+ "CH4O" "METHANOL" "CH3OH" "N2" C "N2" "NITROGEN" "N2" )                        
+ IDSET ID_17 (PROPERTIES) (1 *2 <13> 31 *2 <22> 32 *2 <20> 2 *2 145 *1 137 *1   
+ 1052 *2 <13> )                                                                 
+ LSET L_8 (%ID_RXBAL %ID_17)                                                    
+ DSET BLOCK RGIBBS B-ATR BLKSTAT @BLKSTAT (0 0)                                 
+ DSET BLOCK RGIBBS B-ATR COMPSTAT @L1 (0)                                       
+ DSET BLOCK RGIBBS B-ATR SYNCSTAT @L1 (0)                                       
+ DSET BLOCK RGIBBS B-ATR BLKIN @BLKIN (1 ATR-IN                                 
+ "1666ff94-b5b3-4ee4-a5c7-e70e00eb1ad3" * )                                     
+ DSET BLOCK RGIBBS B-ATR TYPIN @TYPIN (1 MATERIAL)                              
+ DSET BLOCK RGIBBS B-ATR BLKOUT @BLKOUT (1 HOT-SYN                              
+ "1666ff94-b5b3-4ee4-a5c7-e70e00eb1ad3" * )                                     
+ DSET BLOCK RGIBBS B-ATR TYPOUT @TYPOUT (1 MATERIAL)                            
+ DSET BLOCK RGIBBS B-ATR RES_Q @L_8 (3.02118040D+04 <3> 4.79191922D+04 <3>      
+ 1.77073882D+04 <3> -1.51838069D-16 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 
+ 2.20867014D-15 * <3> * <3> * <3> * 3.02118040D+04 <3> 4.79191922D+04 <3>       
+ 1.77073882D+04 <3> -1.51838069D-16 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 
+ 2.20867014D-15 -1.94657007D+08 <3> -1.89282375D+08 <3> * <3> -2.76107824D-02   
+ 6.13800000D+06 <3> 4.43035220D+05 <3> -5.69496478D+06 <3> 0.D0 <3>             
+ -5.69496478D+06 <3> 5.37463228D+06 <3> 1.00000000D+03 <4> 3.00000000D+01 <5>   
+ 1.00000000D+00 1 0 5.37463228D+06 <3> )                                        
+ IDSET ID_18 (ATOM_NUM) (H C N O)                                               
+ IDSET ID_19 (COMPONENTS) (CH4 H2O O2 CO CO2 H2 CH3OH N2)                       
+ IDSET ID_20 (PROPERTIES) (147 *2)                                              
+ LSET L_9 (( %ID_20 & %ID_18) & %ID_19)                                         
+ DSET BLOCK RGIBBS B-ATR RGIB_ATM @L_9 ( 4.00000000D+00 1.00000000D+00 0.D0     
+ 0.D0 2.00000000D+00 0.D0 0.D0 1.00000000D+00 0.D0 0.D0 0.D0 2.00000000D+00     
+ 0.D0 1.00000000D+00 0.D0 1.00000000D+00 0.D0 1.00000000D+00 0.D0               
+ 2.00000000D+00 2.00000000D+00 0.D0 0.D0 0.D0 4.00000000D+00 1.00000000D+00     
+ 0.D0 1.00000000D+00 0.D0 0.D0 2.00000000D+00 0.D0 )                            
+ IDSET ID_21 (PHASE) (VAPOR)                                                    
+ IDSET ID_22 (PROPERTIES) (133 *5)                                              
+ IDSET ID_23 (PROPERTIES) (139 *2)                                              
+ IDSET ID_24 (PROPERTIES) (140 *5)                                              
+ IDSET ID_25 (COMPONENTS) (CH4 H2O O2 CO CO2 H2 CH3OH N2)                       
+ IDSET ID_26 (PROPERTIES) (8002 *2)                                             
+ IDSET ID_27 (PROPERTIES) (8001 *2 <11> )                                       
+ LSET L_10 (( %ID_22 %ID_23 %ID_24 ( %ID_25 & %ID_26) %ID_27 ) & %ID_21)        
+ DSET BLOCK RGIBBS B-ATR RGIB_TAB @L_10 ( VAPOR 1.00000000D+00 HOT-SYN          
+ 1.57048848D-02 1.94027499D-01 1.33857068D-17 2.20117622D-01 5.03539791D-02     
+ 5.18934516D-01 1.05647082D-07 8.61392892D-04 4.79191922D+04 <3> )              
+ IDSET ID_28 (PROPERTIES) (22 *2 <19> 18 *2 <19> 16 *2 <19> 30 *2 23 *2 <22> 24 
+ *2 <20> 25 *2 <22> 27 *2 <39> 28 *2 <12> 29 *2 2 *2 183 *2 <20> 30103 *2 30104 
+ *2 30105 *2 112 *2 <19> 298 *2 <75> 142 *2 549 *2 132 *1)                      
+ LSET L_11 (%ID_RXBAL %ID_28 %ID_KODE)                                          
+ DSET BLOCK COMPR B-COMP BLKSTAT @BLKSTAT (0 0)                                 
+ DSET BLOCK COMPR B-COMP COMPSTAT @L1 (0)                                       
+ DSET BLOCK COMPR B-COMP SYNCSTAT @L1 (0)                                       
+ DSET BLOCK COMPR B-COMP BLKIN @BLKIN (1 DRY-GAS                                
+ "82867aeb-bd6b-4383-ba0e-6870dc12c7f2" * )                                     
+ DSET BLOCK COMPR B-COMP TYPIN @TYPIN (1 MATERIAL)                              
+ DSET BLOCK COMPR B-COMP BLKOUT @BLKOUT (1 HP-GAS                               
+ "82867aeb-bd6b-4383-ba0e-6870dc12c7f2" * )                                     
+ DSET BLOCK COMPR B-COMP TYPOUT @TYPOUT (1 MATERIAL)                            
+ DSET BLOCK COMPR B-COMP RES_W @L_11 (3.87020691D+04 <3> 3.87020691D+04 <3>     
+ 0.D0 <3> 0.D0 4.66441199D+05 <3> 4.66441199D+05 <3> * <3> 4.99163976D-16 * <3> 
+ * <3> * <3> * 3.87020691D+04 <3> 3.87020691D+04 <3> 0.D0 <3> 0.D0              
+ 4.66441199D+05 <3> 4.66441199D+05 <3> * <3> 4.99163976D-16 -1.44284201D+08 <3> 
+ -1.35173996D+08 <3> * <3> -6.31406985D-02 4.43015915D+05 <3> 4.43015915D+05 <3>
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> 3.81426072D+04 <3> 3.81426072D+04 <3>               
+ 3.81426072D+04 <3> 8.50000000D-01 1.55086392D+02 <4> 8.00000000D+01 <5>        
+ 1.37970968D+02 <4> -1.36540526D+05 <3> * <3> * 1.00000000D+00 3.00000000D+01   
+ <5> * 8.50000000D-01 1.00000000D+00 0.D0 <3> 5.00000000D+01 <5> 2.66666667D+00 
+ 5.00000000D-01 4 0)                                                            
+ IDSET ID_29 (PROPERTIES) (30119 *2 <33> 92 *2 <12> 19 *2 <12> 30111 *2 30112   
+ *2 <19> 30113 *2 30114 *2 30115 *2 30116 *2 30117 *2 30118 *2 400 *2 <33> 58   
+ *1 )                                                                           
+ LSET L_12 ( %ID_29)                                                            
+ DSET BLOCK COMPR B-COMP RES_PARA @L_12 ( 2.55160958D+04 <3> 5.68141141D+05 <3> 
+ 2.98586670D+05 <3> 1.40510079D+00 3.24212161D+04 <3> 1.01488045D+00            
+ 1.04007975D+00 1.43522670D+00 1.38413201D+00 1.52466122D+00 1.46866739D+00 *   
+ <3> *)                                                                         
+ IDSET ID_30 (PROPERTIES) (837 *1 182 *2 <22> 183 *2 <20> 184 *2 836 *2 1052 *2 
+ <13> 173 *2 <31> 1165 *2 <31> 1166 *2 <31> )                                   
+ IDSET ID_31 (PROPERTIES) (298 *2 <75> )                                        
+ LSET L_13 (%ID_RXBAL %ID_TPQV %ID_30 %ID_KODE %ID_31)                          
+ DSET BLOCK HEATER B-COOL BLKSTAT @BLKSTAT (0 0)                                
+ DSET BLOCK HEATER B-COOL COMPSTAT @L1 (0)                                      
+ DSET BLOCK HEATER B-COOL SYNCSTAT @L1 (0)                                      
+ DSET BLOCK HEATER B-COOL BLKIN @BLKIN (1 HOT-SYN                               
+ "4b3728d5-2804-41d5-a3e6-c4a62e7e0715" * )                                     
+ DSET BLOCK HEATER B-COOL TYPIN @TYPIN (1 MATERIAL)                             
+ DSET BLOCK HEATER B-COOL BLKOUT @BLKOUT (1 COLD-SYN                            
+ "4b3728d5-2804-41d5-a3e6-c4a62e7e0715" * )                                     
+ DSET BLOCK HEATER B-COOL TYPOUT @TYPOUT (1 MATERIAL)                           
+ DSET BLOCK HEATER B-COOL RES_Q @L_13 (4.79191922D+04 <3> 4.79191922D+04 <3>    
+ 0.D0 <3> 0.D0 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 1.84055845D-16 * <3> 
+ * <3> * <3> * 4.79191922D+04 <3> 4.79191922D+04 <3> 0.D0 <3> 0.D0              
+ 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 1.84055845D-16 -1.89282375D+08 <3> 
+ -3.20212546D+08 <3> * <3> 4.08885200D-01 4.43035220D+05 <3> 4.43035220D+05 <3> 
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> -1.30930171D+08 <3> 4.00000000D+01 <4>              
+ 3.00000000D+01 <5> 8.07652786D-01 1.00000000D+00 1 * <4> 3.00000000D+01 <5> *  
+ * -1.30930171D+08 <3> * <1> * <1> * <1> 11 0.D0 <5> )                          
+ IDSET ID_32 (PROPERTIES) (1051 *2 )                                            
+ LSET L_14 (%ID_32 )                                                            
+ DSET BLOCK HEATER B-COOL HTR_RES @L_14 ( *)                                    
+ IDSET ID_33 (COMPONENTS) ( CH4 H2O CO CO2 H2 CH3OH N2 )                        
+ LSET L_15 ( %ID_XY & %ID_33)                                                   
+ DSET BLOCK HEATER B-COOL VLE @L_15 ( 1.57048848D-02 5.39100904D-07             
+ 1.94449662D-02 3.60692539D+04 1.94027499D-01 9.99953125D-01 2.09161897D-03     
+ 2.09171727D-03 2.20117622D-01 6.86438338D-07 2.72539752D-01 3.97034587D+05     
+ 5.03539791D-02 4.21081898D-05 6.23360441D-02 1.48037826D+03 5.18934516D-01     
+ 3.07972184D-06 6.42521060D-01 2.08629575D+05 1.05647082D-07 4.57989859D-07     
+ 2.17345986D-08 4.74565153D-02 8.61392892D-04 3.31756493D-09 1.06653783D-03     
+ 3.21482141D+05 )                                                               
+ IDSET ID_34 (PROPERTIES) (68 *2 )                                              
+ IDSET ID_35 (PROPERTIES) (1 *2 <13> )                                          
+ IDSET ID_36 (PROPERTIES) (7001 *2 <22> 7002 *2 <20> 7003 *2 298 *2 <75> 173 *2 
+ <31> )                                                                         
+ IDSET ID_37 (STREAMID) (MEOH-PRO WASTE-H2)                                     
+ LSET L_16 (%ID_RXBAL %ID_35 (( %ID_NCCNS & %IDS_1) & %ID_37) & %ID_34          
+ %ID_36 & %ID_37)                                                               
+ DSET BLOCK SEP B-DIST BLKSTAT @BLKSTAT (0 0)                                   
+ DSET BLOCK SEP B-DIST COMPSTAT @L1 (0)                                         
+ DSET BLOCK SEP B-DIST SYNCSTAT @L1 (0)                                         
+ DSET BLOCK SEP B-DIST BLKIN @BLKIN (1 CRUDE-ME                                 
+ "f8dbaf7f-78a8-4cf5-a1fc-39ec55ba39b3" * )                                     
+ DSET BLOCK SEP B-DIST TYPIN @TYPIN (1 MATERIAL)                                
+ DSET BLOCK SEP B-DIST BLKOUT @BLKOUT (2 MEOH-PRO WASTE-H2                      
+ "f8dbaf7f-78a8-4cf5-a1fc-39ec55ba39b3" * * )                                   
+ DSET BLOCK SEP B-DIST TYPOUT @TYPOUT (2 MATERIAL MATERIAL)                     
+ DSET BLOCK SEP B-DIST SEP_RES @L_16 (7.21813666D+03 <3> 7.21813666D+03 <3>     
+ 0.D0 <3> 0.D0 1.30108365D+05 <3> 1.30108365D+05 <3> * <3> -1.11844578D-16 * <3>
+ * <3> * <3> * 7.21813666D+03 <3> 7.21813666D+03 <3> 0.D0 <3> 0.D0              
+ 1.30108365D+05 <3> 1.30108365D+05 <3> * <3> -1.11844578D-16 -1.37740274D+08 <3>
+ -1.37740275D+08 <3> * <3> 7.09540534D-09 2.65012711D+02 <3> 2.65012711D+02 <3> 
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> -9.77323101D-01 <3> 0.D0 1.00000000D-03 0.D0 0.D0   
+ 0.D0 0.D0 0.D0 0.D0 1.00000000D+00 9.99000000D-01 0.D0 1.00000000D+00          
+ 1.00000000D+00 1.00000000D+00 1.00000000D+00 1.00000000D+00 4.00000000D+01 <4> 
+ 8.00000000D+01 <5> 0.D0 0.D0 <5> 0.D0 <1> 4.00000000D+01 <4> 8.00000000D+01 <5>
+ 8.54670733D-08 0.D0 <5> 0.D0 <1> )                                             
+ IDSET ID_38 (PROPERTIES) (68 *2 8001 *2 <11> 8003 *2 <10> 8010 *2 <12> )       
+ IDSET ID_39 (PROPERTIES) (7001 *2 <22> 7002 *2 <20> 7003 *2 173 *2 <31> 31 *2  
+ <22> 32 *2 <20> )                                                              
+ IDSET ID_40 (PROPERTIES) (183 *2 <20> )                                        
+ IDSET ID_41 (STREAMID) (MEOH-PRO WASTE-H2)                                     
+ LSET L_17 ( ( ( %ID_NCCNS & %IDS_1) & %ID_41) & %ID_38 %ID_39 & %ID_41         
+ %ID_40)                                                                        
+ DSET BLOCK SEP B-DIST SEP_INR @L_17 ( * 1.00000000D-03 * * * * * * * * * * * * 
+ * * * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> *  
+ <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> *  
+ <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> *  
+ <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * <1> * * <1>  
+ * <1> * <1> * <1> * <1> * * <1> * <1> * <1> * <1> )                            
+ IDSET ID_42 (PROPERTIES) (1052 *2 <13> )                                       
+ IDSET ID_43 (PROPERTIES) (298 *2 <75> )                                        
+ IDSET ID_44 (PROPERTIES) (7007 *2 )                                            
+ LSET L_18 (%ID_RXBAL %ID_TPQV %ID_42 %ID_KODE %ID_43 %ID_44)                   
+ DSET BLOCK FLASH2 B-FLASH BLKSTAT @BLKSTAT (0 0)                               
+ DSET BLOCK FLASH2 B-FLASH COMPSTAT @L1 (0)                                     
+ DSET BLOCK FLASH2 B-FLASH SYNCSTAT @L1 (0)                                     
+ DSET BLOCK FLASH2 B-FLASH BLKIN @BLKIN (1 COLD-SYN                             
+ "a45550d8-bdf6-4970-b20c-2cbb555936e2" * )                                     
+ DSET BLOCK FLASH2 B-FLASH TYPIN @TYPIN (1 MATERIAL)                            
+ DSET BLOCK FLASH2 B-FLASH BLKOUT @BLKOUT (2 DRY-GAS WATER-DR                   
+ "a45550d8-bdf6-4970-b20c-2cbb555936e2" * * )                                   
+ DSET BLOCK FLASH2 B-FLASH TYPOUT @TYPOUT (2 MATERIAL MATERIAL)                 
+ DSET BLOCK FLASH2 B-FLASH RES_Q @L_18 (4.79191922D+04 <3> 4.79191922D+04 <3>   
+ 0.D0 <3> 0.D0 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 2.42953715D-14 * <3> 
+ * <3> * <3> * 4.79191922D+04 <3> 4.79191922D+04 <3> 0.D0 <3> 0.D0              
+ 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 2.42953715D-14 -3.20212546D+08 <3> 
+ -3.20212546D+08 <3> * <3> 0.D0 4.43035220D+05 <3> 4.43035220D+05 <3> 0.D0 <3>  
+ 0.D0 <3> 0.D0 <3> 4.73745267D-08 <3> 4.00000000D+01 <4> 3.00000000D+01 <5>     
+ 8.07652786D-01 1.00000000D+00 4.73745267D-08 <3> 11 0.D0 <5> 7.37456441D-01)   
+ IDSET ID_45 (PROPERTIES) (1 *2 <13> 31 *2 <22> 32 *2 <20> 2 *2 7001 *2 <22>    
+ 7002 *2 <20> 899 *2 )                                                          
+ LSET L_19 ( %ID_45 )                                                           
+ DSET BLOCK FLASH2 B-FLASH FLS2_INR @L_19 ( * <1> 3.13150000D+02 <1> 0.D0 <1> * 
+ * <1> * <1> 0.D0 )                                                             
+ IDSET ID_46 (COMPONENTS) ( CH4 H2O CO CO2 H2 CH3OH N2 )                        
+ LSET L_20 ( %ID_XY & %ID_46)                                                   
+ DSET BLOCK FLASH2 B-FLASH VLE @L_20 ( 1.57048848D-02 5.39100904D-07            
+ 1.94449662D-02 3.60692539D+04 1.94027499D-01 9.99953125D-01 2.09161897D-03     
+ 2.09171727D-03 2.20117622D-01 6.86438338D-07 2.72539752D-01 3.97034587D+05     
+ 5.03539791D-02 4.21081898D-05 6.23360441D-02 1.48037826D+03 5.18934516D-01     
+ 3.07972184D-06 6.42521060D-01 2.08629575D+05 1.05647082D-07 4.57989859D-07     
+ 2.17345986D-08 4.74565153D-02 8.61392892D-04 3.31756493D-09 1.06653783D-03     
+ 3.21482141D+05 )                                                               
+ IDSET ID_47 (PROPERTIES) (1052 *2 <13> )                                       
+ IDSET ID_48 (PROPERTIES) (298 *2 <75> )                                        
+ IDSET ID_49 (PROPERTIES) (7007 *2 )                                            
+ LSET L_21 (%ID_RXBAL %ID_TPQV %ID_47 %ID_KODE %ID_48 %ID_49)                   
+ DSET BLOCK FLASH2 B-SEP BLKSTAT @BLKSTAT (0 0)                                 
+ DSET BLOCK FLASH2 B-SEP COMPSTAT @L1 (0)                                       
+ DSET BLOCK FLASH2 B-SEP SYNCSTAT @L1 (0)                                       
+ DSET BLOCK FLASH2 B-SEP BLKIN @BLKIN (1 R-OUT                                  
+ "603e2ccf-4e53-49f5-98da-3ab10c4b7fbe" * )                                     
+ DSET BLOCK FLASH2 B-SEP TYPIN @TYPIN (1 MATERIAL)                              
+ DSET BLOCK FLASH2 B-SEP BLKOUT @BLKOUT (2 GAS-PURG CRUDE-ME                    
+ "603e2ccf-4e53-49f5-98da-3ab10c4b7fbe" * * )                                   
+ DSET BLOCK FLASH2 B-SEP TYPOUT @TYPOUT (2 MATERIAL MATERIAL)                   
+ DSET BLOCK FLASH2 B-SEP RES_Q @L_21 (2.82764154D+05 <3> 2.82764154D+05 <3>     
+ 0.D0 <3> -2.05852334D-16 6.85581432D+06 <3> 6.85581432D+06 <3> * <3>           
+ -2.71688389D-16 * <3> * <3> * <3> * 2.82764154D+05 <3> 2.82764154D+05 <3> 0.D0 
+ <3> -2.05852334D-16 6.85581432D+06 <3> 6.85581432D+06 <3> * <3>                
+ -2.71688389D-16 -3.05164597D+09 <3> -3.25834351D+09 <3> * <3> 6.34363854D-02   
+ 8.95803349D+07 <3> 8.95803349D+07 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3>               
+ -2.06697534D+08 <3> 4.00000000D+01 <4> 8.00000000D+01 <5> 9.74472943D-01       
+ 1.00000000D+00 -2.06697534D+08 <3> 11 0.D0 <5> 9.81022187D-01)                 
+ IDSET ID_50 (PROPERTIES) (1 *2 <13> 31 *2 <22> 32 *2 <20> 2 *2 7001 *2 <22>    
+ 7002 *2 <20> 899 *2 )                                                          
+ LSET L_22 ( %ID_50 )                                                           
+ DSET BLOCK FLASH2 B-SEP FLS2_INR @L_22 ( * <1> 3.13150000D+02 <1> 0.D0 <1> * * 
+ <1> * <1> 0.D0 )                                                               
+ IDSET ID_51 (COMPONENTS) ( CH4 H2O CO CO2 H2 CH3OH N2 )                        
+ LSET L_23 ( %ID_XY & %ID_51)                                                   
+ DSET BLOCK FLASH2 B-SEP VLE @L_23 ( 6.79248422D-01 4.41711848D-05              
+ 6.97040692D-01 1.57804391D+04 2.71715737D-02 9.99570789D-01 1.69883959D-03     
+ 1.69956906D-03 4.55555294D-05 3.16372297D-10 4.67488827D-05 1.47765412D+05     
+ 2.90286716D-01 3.85007967D-04 2.97880911D-01 7.73700641D+02 3.28546528D-04     
+ 5.43985334D-09 3.37152911D-04 6.19783090D+04 9.86761268D-11 1.28916836D-09     
+ 6.74902808D-11 5.23517973D-02 2.91918570D-03 2.49830831D-08 2.99565533D-03     
+ 1.19907352D+05 )                                                               
+ IDSET ID_52 (PROPERTIES) (1 *2 <13> 31 *2 <22> 32 *2 <20> 2 *2 145 *1 137 *1   
+ 1052 *2 <13> )                                                                 
+ LSET L_24 (%ID_RXBAL %ID_52)                                                   
+ DSET BLOCK RGIBBS B-SYN BLKSTAT @BLKSTAT (0 0)                                 
+ DSET BLOCK RGIBBS B-SYN COMPSTAT @L1 (0)                                       
+ DSET BLOCK RGIBBS B-SYN SYNCSTAT @L1 (0)                                       
+ DSET BLOCK RGIBBS B-SYN BLKIN @BLKIN (1 R-IN                                   
+ "19642ab8-313d-4880-9186-4f1c5baccca8" * )                                     
+ DSET BLOCK RGIBBS B-SYN TYPIN @TYPIN (1 MATERIAL)                              
+ DSET BLOCK RGIBBS B-SYN BLKOUT @BLKOUT (1 R-OUT                                
+ "19642ab8-313d-4880-9186-4f1c5baccca8" * )                                     
+ DSET BLOCK RGIBBS B-SYN TYPOUT @TYPOUT (1 MATERIAL)                            
+ DSET BLOCK RGIBBS B-SYN RES_Q @L_24 (3.00468880D+05 <3> 2.82764154D+05 <3>     
+ -1.77047265D+04 <3> 1.93722760D-16 6.85581432D+06 <3> 6.85581432D+06 <3> * <3> 
+ -5.16207940D-15 * <3> * <3> * <3> * 3.00468880D+05 <3> 2.82764154D+05 <3>      
+ -1.77047265D+04 <3> 1.93722760D-16 6.85581432D+06 <3> 6.85581432D+06 <3> * <3> 
+ -5.16207940D-15 -3.09972205D+09 <3> -3.05164597D+09 <3> * <3> -1.55098020D-02  
+ 8.55434889D+07 <3> 8.95803349D+07 <3> 4.03684598D+06 <3> 0.D0 <3>              
+ 4.03684598D+06 <3> 4.80760752D+07 <3> 2.50000000D+02 <4> 8.00000000D+01 <5>    
+ 1.00000000D+00 1 0 4.80760752D+07 <3> )                                        
+ IDSET ID_53 (ATOM_NUM) (H C N O)                                               
+ IDSET ID_54 (COMPONENTS) (CH4 H2O O2 CO CO2 H2 CH3OH N2)                       
+ IDSET ID_55 (PROPERTIES) (147 *2)                                              
+ LSET L_25 (( %ID_55 & %ID_53) & %ID_54)                                        
+ DSET BLOCK RGIBBS B-SYN RGIB_ATM @L_25 ( 4.00000000D+00 1.00000000D+00 0.D0    
+ 0.D0 2.00000000D+00 0.D0 0.D0 1.00000000D+00 0.D0 0.D0 0.D0 2.00000000D+00     
+ 0.D0 1.00000000D+00 0.D0 1.00000000D+00 0.D0 1.00000000D+00 0.D0               
+ 2.00000000D+00 2.00000000D+00 0.D0 0.D0 0.D0 4.00000000D+00 1.00000000D+00     
+ 0.D0 1.00000000D+00 0.D0 0.D0 2.00000000D+00 0.D0 )                            
+ IDSET ID_56 (PHASE) (VAPOR)                                                    
+ IDSET ID_57 (PROPERTIES) (133 *5)                                              
+ IDSET ID_58 (PROPERTIES) (139 *2)                                              
+ IDSET ID_59 (PROPERTIES) (140 *5)                                              
+ IDSET ID_60 (COMPONENTS) (CH4 O2 CO CO2 H2 CH3OH N2 H2O)                       
+ IDSET ID_61 (PROPERTIES) (8002 *2)                                             
+ IDSET ID_62 (PROPERTIES) (8001 *2 <11> )                                       
+ LSET L_26 (( %ID_57 %ID_58 %ID_59 ( %ID_60 & %ID_61) %ID_62 ) & %ID_56)        
+ DSET BLOCK RGIBBS B-SYN RGIB_TAB @L_26 ( VAPOR 1.00000000D+00 R-OUT            
+ 6.79248422D-01 1.58628173D-42 4.55555294D-05 2.90286716D-01 3.28546528D-04     
+ 9.86761268D-11 2.91918570D-03 2.71715737D-02 2.82764154D+05 <3> )              
+ IDSET ID_63 (PROPERTIES) (31 *2 <22> 32 *2 <20> 2 *2 3 *2)                     
+ IDSET ID_64 (PROPERTIES) (298 *2 <75> )                                        
+ LSET L_27 (%ID_RXBAL %ID_63 %ID_KODE %ID_64)                                   
+ DSET BLOCK MIXER MIX-FEED BLKSTAT @BLKSTAT (0 0)                               
+ DSET BLOCK MIXER MIX-FEED COMPSTAT @L1 (0)                                     
+ DSET BLOCK MIXER MIX-FEED SYNCSTAT @L1 (0)                                     
+ DSET BLOCK MIXER MIX-FEED BLKIN @BLKIN (3 NG-FEED STEAM O2-FEED                
+ "ba706165-df57-48d8-85f0-9b495a753cdc" * * * )                                 
+ DSET BLOCK MIXER MIX-FEED TYPIN @TYPIN (3 MATERIAL MATERIAL MATERIAL)          
+ DSET BLOCK MIXER MIX-FEED BLKOUT @BLKOUT (1 ATR-IN                             
+ "ba706165-df57-48d8-85f0-9b495a753cdc" * )                                     
+ DSET BLOCK MIXER MIX-FEED TYPOUT @TYPOUT (1 MATERIAL)                          
+ DSET BLOCK MIXER MIX-FEED MIX_RES @L_27 (3.02118040D+04 <3> 3.02118040D+04 <3> 
+ 0.D0 <3> 0.D0 6.32500000D+05 <3> 6.32500000D+05 <3> * <3> 0.D0 * <3> * <3> *   
+ <3> * 3.02118040D+04 <3> 3.02118040D+04 <3> 0.D0 <3> 0.D0 6.32500000D+05 <3>   
+ 6.32500000D+05 <3> * <3> 0.D0 -1.94657007D+08 <3> -1.94657007D+08 <3> * <3>    
+ -1.53101719D-16 6.13800000D+06 <3> 6.13800000D+06 <3> 0.D0 <3> 0.D0 <3> 0.D0   
+ <3> 1.62869524D+02 <4> 3.00000000D+01 <5> 9.55803945D-01 1.00000000D+00 9 0.D0 
+ <5> )                                                                          
+ IDSET ID_65 (PROPERTIES) (31 *2 <22> 32 *2 <20> 2 *2 3 *2)                     
+ IDSET ID_66 (PROPERTIES) (298 *2 <75> )                                        
+ LSET L_28 (%ID_RXBAL %ID_65 %ID_KODE %ID_66)                                   
+ DSET BLOCK MIXER MIX-LOOP BLKSTAT @BLKSTAT (0 0)                               
+ DSET BLOCK MIXER MIX-LOOP COMPSTAT @L1 (0)                                     
+ DSET BLOCK MIXER MIX-LOOP SYNCSTAT @L1 (0)                                     
+ DSET BLOCK MIXER MIX-LOOP BLKIN @BLKIN (2 HP-GAS RECYCLE                       
+ "269227bd-7156-4f18-976e-b58fc9d553d6" * * )                                   
+ DSET BLOCK MIXER MIX-LOOP TYPIN @TYPIN (2 MATERIAL MATERIAL)                   
+ DSET BLOCK MIXER MIX-LOOP BLKOUT @BLKOUT (1 R-IN                               
+ "269227bd-7156-4f18-976e-b58fc9d553d6" * )                                     
+ DSET BLOCK MIXER MIX-LOOP TYPOUT @TYPOUT (1 MATERIAL)                          
+ DSET BLOCK MIXER MIX-LOOP MIX_RES @L_28 (3.00468880D+05 <3> 3.00468880D+05 <3> 
+ 0.D0 <3> 0.D0 6.85581432D+06 <3> 6.85581432D+06 <3> * <3> -2.71688389D-16 * <3>
+ * <3> * <3> * 3.00468880D+05 <3> 3.00468880D+05 <3> 0.D0 <3> 0.D0              
+ 6.85581432D+06 <3> 6.85581432D+06 <3> * <3> -2.71688389D-16 -3.09972205D+09 <3>
+ -3.09972205D+09 <3> * <3> 3.07664462D-16 8.55434889D+07 <3> 8.55434889D+07 <3> 
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> 4.71791054D+01 <4> 8.00000000D+01 <5>               
+ 1.00000000D+00 1.00000000D+00 9 0.D0 <5> )                                     
+ IDSET ID_67 (PROPERTIES) (69 *2)                                               
+ IDSET ID_68 (STREAMID) (PURGE RECYCLE)                                         
+ LSET L_29 (%ID_RXBAL %ID_67 & %ID_68)                                          
+ DSET BLOCK FSPLIT SPLIT BLKSTAT @BLKSTAT (0 0)                                 
+ DSET BLOCK FSPLIT SPLIT COMPSTAT @L1 (0)                                       
+ DSET BLOCK FSPLIT SPLIT SYNCSTAT @L1 (0)                                       
+ DSET BLOCK FSPLIT SPLIT BLKIN @BLKIN (1 GAS-PURG                               
+ "7da1f798-58a4-4f51-aabc-348401f58537" * )                                     
+ DSET BLOCK FSPLIT SPLIT TYPIN @TYPIN (1 MATERIAL)                              
+ DSET BLOCK FSPLIT SPLIT BLKOUT @BLKOUT (2 PURGE RECYCLE                        
+ "7da1f798-58a4-4f51-aabc-348401f58537" * * )                                   
+ DSET BLOCK FSPLIT SPLIT TYPOUT @TYPOUT (2 MATERIAL MATERIAL)                   
+ DSET BLOCK FSPLIT SPLIT FSPL_RES @L_29 (2.75546017D+05 <3> 2.75544112D+05 <3>  
+ 0.D0 <3> 6.91364339D-06 6.72570595D+06 <3> 6.72565842D+06 <3> * <3>            
+ 7.06780384D-06 * <3> * <3> * <3> * 2.75546017D+05 <3> 2.75544112D+05 <3> 0.D0  
+ <3> 6.91364339D-06 6.72570595D+06 <3> 6.72565842D+06 <3> * <3> 7.06780384D-06  
+ -3.12060323D+09 <3> -3.12057821D+09 <3> * <3> -8.01732294D-06 8.95800699D+07   
+ <3> 8.95794765D+07 <3> -5.93384239D+02 <3> 0.D0 <3> -5.93384239D+02 <3>        
+ 5.00000000D-02 9.50000000D-01 )                                                
+ IDSET ID_69 (PROPERTIES) (671 *1)                                              
+ IDSET ID_70 (STREAMID) (PURGE RECYCLE)                                         
+ LSET L_30 ( %ID_69 & %ID_70)                                                   
+ DSET BLOCK FSPLIT SPLIT FSPL_ORD @L_30 ( 1 2 )                                 
+ IDSET ID_71 (PROPERTIES) (32 *2 <20> 298 *2 <75> )                             
+ IDSET ID_72 (PROPERTIES) (100 *2 <11> 102 *2 <10> 103 *2 <12> 204 *2 <12> 8101 
+ *2 <11> 8103 *2 <10> 1152 *2 <12> 19 *2 <12> 880 *2 <11> 879 *2 <10> 270 *2    
+ <12> 881 *2 <12> 549 *2)                                                       
+ IDSET ID_73 (STREAMID) (PURGE RECYCLE)                                         
+ LSET L_31 ( %ID_71 %ID_72 & %ID_73)                                            
+ DSET BLOCK FSPLIT SPLIT FSPL_R2I @L_31 ( 8.00000000D+01 <5> 0.D0 <5> * <3> *   
+ <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> 0.D0 * <3> *   
+ <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> * <3> 0.D0 )         
+ IDSET ID_74 (PROPERTIES) (7001 *2 <22> 7002 *2 <20> 8103 *2 <10> 204 *2 <12>   
+ 8101 *2 <11> 7003 *2 )                                                         
+ LSET L_32 ( %ID_74 )                                                           
+ IDSET ID_75 (PROPERTIES) (253 *2)                                              
+ IDSET ID_76 (PROPERTIES) (253 *2 <11> )                                        
+ IDSET ID_77 (PROPERTIES) (253 *2 <12> )                                        
+ IDSET ID_78 (PROPERTIES) (253 *2 <17> )                                        
+ IDSET ID_79 (PROPERTIES) (253 *2 <27> )                                        
+ IDSET ID_80 (PROPERTIES) (253 *2 <59> )                                        
+ IDSET ID_81 (PROPERTIES) (253 *2 <10> )                                        
+ IDSET ID_82 (PROPERTIES) (8101 *2 <11> 8002 *2 8103 *2 <10> 8004 *2 )          
+ IDSET ID_83 (PROPERTIES) (8001 *2 <11> 8003 *2 <10> 8010 *2 <12> 7001 *2 <22>  
+ 7002 *2 <20> 7003 *2 7004 *2 7006 *2 2002 *2 <39> 41142 *2 <40> 41143 *2 <13>  
+ 2003 *2 <41> 41144 *2 <42> 11006 *2 <37> 41145 *2 <38> 11007 *2 8005 *2 <12> ) 
+ LSET L_33 ( %ISODES (( %ID_NCCNS & %ID_82 %ID_83) & %IDS_1) )                  
+ DSET STREAM MATERIAL ATR-IN BLKSTAT @BLKSTAT (0 0)                             
+ DSET STREAM MATERIAL ATR-IN COMPSTAT @L1 (0)                                   
+ DSET STREAM MATERIAL ATR-IN STR_MAIN @L_33 (MIX-FEED B-ATR MIXED RK-SOAVE      
+ 1.37133511D+04 <3> 8.24300261D+03 <3> 8.21417305D+03 <3> 0.D0 <3> 0.D0 <3>     
+ 0.D0 <3> 0.D0 <3> 4.12772515D+01 <3> 4.53907058D-01 2.72840464D-01             
+ 2.71886216D-01 0.D0 0.D0 0.D0 0.D0 1.36626239D-03 2.20000000D+05 <3>           
+ 1.48500000D+05 <3> 2.62843681D+05 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3>      
+ 1.15631946D+03 <3> 3.47826087D-01 2.34782609D-01 4.15563131D-01 0.D0 0.D0 0.D0 
+ 0.D0 1.82817306D-03 3.02118040D+04 <3> 6.32500000D+05 <3> 5.67786969D+05 <3>   
+ 1.62869524D+02 <4> 3.00000000D+01 <5> 9.55803945D-01 4.41960553D-02 0.D0       
+ -2.31950805D+04 <3> -1.10792921D+03 <3> -1.94657007D+08 <3> -1.41622099D+01 <3>
+ -6.76467841D-01 <3> 8.86829204D-04 <3> 1.85662356D-02 <3> 2.09355257D+01       
+ 2.20897811D+04 <3> )                                                           
+ DSET STREAM MATERIAL ATR-IN RES_STR @L_32 (1.62869524D+02 <4> 3.00000000D+01   
+ <5> 6.32500000D+05 <3> 5.67786969D+05 <3> 3.02118040D+04 <3> 9.55803945D-01 )  
+ DSET STREAM MATERIAL COLD-SYN BLKSTAT @BLKSTAT (0 0)                           
+ DSET STREAM MATERIAL COLD-SYN COMPSTAT @L1 (0)                                 
+ DSET STREAM MATERIAL COLD-SYN STR_MAIN @L_33 (B-COOL B-FLASH MIXED RK-SOAVE    
+ 7.52565395D+02 <3> 9.29764103D+03 <3> 6.41432257D-13 <3> 1.05478586D+04 <3>    
+ 2.41292200D+03 <3> 2.48669228D+04 <3> 5.06252284D-03 <3> 4.12772515D+01 <3>    
+ 1.57048848D-02 1.94027499D-01 1.33857068D-17 2.20117622D-01 5.03539791D-02     
+ 5.18934516D-01 1.05647082D-07 8.61392892D-04 1.20732260D+04 <3> 1.67499606D+05 
+ <3> 2.05250625D-11 <3> 2.95449739D+05 <3> 1.06192215D+05 <3> 5.01287323D+04 <3>
+ 1.62214167D-01 <3> 1.15631946D+03 <3> 1.90881044D-02 2.64821512D-01            
+ 3.24506917D-17 4.67114212D-01 1.67892830D-01 7.92549128D-02 2.56465086D-07     
+ 1.82817306D-03 4.79191922D+04 <3> 6.32500000D+05 <3> 5.70967057D+05 <3>        
+ 4.00000000D+01 <4> 3.00000000D+01 <5> 8.07652786D-01 1.92347214D-01 0.D0       
+ -2.40564399D+04 <3> -1.82255362D+03 <3> -3.20212546D+08 <3> -7.00305209D+00 <3>
+ -5.30562211D-01 <3> 1.39877282D-03 <3> 1.84628282D-02 <3> 1.31993043D+01       
+ 3.72717944D+04 <3> )                                                           
+ DSET STREAM MATERIAL COLD-SYN RES_STR @L_32 (4.00000000D+01 <4> 3.00000000D+01 
+ <5> 6.32500000D+05 <3> 5.70967057D+05 <3> 4.79191922D+04 <3> 8.07652786D-01 )  
+ DSET STREAM MATERIAL CRUDE-ME BLKSTAT @BLKSTAT (0 0)                           
+ DSET STREAM MATERIAL CRUDE-ME COMPSTAT @L1 (0)                                 
+ DSET STREAM MATERIAL CRUDE-ME STR_MAIN @L_33 (B-SEP B-DIST LIQUID RK-SOAVE     
+ 3.18833649D-01 <3> 7.21503856D+03 <3> 0.D0 <3> 2.28361848D-06 <3>              
+ 2.77904012D+00 <3> 3.92656048D-05 <3> 9.30539343D-06 <3> 1.80331308D-04 <3>    
+ 4.41711848D-05 9.99570789D-01 0.D0 3.16372297D-10 3.85007967D-04               
+ 5.43985334D-09 1.28916836D-09 2.49830831D-08 5.11497171D+00 <3> 1.29980940D+05 
+ <3> 0.D0 <3> 6.39650670D-05 <3> 1.22305000D+02 <3> 7.91547474D-05 <3>          
+ 2.98164905D-04 <3> 5.05170748D-03 <3> 3.93131656D-05 9.99020621D-01 0.D0       
+ 4.91629165D-10 9.40024108D-04 6.08375543D-10 2.29166591D-09 3.88269230D-08     
+ 7.21813666D+03 <3> 1.30108365D+05 <3> 2.21388329D+03 <3> 4.00000000D+01 <4>    
+ 8.00000000D+01 <5> 0.D0 1.00000000D+00 0.D0 -6.86970905D+04 <3>                
+ -3.81116915D+03 <3> -1.37740274D+08 <3> -3.99044720D+01 <3> -2.21381563D+00 <3>
+ 5.43399367D-02 <3> 9.79488289D-01 <3> 1.80252012D+01 2.17328956D+03 <3> )      
+ DSET STREAM MATERIAL CRUDE-ME RES_STR @L_32 (4.00000000D+01 <4> 8.00000000D+01 
+ <5> 1.30108365D+05 <3> 2.21388329D+03 <3> 7.21813666D+03 <3> 0.D0 )            
+ DSET STREAM MATERIAL DRY-GAS BLKSTAT @BLKSTAT (0 0)                            
+ DSET STREAM MATERIAL DRY-GAS COMPSTAT @L1 (0)                                  
+ DSET STREAM MATERIAL DRY-GAS STR_MAIN @L_33 (B-FLASH B-COMP VAPOR RK-SOAVE     
+ 7.52560426D+02 <3> 8.09499816D+01 <3> 0.D0 <3> 1.05478523D+04 <3>              
+ 2.41253388D+03 <3> 2.48668944D+04 <3> 8.41173936D-04 <3> 4.12772209D+01 <3>    
+ 1.94449662D-02 2.09161897D-03 0.D0 2.72539752D-01 6.23360441D-02               
+ 6.42521060D-01 2.17345986D-08 1.06653783D-03 1.20731463D+04 <3> 1.45833659D+03 
+ <3> 0.D0 <3> 2.95449562D+05 <3> 1.06175134D+05 <3> 5.01286751D+04 <3>          
+ 2.69530298D-02 <3> 1.15631860D+03 <3> 2.58835333D-02 3.12651753D-03 0.D0       
+ 6.33412234D-01 2.27628121D-01 1.07470513D-01 5.77844108D-08 2.47902331D-03     
+ 3.87020691D+04 <3> 4.66441199D+05 <3> 5.68141141D+05 <3> 4.00000000D+01 <4>    
+ 3.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -1.34210686D+04 <3>                
+ -1.11358757D+03 <3> -1.44284201D+08 <3> 8.31565264D-01 <3> 6.89975421D-02 <3>  
+ 1.13534197D-03 <3> 1.36832548D-02 <3> 1.20520998D+01 3.44987218D+04 <3> )      
+ DSET STREAM MATERIAL DRY-GAS RES_STR @L_32 (4.00000000D+01 <4> 3.00000000D+01  
+ <5> 4.66441199D+05 <3> 5.68141141D+05 <3> 3.87020691D+04 <3> 1.00000000D+00 )  
+ DSET STREAM MATERIAL GAS-PURG BLKSTAT @BLKSTAT (0 0)                           
+ DSET STREAM MATERIAL GAS-PURG COMPSTAT @L1 (0)                                 
+ DSET STREAM MATERIAL GAS-PURG STR_MAIN @L_33 (B-SEP SPLIT VAPOR RK-SOAVE       
+ 1.92066787D+05 <3> 4.68108483D+02 <3> 0.D0 <3> 1.28814684D+01 <3>              
+ 8.20798986D+04 <3> 9.29011418D+01 <3> 1.85966781D-05 <3> 8.25440895D+02 <3>    
+ 6.97040692D-01 1.69883959D-03 0.D0 4.67488827D-05 2.97880911D-01               
+ 3.37152911D-04 6.74902808D-11 2.99565533D-03 3.08128136D+06 <3> 8.43310538D+03 
+ <3> 0.D0 <3> 3.60815084D+02 <3> 3.61231992D+06 <3> 1.87277554D+02 <3>          
+ 5.95877734D-04 <3> 2.31234720D+04 <3> 4.58135009D-01 1.25386174D-03 0.D0       
+ 5.36471690D-05 5.37091563D-01 2.78450404D-05 8.85970541D-11 3.43807359D-03     
+ 2.75546017D+05 <3> 6.72570595D+06 <3> 1.27912000D+06 <3> 4.00000000D+01 <4>    
+ 8.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -4.07705825D+04 <3>                
+ -1.67033345D+03 <3> -3.12060323D+09 <3> -2.11677665D+01 <3> -8.67224020D-01 <3>
+ 3.59030709D-03 <3> 8.76345447D-02 <3> 2.44086488D+01 2.45683616D+05 <3> )      
+ DSET STREAM MATERIAL GAS-PURG RES_STR @L_32 (4.00000000D+01 <4> 8.00000000D+01 
+ <5> 6.72570595D+06 <3> 1.27912000D+06 <3> 2.75546017D+05 <3> 1.00000000D+00 )  
+ IDSET ID_84 (PROPERTIES) (757 *1)                                              
+ IDSET ID_85 (PROPERTIES) (36 *2 37 *2 38 *2 39 *2 8103 *2 <10> )               
+ LSET L_34 ( %ID_NCCNS & %ID_85 %ID_84)                                         
+ DSET STREAM MATERIAL ATR-IN STRM_XY @L_34 ( 2.82575753D-04 9.99491413D-01      
+ 2.25812231D-04 0.D0 0.D0 0.D0 0.D0 1.98636940D-07 2.82575753D-04               
+ 9.99491413D-01 2.25812231D-04 0.D0 0.D0 0.D0 0.D0 1.98636940D-07               
+ 4.53907058D-01 2.72840464D-01 2.71886216D-01 0.D0 0.D0 0.D0 0.D0               
+ 1.36626239D-03 4.74882503D-01 2.39240366D-01 2.84447702D-01 0.D0 0.D0 0.D0     
+ 0.D0 1.42942872D-03 2.20000000D+05 <3> 1.48500000D+05 <3> 2.62843681D+05 <3>   
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 1.15631946D+03 <3> * )                     
+ DSET STREAM MATERIAL COLD-SYN STRM_XY @L_34 ( 5.39100904D-07 9.99953125D-01    
+ 0.D0 6.86438338D-07 4.21081898D-05 3.07972184D-06 4.57989859D-07               
+ 3.31756493D-09 5.39100904D-07 9.99953125D-01 0.D0 6.86438338D-07               
+ 4.21081898D-05 3.07972184D-06 4.57989859D-07 3.31756493D-09 1.57048848D-02     
+ 1.94027499D-01 0.D0 2.20117622D-01 5.03539791D-02 5.18934516D-01               
+ 1.05647082D-07 8.61392892D-04 1.94449662D-02 2.09161897D-03 0.D0               
+ 2.72539752D-01 6.23360441D-02 6.42521060D-01 2.17345986D-08 1.06653783D-03     
+ 1.20732260D+04 <3> 1.67499606D+05 <3> 2.05250625D-11 <3> 2.95449739D+05 <3>    
+ 1.06192215D+05 <3> 5.01287323D+04 <3> 1.62214167D-01 <3> 1.15631946D+03 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL CRUDE-ME STRM_XY @L_34 ( 4.41711848D-05 9.99570789D-01    
+ 0.D0 3.16372297D-10 3.85007967D-04 5.43985334D-09 1.28916836D-09               
+ 2.49830831D-08 4.41711848D-05 9.99570789D-01 0.D0 3.16372297D-10               
+ 3.85007967D-04 5.43985334D-09 1.28916836D-09 2.49830831D-08 0.D0 0.D0 0.D0     
+ 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0               
+ 5.11497171D+00 <3> 1.29980940D+05 <3> 0.D0 <3> 6.39650670D-05 <3>              
+ 1.22305000D+02 <3> 7.91547474D-05 <3> 2.98164905D-04 <3> 5.05170748D-03 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL DRY-GAS STRM_XY @L_34 ( 5.39100904D-07 9.99953125D-01     
+ 0.D0 6.86438338D-07 4.21081898D-05 3.07972184D-06 4.57989859D-07               
+ 3.31756493D-09 5.39100904D-07 9.99953125D-01 0.D0 6.86438338D-07               
+ 4.21081898D-05 3.07972184D-06 4.57989859D-07 3.31756493D-09 1.94449662D-02     
+ 2.09161897D-03 0.D0 2.72539752D-01 6.23360441D-02 6.42521060D-01               
+ 2.17345986D-08 1.06653783D-03 1.94449662D-02 2.09161897D-03 0.D0               
+ 2.72539752D-01 6.23360441D-02 6.42521060D-01 2.17345986D-08 1.06653783D-03     
+ 1.20731463D+04 <3> 1.45833659D+03 <3> 0.D0 <3> 2.95449562D+05 <3>              
+ 1.06175134D+05 <3> 5.01286751D+04 <3> 2.69530298D-02 <3> 1.15631860D+03 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL GAS-PURG STRM_XY @L_34 ( 4.41711848D-05 9.99570789D-01    
+ 0.D0 3.16372297D-10 3.85007967D-04 5.43985334D-09 1.28916836D-09               
+ 2.49830831D-08 4.41711848D-05 9.99570789D-01 0.D0 3.16372297D-10               
+ 3.85007967D-04 5.43985334D-09 1.28916836D-09 2.49830831D-08 6.97040692D-01     
+ 1.69883959D-03 0.D0 4.67488827D-05 2.97880911D-01 3.37152911D-04               
+ 6.74902808D-11 2.99565533D-03 6.97040692D-01 1.69883959D-03 0.D0               
+ 4.67488827D-05 2.97880911D-01 3.37152911D-04 6.74902808D-11 2.99565533D-03     
+ 3.08128136D+06 <3> 8.43310538D+03 <3> 0.D0 <3> 3.60815084D+02 <3>              
+ 3.61231992D+06 <3> 1.87277554D+02 <3> 5.95877734D-04 <3> 2.31234720D+04 <3> *  
+ )                                                                              
+ IDSET ID_86 (PROPERTIES) (64 *2 <11> 63 *2 <11> 94 *2 <11> 95 *2 <11> 88 *2    
+ <39> 61 *2 <39> 89 *2 <39> 90 *2 <39> 991 *2 <7> 992 *2 <7> 993 *2 <7> 994 *2  
+ <7> 926 *2 <37> 925 *2 <37> 995 *2 <37> 996 *2 <37> 928 *2 927 *2 997 *2 998   
+ *2 2 *2 3 *2 606 *2 <11> 103 *2 <12> 269 *2 1246 *2 <10> 1247 *2 <10> 1248 *2  
+ <12> 1249 *2 <12> 8010 *2 <12> 7007 *2 7008 *2 )                               
+ LSET L_35 ( %ID_86)                                                            
+ DSET STREAM MATERIAL ATR-IN STR_PHAS @L_35 ( 2.88765614D+04 <3> 1.33524256D+03 
+ <3> 1.33524256D+03 <3> 0.D0 <3> -2.12117637D+04 <3> -6.60871854D+04 <3>        
+ -6.60871854D+04 <3> * <3> -1.32954404D+01 <3> -3.29073606D+01 <3>              
+ -3.29073606D+01 <3> * <3> 8.48341601D-04 <3> 4.70466532D-02 <3> 4.70466532D-02 
+ <3> * <3> 2.10704366D+01 1.80178822D+01 1.80178822D+01 * 9.55803945D-01        
+ 1.00000000D+00 3.02118040D+04 <3> 2.20897811D+04 <3> 2.09355257D+01            
+ 6.08441757D+05 <3> 2.40582432D+04 <3> 5.67313949D+05 <3> 4.73020739D+02 <3>    
+ 5.67786969D+05 <3> 9.61963252D-01 0.D0 )                                       
+ DSET STREAM MATERIAL COLD-SYN STR_PHAS @L_35 ( 3.87020691D+04 <3>              
+ 9.21712310D+03 <3> 9.21712310D+03 <3> 0.D0 <3> -1.34210686D+04 <3>             
+ -6.87136361D+04 <3> -6.87136361D+04 <3> * <3> 8.31565264D-01 <3>               
+ -3.99000741D+01 <3> -3.99000741D+01 <3> * <3> 1.13534197D-03 <3>               
+ 5.43606987D-02 <3> 5.43606987D-02 <3> * <3> 1.20520998D+01 1.80163376D+01      
+ 1.80163376D+01 * 8.07652786D-01 1.00000000D+00 4.79191922D+04 <3>              
+ 3.72717944D+04 <3> 1.31993043D+01 4.66441199D+05 <3> 1.66058801D+05 <3>        
+ 5.68141141D+05 <3> 2.82591508D+03 <3> 5.70967057D+05 <3> 7.37456441D-01 0.D0 ) 
+ DSET STREAM MATERIAL CRUDE-ME STR_PHAS @L_35 ( 0.D0 <3> 7.21813666D+03 <3>     
+ 7.21813666D+03 <3> 0.D0 <3> * <3> -6.86970905D+04 <3> -6.86970905D+04 <3> * <3>
+ * <3> -3.99044720D+01 <3> -3.99044720D+01 <3> * <3> * <3> 5.43399367D-02 <3>   
+ 5.43399367D-02 <3> * <3> * 1.80252012D+01 1.80252012D+01 * 0.D0 1.00000000D+00 
+ 7.21813666D+03 <3> 2.17328956D+03 <3> 1.80252012D+01 0.D0 <3> 1.30108365D+05   
+ <3> * <3> 2.21388329D+03 <3> 2.21388329D+03 <3> 0.D0 0.D0 )                    
+ DSET STREAM MATERIAL DRY-GAS STR_PHAS @L_35 ( 3.87020691D+04 <3> 0.D0 <3> 0.D0 
+ <3> 0.D0 <3> -1.34210686D+04 <3> * <3> * <3> * <3> 8.31565264D-01 <3> * <3> *  
+ <3> * <3> 1.13534197D-03 <3> * <3> * <3> * <3> 1.20520998D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 3.87020691D+04 <3> 3.44987218D+04 <3>            
+ 1.20520998D+01 4.66441199D+05 <3> 0.D0 <3> 5.68141141D+05 <3> * <3>            
+ 5.68141141D+05 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL GAS-PURG STR_PHAS @L_35 ( 2.75546017D+05 <3> 0.D0 <3>     
+ 0.D0 <3> 0.D0 <3> -4.07705825D+04 <3> * <3> * <3> * <3> -2.11677665D+01 <3> *  
+ <3> * <3> * <3> 3.59030709D-03 <3> * <3> * <3> * <3> 2.44086488D+01 * * *      
+ 1.00000000D+00 1.00000000D+00 2.75546017D+05 <3> 2.45683616D+05 <3>            
+ 2.44086488D+01 6.72570595D+06 <3> 0.D0 <3> 1.27912000D+06 <3> * <3>            
+ 1.27912000D+06 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL HOT-SYN BLKSTAT @BLKSTAT (0 0)                            
+ DSET STREAM MATERIAL HOT-SYN COMPSTAT @L1 (0)                                  
+ DSET STREAM MATERIAL HOT-SYN STR_MAIN @L_33 (B-ATR B-COOL VAPOR RK-SOAVE       
+ 7.52565395D+02 <3> 9.29764103D+03 <3> 6.41432257D-13 <3> 1.05478586D+04 <3>    
+ 2.41292200D+03 <3> 2.48669228D+04 <3> 5.06252284D-03 <3> 4.12772515D+01 <3>    
+ 1.57048848D-02 1.94027499D-01 1.33857068D-17 2.20117622D-01 5.03539791D-02     
+ 5.18934516D-01 1.05647082D-07 8.61392892D-04 1.20732260D+04 <3> 1.67499606D+05 
+ <3> 2.05250625D-11 <3> 2.95449739D+05 <3> 1.06192215D+05 <3> 5.01287323D+04 <3>
+ 1.62214167D-01 <3> 1.15631946D+03 <3> 1.90881044D-02 2.64821512D-01            
+ 3.24506917D-17 4.67114212D-01 1.67892830D-01 7.92549128D-02 2.56465086D-07     
+ 1.82817306D-03 4.79191922D+04 <3> 6.32500000D+05 <3> 2.83401727D+06 <3>        
+ 1.00000000D+03 <4> 3.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -1.42201177D+04 
+ <3> -1.07733842D+03 <3> -1.89282375D+08 <3> 9.39748343D+00 <3> 7.11968086D-01  
+ <3> 2.81809575D-04 <3> 3.71969034D-03 <3> 1.31993043D+01 3.72717944D+04 <3> )  
+ DSET STREAM MATERIAL HOT-SYN RES_STR @L_32 (1.00000000D+03 <4> 3.00000000D+01  
+ <5> 6.32500000D+05 <3> 2.83401727D+06 <3> 4.79191922D+04 <3> 1.00000000D+00 )  
+ DSET STREAM MATERIAL HP-GAS BLKSTAT @BLKSTAT (0 0)                             
+ DSET STREAM MATERIAL HP-GAS COMPSTAT @L1 (0)                                   
+ DSET STREAM MATERIAL HP-GAS STR_MAIN @L_33 (B-COMP MIX-LOOP VAPOR RK-SOAVE     
+ 7.52560426D+02 <3> 8.09499816D+01 <3> 0.D0 <3> 1.05478523D+04 <3>              
+ 2.41253388D+03 <3> 2.48668944D+04 <3> 8.41173936D-04 <3> 4.12772209D+01 <3>    
+ 1.94449662D-02 2.09161897D-03 0.D0 2.72539752D-01 6.23360441D-02               
+ 6.42521060D-01 2.17345986D-08 1.06653783D-03 1.20731463D+04 <3> 1.45833659D+03 
+ <3> 0.D0 <3> 2.95449562D+05 <3> 1.06175134D+05 <3> 5.01286751D+04 <3>          
+ 2.69530298D-02 <3> 1.15631860D+03 <3> 2.58835333D-02 3.12651753D-03 0.D0       
+ 6.33412234D-01 2.27628121D-01 1.07470513D-01 5.77844108D-08 2.47902331D-03     
+ 3.87020691D+04 <3> 4.66441199D+05 <3> 2.98586670D+05 <3> 1.55086392D+02 <4>    
+ 8.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -1.25736529D+04 <3>                
+ -1.04327488D+03 <3> -1.35173996D+08 <3> 1.13448699D+00 <3> 9.41318946D-02 <3>  
+ 2.16029230D-03 <3> 2.60360584D-02 <3> 1.20520998D+01 3.44987218D+04 <3> )      
+ DSET STREAM MATERIAL HP-GAS RES_STR @L_32 (1.55086392D+02 <4> 8.00000000D+01   
+ <5> 4.66441199D+05 <3> 2.98586670D+05 <3> 3.87020691D+04 <3> 1.00000000D+00 )  
+ DSET STREAM MATERIAL MEOH-PRO BLKSTAT @BLKSTAT (0 0)                           
+ DSET STREAM MATERIAL MEOH-PRO COMPSTAT @L1 (0)                                 
+ DSET STREAM MATERIAL MEOH-PRO STR_MAIN @L_33 (B-DIST * LIQUID RK-SOAVE 0.D0 <3>
+ 7.21503856D+00 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0  
+ 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 <3> 1.29980940D+02 <3> 0.D0  
+ <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 1.00000000D+00 0.D0 0.D0 
+ 0.D0 0.D0 0.D0 0.D0 7.21503856D+00 <3> 1.29980940D+02 <3> 2.21198646D+00 <3>   
+ 4.00000000D+01 <4> 8.00000000D+01 <5> 0.D0 1.00000000D+00 0.D0 -6.86908994D+04 
+ <3> -3.81292433D+03 <3> -1.37668747D+05 <3> -3.99234916D+01 <3>                
+ -2.21609054D+00 <3> 5.43631911D-02 <3> 9.79368110D-01 <3> 1.80152800D+01       
+ 2.17052410D+00 <3> )                                                           
+ DSET STREAM MATERIAL MEOH-PRO RES_STR @L_32 (4.00000000D+01 <4> 8.00000000D+01 
+ <5> 1.29980940D+02 <3> 2.21198646D+00 <3> 7.21503856D+00 <3> 0.D0 )            
+ DSET STREAM MATERIAL NG-FEED BLKSTAT @BLKSTAT (0 0)                            
+ DSET STREAM MATERIAL NG-FEED COMPSTAT @L1 (0)                                  
+ DSET STREAM MATERIAL NG-FEED STR_MAIN @L_33 (* MIX-FEED VAPOR RK-SOAVE         
+ 1.37133511D+04 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0  
+ <3> 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 2.20000000D+05 <3> 0.D0  
+ <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 1.00000000D+00 0.D0  
+ 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 1.37133511D+04 <3> 2.20000000D+05 <3>            
+ 1.90554056D+05 <3> 4.00000000D+01 <4> 3.00000000D+01 <5> 1.00000000D+00 0.D0   
+ 0.D0 -1.77787884D+04 <3> -1.10821258D+03 <3> -6.77241019D+07 <3>               
+ -2.58237734D+01 <3> -1.60968396D+00 <3> 1.19942790D-03 <3> 1.92421339D-02 <3>  
+ 1.60427600D+01 1.22409486D+04 <3> )                                            
+ DSET STREAM MATERIAL NG-FEED RES_STR @L_32 (4.00000000D+01 <4> 3.00000000D+01  
+ <5> 2.20000000D+05 <3> 1.90554056D+05 <3> 1.37133511D+04 <3> 1.00000000D+00 )  
+ DSET STREAM MATERIAL O2-FEED BLKSTAT @BLKSTAT (0 0)                            
+ DSET STREAM MATERIAL O2-FEED COMPSTAT @L1 (0)                                  
+ DSET STREAM MATERIAL O2-FEED STR_MAIN @L_33 (* MIX-FEED VAPOR RK-SOAVE 0.D0 <3>
+ 0.D0 <3> 8.21417305D+03 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 4.12772515D+01 
+ <3> 0.D0 0.D0 9.95000000D-01 0.D0 0.D0 0.D0 0.D0 5.00000000D-03 0.D0 <3> 0.D0  
+ <3> 2.62843681D+05 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 1.15631946D+03 <3>  
+ 0.D0 0.D0 9.95620002D-01 0.D0 0.D0 0.D0 0.D0 4.37999795D-03 8.25545030D+03 <3> 
+ 2.64000000D+05 <3> 1.62082297D+05 <3> 1.50000000D+02 <4> 3.00000000D+01 <5>    
+ 1.00000000D+00 0.D0 0.D0 8.64281698D+02 <3> 2.70266462D+01 <3> 1.98195406D+06  
+ <3> -4.24466351D+00 <3> -1.32733366D-01 <3> 8.48894917D-04 <3> 2.71467031D-02  
+ <3> 3.19788734D+01 7.36906260D+03 <3> )                                        
+ DSET STREAM MATERIAL O2-FEED RES_STR @L_32 (1.50000000D+02 <4> 3.00000000D+01  
+ <5> 2.64000000D+05 <3> 1.62082297D+05 <3> 8.25545030D+03 <3> 1.00000000D+00 )  
+ DSET STREAM MATERIAL HOT-SYN STRM_XY @L_34 ( 1.57048848D-02 1.94027499D-01     
+ 0.D0 1.33857068D-17 2.20117622D-01 5.03539791D-02 5.18934516D-01               
+ 1.05647082D-07 1.57048848D-02 1.94027499D-01 0.D0 1.33857068D-17               
+ 2.20117622D-01 5.03539791D-02 5.18934516D-01 1.05647082D-07 1.57048848D-02     
+ 1.94027499D-01 0.D0 1.33857068D-17 2.20117622D-01 5.03539791D-02               
+ 5.18934516D-01 1.05647082D-07 1.57048848D-02 1.94027499D-01 1.33857068D-17     
+ 2.20117622D-01 5.03539791D-02 5.18934516D-01 1.05647082D-07 8.61392892D-04     
+ 1.20732260D+04 <3> 1.67499606D+05 <3> 2.05250625D-11 <3> 2.95449739D+05 <3>    
+ 1.06192215D+05 <3> 5.01287323D+04 <3> 1.62214167D-01 <3> 1.15631946D+03 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL HP-GAS STRM_XY @L_34 ( 1.94449662D-02 2.09161897D-03 0.D0 
+ 2.72539752D-01 6.23360441D-02 6.42521060D-01 2.17345986D-08 1.06653783D-03     
+ 1.94449662D-02 2.09161897D-03 0.D0 2.72539752D-01 6.23360441D-02               
+ 6.42521060D-01 2.17345986D-08 1.06653783D-03 1.94449662D-02 2.09161897D-03     
+ 0.D0 2.72539752D-01 6.23360441D-02 6.42521060D-01 2.17345986D-08               
+ 1.06653783D-03 1.94449662D-02 2.09161897D-03 0.D0 2.72539752D-01               
+ 6.23360441D-02 6.42521060D-01 2.17345986D-08 1.06653783D-03 1.20731463D+04 <3> 
+ 1.45833659D+03 <3> 0.D0 <3> 2.95449562D+05 <3> 1.06175134D+05 <3>              
+ 5.01286751D+04 <3> 2.69530298D-02 <3> 1.15631860D+03 <3> * )                   
+ DSET STREAM MATERIAL MEOH-PRO STRM_XY @L_34 ( 0.D0 1.00000000D+00 0.D0 0.D0    
+ 0.D0 0.D0 0.D0 0.D0 0.D0 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0     
+ 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0     
+ 0.D0 <3> 1.29980940D+02 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0  
+ <3> * )                                                                        
+ DSET STREAM MATERIAL NG-FEED STRM_XY @L_34 ( 1.00000000D+00 0.D0 0.D0 0.D0     
+ 0.D0 0.D0 0.D0 0.D0 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0          
+ 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 1.00000000D+00 0.D0 0.D0     
+ 0.D0 0.D0 0.D0 0.D0 0.D0 2.20000000D+05 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3>
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> 0 )                                                 
+ DSET STREAM MATERIAL O2-FEED STRM_XY @L_34 ( 0.D0 0.D0 9.95000000D-01 0.D0     
+ 0.D0 0.D0 0.D0 5.00000000D-03 0.D0 0.D0 9.95000000D-01 0.D0 0.D0 0.D0 0.D0     
+ 5.00000000D-03 0.D0 0.D0 9.95000000D-01 0.D0 0.D0 0.D0 0.D0 5.00000000D-03     
+ 0.D0 0.D0 9.95000000D-01 0.D0 0.D0 0.D0 0.D0 5.00000000D-03 0.D0 <3> 0.D0 <3>  
+ 2.62843681D+05 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 1.15631946D+03 <3> 0 )  
+ DSET STREAM MATERIAL HOT-SYN STR_PHAS @L_35 ( 4.79191922D+04 <3> 0.D0 <3> 0.D0 
+ <3> 0.D0 <3> -1.42201177D+04 <3> * <3> * <3> * <3> 9.39748343D+00 <3> * <3> *  
+ <3> * <3> 2.81809575D-04 <3> * <3> * <3> * <3> 1.31993043D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 4.79191922D+04 <3> 3.72717944D+04 <3>            
+ 1.31993043D+01 6.32500000D+05 <3> 0.D0 <3> 2.83401727D+06 <3> * <3>            
+ 2.83401727D+06 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL HP-GAS STR_PHAS @L_35 ( 3.87020691D+04 <3> 0.D0 <3> 0.D0  
+ <3> 0.D0 <3> -1.25736529D+04 <3> * <3> * <3> * <3> 1.13448699D+00 <3> * <3> *  
+ <3> * <3> 2.16029230D-03 <3> * <3> * <3> * <3> 1.20520998D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 3.87020691D+04 <3> 3.44987218D+04 <3>            
+ 1.20520998D+01 4.66441199D+05 <3> 0.D0 <3> 2.98586670D+05 <3> * <3>            
+ 2.98586670D+05 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL MEOH-PRO STR_PHAS @L_35 ( 0.D0 <3> 7.21503856D+00 <3>     
+ 7.21503856D+00 <3> 0.D0 <3> * <3> -6.86908994D+04 <3> -6.86908994D+04 <3> * <3>
+ * <3> -3.99234916D+01 <3> -3.99234916D+01 <3> * <3> * <3> 5.43631911D-02 <3>   
+ 5.43631911D-02 <3> * <3> * 1.80152800D+01 1.80152800D+01 * 0.D0 1.00000000D+00 
+ 7.21503856D+00 <3> 2.17052410D+00 <3> 1.80152800D+01 0.D0 <3> 1.29980940D+02   
+ <3> * <3> 2.21198646D+00 <3> 2.21198646D+00 <3> 0.D0 0.D0 )                    
+ DSET STREAM MATERIAL NG-FEED STR_PHAS @L_35 ( 1.37133511D+04 <3> 0.D0 <3> 0.D0 
+ <3> 0.D0 <3> -1.77787884D+04 <3> * <3> * <3> * <3> -2.58237734D+01 <3> * <3> * 
+ <3> * <3> 1.19942790D-03 <3> * <3> * <3> * <3> 1.60427600D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 1.37133511D+04 <3> 1.22409486D+04 <3>            
+ 1.60427600D+01 2.20000000D+05 <3> 0.D0 <3> 1.90554056D+05 <3> * <3>            
+ 1.90554056D+05 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL O2-FEED STR_PHAS @L_35 ( 8.25545030D+03 <3> 0.D0 <3> 0.D0 
+ <3> 0.D0 <3> 8.64281698D+02 <3> * <3> * <3> * <3> -4.24466351D+00 <3> * <3> *  
+ <3> * <3> 8.48894917D-04 <3> * <3> * <3> * <3> 3.19788734D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 8.25545030D+03 <3> 7.36906260D+03 <3>            
+ 3.19788734D+01 2.64000000D+05 <3> 0.D0 <3> 1.62082297D+05 <3> * <3>            
+ 1.62082297D+05 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL PURGE BLKSTAT @BLKSTAT (0 0)                              
+ DSET STREAM MATERIAL PURGE COMPSTAT @L1 (0)                                    
+ DSET STREAM MATERIAL PURGE STR_MAIN @L_33 (SPLIT * VAPOR RK-SOAVE              
+ 9.60333933D+03 <3> 2.34054241D+01 <3> 0.D0 <3> 6.44073422D-01 <3>              
+ 4.10399493D+03 <3> 4.64505709D+00 <3> 9.29833904D-07 <3> 4.12720447D+01 <3>    
+ 6.97040692D-01 1.69883959D-03 0.D0 4.67488827D-05 2.97880911D-01               
+ 3.37152911D-04 6.74902808D-11 2.99565533D-03 1.54064068D+05 <3> 4.21655269D+02 
+ <3> 0.D0 <3> 1.80407542D+01 <3> 1.80615996D+05 <3> 9.36387769D+00 <3>          
+ 2.97938867D-05 <3> 1.15617360D+03 <3> 4.58135009D-01 1.25386174D-03 0.D0       
+ 5.36471690D-05 5.37091563D-01 2.78450404D-05 8.85970541D-11 3.43807359D-03     
+ 1.37773009D+04 <3> 3.36285298D+05 <3> 6.39560002D+04 <3> 4.00000000D+01 <4>    
+ 8.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -4.07705825D+04 <3>                
+ -1.67033345D+03 <3> -1.56030162D+08 <3> -2.11677665D+01 <3> -8.67224020D-01 <3>
+ 3.59030709D-03 <3> 8.76345447D-02 <3> 2.44086488D+01 1.22841808D+04 <3> )      
+ DSET STREAM MATERIAL PURGE RES_STR @L_32 (4.00000000D+01 <4> 8.00000000D+01 <5>
+ 3.36285298D+05 <3> 6.39560002D+04 <3> 1.37773009D+04 <3> 1.00000000D+00 )      
+ DSET STREAM MATERIAL R-IN BLKSTAT @BLKSTAT (0 0)                               
+ DSET STREAM MATERIAL R-IN COMPSTAT @L1 (0)                                     
+ DSET STREAM MATERIAL R-IN STR_MAIN @L_33 (MIX-LOOP B-SYN VAPOR RK-SOAVE        
+ 1.83214741D+05 <3> 5.25626874D+02 <3> 0.D0 <3> 1.05600886D+04 <3>              
+ 8.03878337D+04 <3> 2.49551479D+04 <3> 8.58839864D-04 <3> 8.25441075D+02 <3>    
+ 6.09762785D-01 1.74935545D-03 0.D0 3.51453656D-02 2.67541296D-01               
+ 8.30540182D-02 2.85833216D-09 2.74717659D-03 2.93927012D+06 <3> 9.46931532D+03 
+ <3> 0.D0 <3> 2.95792307D+05 <3> 3.53785249D+06 <3> 5.03065835D+04 <3>          
+ 2.75190843D-02 <3> 2.31234771D+04 <3> 4.28726623D-01 1.38120942D-03 0.D0       
+ 4.31447372D-02 5.16036800D-01 7.33779842D-03 4.01397749D-09 3.37282721D-03     
+ 3.00468880D+05 <3> 6.85581432D+06 <3> 1.51500342D+06 <3> 4.71791054D+01 <4>    
+ 8.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -3.71386193D+04 <3>                
+ -1.62766943D+03 <3> -3.09972205D+09 <3> -1.76259199D+01 <3> -7.72488892D-01 <3>
+ 3.30548078D-03 <3> 7.54213295D-02 <3> 2.28170528D+01 2.67896472D+05 <3> )      
+ DSET STREAM MATERIAL R-IN RES_STR @L_32 (4.71791054D+01 <4> 8.00000000D+01 <5> 
+ 6.85581432D+06 <3> 1.51500342D+06 <3> 3.00468880D+05 <3> 1.00000000D+00 )      
+ DSET STREAM MATERIAL R-OUT BLKSTAT @BLKSTAT (0 0)                              
+ DSET STREAM MATERIAL R-OUT COMPSTAT @L1 (0)                                    
+ DSET STREAM MATERIAL R-OUT STR_MAIN @L_33 (B-SYN B-SEP VAPOR RK-SOAVE          
+ 1.92067105D+05 <3> 7.68314704D+03 <3> 4.48543610D-37 <3> 1.28814707D+01 <3>    
+ 8.20826777D+04 <3> 9.29011811D+01 <3> 2.79020715D-05 <3> 8.25441075D+02 <3>    
+ 6.79248422D-01 2.71715737D-02 1.58628173D-42 4.55555294D-05 2.90286716D-01     
+ 3.28546528D-04 9.86761268D-11 2.91918570D-03 3.08128648D+06 <3> 1.38414045D+05 
+ <3> 1.43528573D-35 <3> 3.60815148D+02 <3> 3.61244223D+06 <3> 1.87277633D+02 <3>
+ 8.94042640D-04 <3> 2.31234771D+04 <3> 4.49441355D-01 2.01892932D-02            
+ 2.09353063D-42 5.26290723D-05 5.26916579D-01 2.73166139D-05 1.30406484D-10     
+ 3.37282721D-03 2.82764154D+05 <3> 6.85581432D+06 <3> 2.57173400D+06 <3>        
+ 2.50000000D+02 <4> 8.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -3.88519031D+04 
+ <3> -1.60242460D+03 <3> -3.05164597D+09 <3> -1.51363938D+01 <3>                
+ -6.24291935D-01 <3> 1.83251296D-03 <3> 4.44305561D-02 <3> 2.42456981D+01       
+ 2.47856906D+05 <3> )                                                           
+ DSET STREAM MATERIAL R-OUT RES_STR @L_32 (2.50000000D+02 <4> 8.00000000D+01 <5>
+ 6.85581432D+06 <3> 2.57173400D+06 <3> 2.82764154D+05 <3> 1.00000000D+00 )      
+ DSET STREAM MATERIAL RECYCLE BLKSTAT @BLKSTAT (0 0)                            
+ DSET STREAM MATERIAL RECYCLE COMPSTAT @L1 (0)                                  
+ DSET STREAM MATERIAL RECYCLE STR_MAIN @L_33 (SPLIT MIX-LOOP VAPOR RK-SOAVE     
+ 1.82462181D+05 <3> 4.44676893D+02 <3> 0.D0 <3> 1.22363591D+01 <3>              
+ 7.79752999D+04 <3> 8.82534381D+01 <3> 1.76659279D-05 <3> 7.84163854D+02 <3>    
+ 6.97040927D-01 1.69875199D-03 0.D0 4.67452657D-05 2.97880772D-01               
+ 3.37145254D-04 6.74872715D-11 2.99565805D-03 2.92719698D+06 <3> 8.01097873D+03 
+ <3> 0.D0 <3> 3.42745314D+02 <3> 3.43167735D+06 <3> 1.77908341D+02 <3>          
+ 5.66054487D-04 <3> 2.19671584D+04 <3> 4.58135238D-01 1.25379729D-03 0.D0       
+ 5.36430269D-05 5.37091400D-01 2.78444125D-05 8.85931181D-11 3.43807726D-03     
+ 2.61766811D+05 <3> 6.38937312D+06 <3> 1.21515496D+06 <3> 4.00000000D+01 <4>    
+ 8.00000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -4.07705352D+04 <3>                
+ -1.67033178D+03 <3> -2.96454805D+09 <3> -2.11677631D+01 <3> -8.67224020D-01 <3>
+ 3.59030767D-03 <3> 8.76345447D-02 <3> 2.44086448D+01 2.33397750D+05 <3> )      
+ DSET STREAM MATERIAL RECYCLE RES_STR @L_32 (4.00000000D+01 <4> 8.00000000D+01  
+ <5> 6.38937312D+06 <3> 1.21515496D+06 <3> 2.61766811D+05 <3> 1.00000000D+00 )  
+ DSET STREAM MATERIAL STEAM BLKSTAT @BLKSTAT (0 0)                              
+ DSET STREAM MATERIAL STEAM COMPSTAT @L1 (0)                                    
+ DSET STREAM MATERIAL STEAM STR_MAIN @L_33 (* MIX-FEED VAPOR RK-SOAVE 0.D0 <3>  
+ 8.24300261D+03 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0  
+ 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 <3> 1.48500000D+05 <3> 0.D0  
+ <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3> 0.D0 1.00000000D+00 0.D0 0.D0 
+ 0.D0 0.D0 0.D0 0.D0 8.24300261D+03 <3> 1.48500000D+05 <3> 1.50150545D+05 <3>   
+ 2.50000000D+02 <4> 3.50000000D+01 <5> 1.00000000D+00 0.D0 0.D0 -5.63015101D+04 
+ <3> -3.12520871D+03 <3> -1.28914859D+08 <3> -1.35619563D+01 <3>                
+ -7.52802972D-01 <3> 9.14970883D-04 <3> 1.64834566D-02 <3> 1.80152800D+01       
+ 2.47976995D+03 <3> )                                                           
+ DSET STREAM MATERIAL STEAM RES_STR @L_32 (2.50000000D+02 <4> 3.50000000D+01 <5>
+ 1.48500000D+05 <3> 1.50150545D+05 <3> 8.24300261D+03 <3> 1.00000000D+00 )      
+ DSET STREAM MATERIAL PURGE STRM_XY @L_34 ( 4.41711848D-05 9.99570789D-01 0.D0  
+ 3.16372297D-10 3.85007967D-04 5.43985334D-09 1.28916836D-09 2.49830831D-08     
+ 4.41711848D-05 9.99570789D-01 0.D0 3.16372297D-10 3.85007967D-04               
+ 5.43985334D-09 1.28916836D-09 2.49830831D-08 6.97040692D-01 1.69883959D-03     
+ 0.D0 4.67488827D-05 2.97880911D-01 3.37152911D-04 6.74902808D-11               
+ 2.99565533D-03 6.97040692D-01 1.69883959D-03 0.D0 4.67488827D-05               
+ 2.97880911D-01 3.37152911D-04 6.74902808D-11 2.99565533D-03 1.54064068D+05 <3> 
+ 4.21655269D+02 <3> 0.D0 <3> 1.80407542D+01 <3> 1.80615996D+05 <3>              
+ 9.36387769D+00 <3> 2.97938867D-05 <3> 1.15617360D+03 <3> * )                   
+ DSET STREAM MATERIAL R-IN STRM_XY @L_34 ( 4.17460137D-05 9.99590374D-01 0.D0   
+ 2.54649793D-07 3.66175442D-04 1.36828669D-06 5.70344273D-08 2.45598297D-08     
+ 4.17460137D-05 9.99590374D-01 0.D0 2.54649793D-07 3.66175442D-04               
+ 1.36828669D-06 5.70344273D-08 2.45598297D-08 6.09762785D-01 1.74935545D-03     
+ 0.D0 3.51453656D-02 2.67541296D-01 8.30540182D-02 2.85833216D-09               
+ 2.74717659D-03 6.09762785D-01 1.74935545D-03 0.D0 3.51453656D-02               
+ 2.67541296D-01 8.30540182D-02 2.85833216D-09 2.74717659D-03 2.93927012D+06 <3> 
+ 9.46931532D+03 <3> 0.D0 <3> 2.95792307D+05 <3> 3.53785249D+06 <3>              
+ 5.03065835D+04 <3> 2.75190843D-02 <3> 2.31234771D+04 <3> * )                   
+ DSET STREAM MATERIAL R-OUT STRM_XY @L_34 ( 6.79248422D-01 2.71715737D-02 0.D0  
+ 1.58628173D-42 4.55555294D-05 2.90286716D-01 3.28546528D-04 9.86761268D-11     
+ 6.79248422D-01 2.71715737D-02 0.D0 1.58628173D-42 4.55555294D-05               
+ 2.90286716D-01 3.28546528D-04 9.86761268D-11 6.79248422D-01 2.71715737D-02     
+ 0.D0 1.58628173D-42 4.55555294D-05 2.90286716D-01 3.28546528D-04               
+ 9.86761268D-11 6.79248422D-01 2.71715737D-02 1.58628173D-42 4.55555294D-05     
+ 2.90286716D-01 3.28546528D-04 9.86761268D-11 2.91918570D-03 3.08128648D+06 <3> 
+ 1.38414045D+05 <3> 1.43528573D-35 <3> 3.60815148D+02 <3> 3.61244223D+06 <3>    
+ 1.87277633D+02 <3> 8.94042640D-04 <3> 2.31234771D+04 <3> * )                   
+ DSET STREAM MATERIAL RECYCLE STRM_XY @L_34 ( 4.41711848D-05 9.99570789D-01     
+ 0.D0 3.16372297D-10 3.85007967D-04 5.43985334D-09 1.28916836D-09               
+ 2.49830831D-08 4.41711848D-05 9.99570789D-01 0.D0 3.16372297D-10               
+ 3.85007967D-04 5.43985334D-09 1.28916836D-09 2.49830831D-08 6.97040692D-01     
+ 1.69883959D-03 0.D0 4.67488827D-05 2.97880911D-01 3.37152911D-04               
+ 6.74902808D-11 2.99565533D-03 6.97040927D-01 1.69875199D-03 0.D0               
+ 4.67452657D-05 2.97880772D-01 3.37145254D-04 6.74872715D-11 2.99565805D-03     
+ 2.92719698D+06 <3> 8.01097873D+03 <3> 0.D0 <3> 3.42745314D+02 <3>              
+ 3.43167735D+06 <3> 1.77908341D+02 <3> 5.66054487D-04 <3> 2.19671584D+04 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL STEAM STRM_XY @L_34 ( 0.D0 1.00000000D+00 0.D0 0.D0 0.D0  
+ 0.D0 0.D0 0.D0 0.D0 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0          
+ 1.00000000D+00 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 1.00000000D+00 0.D0 0.D0     
+ 0.D0 0.D0 0.D0 0.D0 0.D0 <3> 1.48500000D+05 <3> 0.D0 <3> 0.D0 <3> 0.D0 <3>     
+ 0.D0 <3> 0.D0 <3> 0.D0 <3> 0 )                                                 
+ DSET STREAM MATERIAL PURGE STR_PHAS @L_35 ( 1.37773009D+04 <3> 0.D0 <3> 0.D0   
+ <3> 0.D0 <3> -4.07705825D+04 <3> * <3> * <3> * <3> -2.11677665D+01 <3> * <3> * 
+ <3> * <3> 3.59030709D-03 <3> * <3> * <3> * <3> 2.44086488D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 1.37773009D+04 <3> 1.22841808D+04 <3>            
+ 2.44086488D+01 3.36285298D+05 <3> 0.D0 <3> 6.39560002D+04 <3> * <3>            
+ 6.39560002D+04 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL R-IN STR_PHAS @L_35 ( 3.00468880D+05 <3> 0.D0 <3> 0.D0 <3>
+ 0.D0 <3> -3.71386188D+04 <3> * <3> * <3> * <3> -1.76259199D+01 <3> * <3> * <3> 
+ * <3> 3.30548078D-03 <3> * <3> * <3> * <3> 2.28170528D+01 * * * 1.00000000D+00 
+ 1.00000000D+00 3.00468880D+05 <3> 2.67896472D+05 <3> 2.28170528D+01            
+ 6.85581432D+06 <3> 0.D0 <3> 1.51500342D+06 <3> * <3> 1.51500342D+06 <3>        
+ 1.00000000D+00 0.D0 )                                                          
+ DSET STREAM MATERIAL R-OUT STR_PHAS @L_35 ( 2.82764154D+05 <3> 0.D0 <3> 0.D0   
+ <3> 0.D0 <3> -3.88519031D+04 <3> * <3> * <3> * <3> -1.51363938D+01 <3> * <3> * 
+ <3> * <3> 1.83251296D-03 <3> * <3> * <3> * <3> 2.42456981D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 2.82764154D+05 <3> 2.47856906D+05 <3>            
+ 2.42456981D+01 6.85581432D+06 <3> 0.D0 <3> 2.57173400D+06 <3> * <3>            
+ 2.57173400D+06 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL RECYCLE STR_PHAS @L_35 ( 2.61766811D+05 <3> 0.D0 <3> 0.D0 
+ <3> 0.D0 <3> -4.07705825D+04 <3> * <3> * <3> * <3> -2.11677665D+01 <3> * <3> * 
+ <3> * <3> 3.59030709D-03 <3> * <3> * <3> * <3> 2.44086488D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 2.61766811D+05 <3> 2.33397750D+05 <3>            
+ 2.44086448D+01 6.38937416D+06 <3> 0.D0 <3> 1.21515516D+06 <3> * <3>            
+ 1.21515496D+06 <3> 1.00000016D+00 0.D0 )                                       
+ DSET STREAM MATERIAL STEAM STR_PHAS @L_35 ( 8.24300261D+03 <3> 0.D0 <3> 0.D0   
+ <3> 0.D0 <3> -5.63015101D+04 <3> * <3> * <3> * <3> -1.35619563D+01 <3> * <3> * 
+ <3> * <3> 9.14970883D-04 <3> * <3> * <3> * <3> 1.80152800D+01 * * *            
+ 1.00000000D+00 1.00000000D+00 8.24300261D+03 <3> 2.47976995D+03 <3>            
+ 1.80152800D+01 1.48500000D+05 <3> 0.D0 <3> 1.50150545D+05 <3> * <3>            
+ 1.50150545D+05 <3> 1.00000000D+00 0.D0 )                                       
+ DSET STREAM MATERIAL WASTE-H2 BLKSTAT @BLKSTAT (0 0)                           
+ DSET STREAM MATERIAL WASTE-H2 COMPSTAT @L1 (0)                                 
+ DSET STREAM MATERIAL WASTE-H2 STR_MAIN @L_33 (B-DIST * MIXED RK-SOAVE          
+ 3.18833649D-01 <3> 7.20782352D+03 <3> 0.D0 <3> 2.28361848D-06 <3>              
+ 2.77904012D+00 <3> 3.92656048D-05 <3> 9.30539343D-06 <3> 1.80331308D-04 <3>    
+ 4.42153812D-05 9.99570359D-01 0.D0 3.16688850D-10 3.85393195D-04               
+ 5.44529630D-09 1.29045827D-09 2.50080804D-08 5.11497171D+00 <3> 1.29850959D+05 
+ <3> 0.D0 <3> 6.39650670D-05 <3> 1.22305000D+02 <3> 7.91547474D-05 <3>          
+ 2.98164905D-04 <3> 5.05170748D-03 <3> 3.93524795D-05 9.99019641D-01 0.D0       
+ 4.92120804D-10 9.40964151D-04 6.08983931D-10 2.29395762D-09 3.88657507D-08     
+ 7.21092162D+03 <3> 1.29978384D+05 <3> 2.21167375D+03 <3> 4.00000000D+01 <4>    
+ 8.00000000D+01 <5> 8.54670733D-08 9.99999915D-01 0.D0 -6.86970972D+04 <3>      
+ -3.81116742D+03 <3> -1.37602607D+08 <3> -3.99044554D+01 <3> -2.21381349D+00 <3>
+ 5.43398532D-02 <3> 9.79487325D-01 <3> 1.80252111D+01 2.17111903D+03 <3> )      
+ DSET STREAM MATERIAL WASTE-H2 RES_STR @L_32 (4.00000000D+01 <4> 8.00000000D+01 
+ <5> 1.29978384D+05 <3> 2.21167375D+03 <3> 7.21092162D+03 <3> 8.54670733D-08 )  
+ DSET STREAM MATERIAL WATER-DR BLKSTAT @BLKSTAT (0 0)                           
+ DSET STREAM MATERIAL WATER-DR COMPSTAT @L1 (0)                                 
+ DSET STREAM MATERIAL WATER-DR STR_MAIN @L_33 (B-FLASH * LIQUID RK-SOAVE        
+ 4.96895939D-03 <3> 9.21669105D+03 <3> 0.D0 <3> 6.32698666D-03 <3>              
+ 3.88116369D-01 <3> 2.83861753D-02 <3> 4.22134891D-03 <3> 3.05784043D-05 <3>    
+ 5.39100904D-07 9.99953125D-01 0.D0 6.86438338D-07 4.21081898D-05               
+ 3.07972184D-06 4.57989859D-07 3.31756493D-09 7.97158230D-02 <3> 1.66041270D+05 
+ <3> 0.D0 <3> 1.77221427D-01 <3> 1.70809238D+01 <3> 5.72231231D-02 <3>          
+ 1.35261137D-01 <3> 8.56607518D-04 <3> 4.80045758D-07 9.99894428D-01 0.D0       
+ 1.06722092D-06 1.02860696D-04 3.44595545D-07 8.14537599D-07 5.15845901D-09     
+ 9.21712310D+03 <3> 1.66058801D+05 <3> 2.82591508D+03 <3> 4.00000000D+01 <4>    
+ 3.00000000D+01 <5> 0.D0 1.00000000D+00 0.D0 -6.87136361D+04 <3>                
+ -3.81396252D+03 <3> -1.75928345D+08 <3> -3.99000741D+01 <3> -2.21466067D+00 <3>
+ 5.43606987D-02 <3> 9.79380698D-01 <3> 1.80163376D+01 2.77307262D+03 <3> )      
+ DSET STREAM MATERIAL WATER-DR RES_STR @L_32 (4.00000000D+01 <4> 3.00000000D+01 
+ <5> 1.66058801D+05 <3> 2.82591508D+03 <3> 9.21712310D+03 <3> 0.D0 )            
+ DSET STREAM MATERIAL WASTE-H2 STRM_XY @L_34 ( 4.41558334D-05 9.99570445D-01    
+ 0.D0 3.12739451D-10 3.85367744D-04 5.41660702D-09 1.29045837D-09               
+ 2.47544073D-08 4.41558334D-05 9.99570445D-01 0.D0 3.12739451D-10               
+ 3.85367744D-04 5.41660702D-09 1.29045837D-09 2.47544073D-08 4.42153812D-05     
+ 9.99570359D-01 0.D0 3.16688850D-10 3.85393195D-04 5.44529630D-09               
+ 1.29045827D-09 2.50080804D-08 6.96777975D-01 1.69901354D-03 0.D0               
+ 4.62099036D-05 2.98173015D-01 3.35681830D-04 6.75694060D-11 2.96810494D-03     
+ 5.11497171D+00 <3> 1.29850959D+05 <3> 0.D0 <3> 6.39650670D-05 <3>              
+ 1.22305000D+02 <3> 7.91547474D-05 <3> 2.98164905D-04 <3> 5.05170748D-03 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL WATER-DR STRM_XY @L_34 ( 5.39100904D-07 9.99953125D-01    
+ 0.D0 6.86438338D-07 4.21081898D-05 3.07972184D-06 4.57989859D-07               
+ 3.31756493D-09 5.39100904D-07 9.99953125D-01 0.D0 6.86438338D-07               
+ 4.21081898D-05 3.07972184D-06 4.57989859D-07 3.31756493D-09 0.D0 0.D0 0.D0     
+ 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0 0.D0               
+ 7.97158230D-02 <3> 1.66041270D+05 <3> 0.D0 <3> 1.77221427D-01 <3>              
+ 1.70809238D+01 <3> 5.72231231D-02 <3> 1.35261137D-01 <3> 8.56607518D-04 <3> *  
+ )                                                                              
+ DSET STREAM MATERIAL WASTE-H2 STR_PHAS @L_35 ( 6.16296367D-04 <3>              
+ 7.21092101D+03 <3> 7.21092101D+03 <3> 0.D0 <3> -4.07935010D+04 <3>             
+ -6.86970996D+04 <3> -6.86970996D+04 <3> * <3> -2.11626879D+01 <3>              
+ -3.99044570D+01 <3> -3.99044570D+01 <3> * <3> 3.59060518D-03 <3>               
+ 5.43399189D-02 <3> 5.43399189D-02 <3> * <3> 2.44165028D+01 1.80252105D+01      
+ 1.80252105D+01 * 8.54670733D-08 1.00000000D+00 7.21092162D+03 <3>              
+ 2.17111903D+03 <3> 1.80252111D+01 1.50478020D-02 <3> 1.29978369D+05 <3>        
+ 2.86068939D-03 <3> 2.21167089D+03 <3> 2.21167375D+03 <3> 1.15771573D-07 0.D0 ) 
+ DSET STREAM MATERIAL WATER-DR STR_PHAS @L_35 ( 0.D0 <3> 9.21712310D+03 <3>     
+ 9.21712310D+03 <3> 0.D0 <3> * <3> -6.87136361D+04 <3> -6.87136361D+04 <3> * <3>
+ * <3> -3.99000741D+01 <3> -3.99000741D+01 <3> * <3> * <3> 5.43606987D-02 <3>   
+ 5.43606987D-02 <3> * <3> * 1.80163376D+01 1.80163376D+01 * 0.D0 1.00000000D+00 
+ 9.21712310D+03 <3> 2.77307262D+03 <3> 1.80163376D+01 0.D0 <3> 1.66058801D+05   
+ <3> * <3> 2.82591508D+03 <3> 2.82591508D+03 <3> 0.D0 0.D0 )                    
+ IDSET ID_87 (PROPERTIES) (8103 *2 <10> 1265 *2 <10> )                          
+ IDSET ID_88 (HIER-ID) ( PLANT )                                                
+ IDSET ID_89 (STREAM-ID) ( NG-FEED STEAM O2-FEED )                              
+ LSET L_36 ( %ID_88 & %ID_87 & %ID_89)                                          
+ DSET UTIL-SUMMARY FEEDSUM @L_36 ( 2.20000000D+05 <3> 6.13800000D+06 <3>        
+ 1.48500000D+05 <3> 0.D0 <3> 2.64000000D+05 <3> 0.D0 <3> )                      
+ IDSET ID_90 (HIER-ID) ( PLANT )                                                
+ IDSET ID_91 (STREAM-ID) ( WATER-DR PURGE MEOH-PRO WASTE-H2 )                   
+ LSET L_37 ( %ID_90 & %ID_87 & %ID_91)                                          
+ DSET UTIL-SUMMARY PRODSUM @L_37 ( 1.66058801D+05 <3> 1.93049952D+01 <3>        
+ 3.36285298D+05 <3> 4.47900349D+06 <3> 1.29980940D+02 <3> 0.D0 <3>              
+ 1.29978384D+05 <3> 2.65012711D+02 <3> )                                        
+ IDSET ID_92 (PROPERTIES) ( 1266 *2 <10> 1267 *2 <10> 1262 *2 <10> 1263 *2 <10> 
+ 1264 *2 <10> 1268 *2 <119> )                                                   
+ LSET L_38 ( %ID_92)                                                            
+ DSET UTIL-SUMMARY PLANTSUM @L_38 ( 6.13800000D+06 <3> 4.47928781D+06 <3>       
+ -1.65871219D+06 <3> 0.D0 <3> -1.65871219D+06 <3> 0.D0 <3> )                    
+ IDSET ID_93 (HIER-ID) ( PLANT )                                                
+ LSET L_39 ( %ID_93 & %ID_92)                                                   
+ DSET UTIL-SUMMARY HIERSUM @L_39 ( 6.13800000D+06 <3> 4.47928781D+06 <3>        
+ -1.65871219D+06 <3> 0.D0 <3> -1.65871219D+06 <3> 0.D0 <3> )                    
+ IDSET RSTAT (PROPERTIES) (739 *1)                                              
+ LSET RSTAT ( %RSTAT)                                                           
+ DSET RUN-STATUS RPTSTAT @RSTAT (0)                                             
+ DSET RUN-STATUS OLDSTAT @STATUS ( 0 1 2 2 0 0 )                                
+ DSET RUN-STATUS STATUS @STATUS ( 10 * * * * * )                                
+ DSET RUN-STATUS COMPSTAT @L_1 (2)                                              
+ IDSET ID_94 (NPOINT) ( #10)                                                    
+ IDSET ID_95 (PROPERTIES) (747 *6)                                              
+ LSET L_40 ( %ID_94 & %ID_95)                                                   
+ DSET RUN-STATUS ERRTXT @L_40 (                                                 
+ "The following Convergence blocks were"                                        
+ "completed with warnings:"                                                     
+ " $OLVER01 "                                                                   
+ ""                                                                             
+ "The following messages were issued during Input Translation:"                 
+ ""                                                                             
+ "   INFORMATION WHILE RETRIEVING AND CHECKING PARAMETER VALUES"                
+ "                                                            (GTDATA.3)"       
+ "   BINARY PARAMETERS RKSKBV (DATA SET 1) FOR MODELS ESRKS/ESRKSTD"            
+ "   ARE RETRIEVED FROM EOS DATABANK. DATABANK NAME = EOS-LIT."                 
+ )                                                                              
+ IDSET TSTAT (PROPERTIES) (741 *1)                                              
+ LSET TSTAT ( %TSTAT)                                                           
+ DSET RUN-STATUS TOTSTAT @TSTAT (2)                                             
+ DSET SPSTAT @SPSTAT (4)                                                        

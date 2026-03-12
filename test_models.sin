@@ -1,0 +1,28 @@
+ >>ORIGINAL RUN                           MARCH 12, 2026      
+   12:27:25 P.M.                          THURSDAY    
+   INPUT FILE: C:\Users\domingueza\ASPEN_PY\test_models.inp
+   OUTPUT PDF: test_models                                                                      VERSION:  1
+   LOCATED IN: C:\Users\domingueza\ASPEN_PY\
+          1    TITLE 'Test Reactions'
+          2    IN-UNITS MET PRESSURE=BAR TEMPERATURE=C FLOW='KG/HR'
+          3    DEF-STREAMS CONVEN ALL
+          4    DATABANKS 'APV140 PURE32' / 'APV140 AQUEOUS' / 'NOASPENPCD'
+          5    PROP-SOURCES 'APV140 PURE32' / 'APV140 AQUEOUS'
+          6    COMPONENTS
+          7        CH4 METHANE / H2O WATER / CO CARBON-MONOXIDE /
+          8        CO2 CARBON-DIOXIDE / H2 HYDROGEN / CH3OH METHANOL
+          9    PROPERTIES RK-SOAVE
+         10    FLOWSHEET
+         11        BLOCK B-SYN IN=S1 OUT=S2 S3
+         12    STREAM S1
+         13        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 MASS-FLOW=220000.0
+         14        MOLE-FRAC CH4 1.0
+         15
+         16    BLOCK B-SYN REQUIL
+         17        PARAM TEMP=250.0 PRES=80.0
+         18        REACTIONS RXN-SET1
+         19
+         20    REACTIONS RXN-SET1
+         21        REAC-DATA 1
+         22        STOIC 1 CO -1.0 / H2 -2.0 / CH3OH 1.0
+         23        K-STOIC 1 12.28 -4048.0 0.0 0.0

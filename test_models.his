@@ -1,0 +1,114 @@
+
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + +                                                                         + +
+ + +                      ASPEN PLUS CALCULATION HISTORY                     + +
+ + +                                                                         + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+
+ ASPEN PLUS IS A TRADEMARK OF           HOTLINE:
+ ASPEN TECHNOLOGY, INC.                 U.S.A. 888/996-7100
+ 781/221-6400                           EUROPE (44) 1189-226555
+
+ PLATFORM: WIN-X64                                       MARCH 12, 2026      
+ VERSION: 40.0   Build 359                               THURSDAY    
+ INSTALLATION:                                           12:27:25 P.M.       
+
+ THIS COPY OF ASPEN PLUS LICENSED TO UNIVERSIDAD DE CANTABRIA        
+
+
+      ASPEN PLUS (R) IS A PROPRIETARY PRODUCT OF ASPEN TECHNOLOGY, INC.
+      (ASPENTECH), AND MAY BE USED ONLY UNDER AGREEMENT WITH ASPENTECH.
+      RESTRICTED RIGHTS LEGEND:  USE, REPRODUCTION, OR DISCLOSURE BY THE
+      U.S. GOVERNMENT IS SUBJECT TO RESTRICTIONS SET FORTH IN 
+      (i) FAR 52.227-14, Alt. III, (ii) FAR 52.227-19, (iii) DFARS 
+      252.227-7013(c)(1)(ii), or (iv) THE ACCOMPANYING LICENSE AGREEMENT,
+      AS APPLICABLE. FOR PURPOSES OF THE FAR, THIS SOFTWARE SHALL BE DEEMED
+      TO BE "UNPUBLISHED" AND LICENSED WITH DISCLOSURE PROHIBITIONS.
+      CONTRACTOR/SUBCONTRACTOR: ASPEN TECHNOLOGY, INC. 20 CROSBY DRIVE,
+      BEDFORD, MA 01730.
+ *** INPUT ECHO(ES) ***
+
+ >>CURRENT RUN
+
+   ORIGINAL RUN                           MARCH 12, 2026      
+   12:27:25 P.M.                          THURSDAY    
+   INPUT FILE: C:\Users\domingueza\ASPEN_PY\test_models.inp
+   OUTPUT PDF: test_models                                                                      VERSION:  1
+   LOCATED IN: C:\Users\domingueza\ASPEN_PY\
+   PDF SIZE: FILE (PSIZE)=    0 RECORDS.   IN-CORE =   256 RECORDS.
+
+          1    TITLE 'Test Reactions'
+          2    IN-UNITS MET PRESSURE=BAR TEMPERATURE=C FLOW='KG/HR'
+          3    DEF-STREAMS CONVEN ALL
+          4    DATABANKS 'APV140 PURE32' / 'APV140 AQUEOUS' / 'NOASPENPCD'
+          5    PROP-SOURCES 'APV140 PURE32' / 'APV140 AQUEOUS'
+          6    COMPONENTS
+          7        CH4 METHANE / H2O WATER / CO CARBON-MONOXIDE /
+          8        CO2 CARBON-DIOXIDE / H2 HYDROGEN / CH3OH METHANOL
+          9    PROPERTIES RK-SOAVE
+         10    FLOWSHEET
+         11        BLOCK B-SYN IN=S1 OUT=S2 S3
+         12    STREAM S1
+         13        SUBSTREAM MIXED TEMP=40.0 PRES=30.0 MASS-FLOW=220000.0
+         14        MOLE-FRAC CH4 1.0
+         15
+         16    BLOCK B-SYN REQUIL
+         17        PARAM TEMP=250.0 PRES=80.0
+         18        REACTIONS RXN-SET1
+         19
+         20    REACTIONS RXN-SET1
+         21        REAC-DATA 1
+         22        STOIC 1 CO -1.0 / H2 -2.0 / CH3OH 1.0
+         23        K-STOIC 1 12.28 -4048.0 0.0 0.0
+ *** INPUT TRANSLATOR MESSAGES ***
+
+  *** THIS RUN USES THE PROPERTIES ENTERPRISE DATABASE ***
+      SQLLOCALDB.APESV140 : (DATAVERSION - 40.0.0.13)                         
+      SQLLOCALDB.APV140 : (DATAVERSION - 40.0.0.13)                           
+      SQLLOCALDB.FACTV140 : (DATAVERSION - 40.0.0.12)                         
+      SQLLOCALDB.NISTV140 : (DATAVERSION - 40.0.0.12)                         
+
+      INFORMATION WHILE RETRIEVING AND CHECKING PARAMETER VALUES                
+                                                               (GTDATA.3)       
+      BINARY PARAMETERS RKSKBV (DATA SET 1) FOR MODELS ESRKS/ESRKSTD            
+      ARE RETRIEVED FROM EOS DATABANK. DATABANK NAME = EOS-LIT.                 
+
+  *** SEVERE ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 16             
+      BLOCK NAME: B-SYN    MODEL NAME: REQUIL     TKW: PRES    (BLDSNT.3)       
+      UNRECOGNIZED SECONDARY KEYWORD: "REACTIONS".                              
+      PROBABLE SPELLING ERROR.  INPUT ON THIS LINE IGNORED.                     
+
+  **  ERROR IN THE "BLOCK" PARAGRAPH WHICH BEGINS ON LINE 16                    
+      BLOCK NAME: B-SYN    MODEL NAME: REQUIL     SKW: PARAM     TKW: PRES      
+                                                               (PITKW.1)        
+      VALUE IS REQUIRED FOR TERTIARY KEYWORD: NREAC                             
+      BUT WAS NOT ENTERED.  PARAGRAPH IGNORED.                                  
+
+  *** SEVERE ERROR WHILE CHECKING CONSISTENCY FOR BLOCK: "B-SYN"                
+                                                               (EDBSEM.1)       
+      BLOCK: "B-SYN" APPEARS IN THE FLOWSHEET, BUT                              
+      NO BLOCK PARAGRAPH HAS BEEN ENTERED FOR IT.                               
+
+  ****DUE TO PREVIOUS SEVERE ERROR(S), FLOWSHEET ANALYSIS
+      AND PROGRAM GENERATION WILL NOT TAKE PLACE.
+
+
+ *** SUMMARY OF ERRORS  ***                
+
+                  PHYSICAL
+                  PROPERTY  SYSTEM  SIMULATION
+ TERMINAL ERRORS      0        0         0
+   SEVERE ERRORS      0        2         0
+          ERRORS      0        1         0
+        WARNINGS      0        0         0
+
+
+ SIMULATION PROGRAM CANNOT BE EXECUTED BECAUSE OF
+ ERRORS IN INPUT TRANSLATION, PLEASE CHECK HISTORY FILE
+
+
+ ************************************************
+ *  ASPEN PLUS INPUT TRANSLATOR ENDS EXECUTION  *
+ ************************************************

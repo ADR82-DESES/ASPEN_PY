@@ -24,7 +24,7 @@ PLANT_DIR = os.path.join(BASE_DIR, "Methanol Plant")
 GENERATED_INP_PATH = os.path.join(PLANT_DIR, "MethanolPlant_generated.inp")
 OUTPUT_APW_PATH = os.path.join(PLANT_DIR, "MethanolPlant_output.apw")
 RESULTS_DIR = os.path.join(PLANT_DIR, "results")
-SESSION_TEMP_DIR = os.path.join(PLANT_DIR, "_session_tmp")
+SESSION_TEMP_DIR = os.path.join(BASE_DIR, "Methanol_Session")
 SESSION_TEMP_INP_PATH = os.path.join(SESSION_TEMP_DIR, "temp_simulation.inp")
 
 
@@ -161,7 +161,8 @@ def main() -> int:
         return 1
     finally:
         if aspen is not None:
-            _cleanup_session(aspen, output_dir=SESSION_TEMP_DIR, keep_alive=False)
+            log("INFO", f"DEBUG: Clean-up disabled for inspection. Session dir: {SESSION_TEMP_DIR}")
+            # _cleanup_session(aspen, output_dir=SESSION_TEMP_DIR, keep_alive=False)
 
 
 if __name__ == "__main__":

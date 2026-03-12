@@ -1,0 +1,9 @@
+input: C:\Users\domingueza\ASPEN_PY\test_syntax.inp
+runid: test_syntax
+username: domingueza
+xmod: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\\xeq\apmain.exe
+xpdflc: C:\Users\domingueza\ASPEN_PY\
+xmodlc: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\\xeq
+modname: apmain
+new_runid: test_syntax
+old_runid: test_syntax
