@@ -1,9 +1,0 @@
-input: C:\Users\domingueza\ASPEN_PY\test_models.inp
-runid: test_models
-username: domingueza
-xmod: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\\xeq\apmain.exe
-xpdflc: C:\Users\domingueza\ASPEN_PY\
-xmodlc: C:\Program Files\AspenTech\Aspen Plus V14.0\Engine\\xeq
-modname: apmain
-new_runid: test_models
-old_runid: test_models

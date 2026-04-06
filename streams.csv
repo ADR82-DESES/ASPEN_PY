@@ -1,4 +1,0 @@
-StreamName,Temperature (C),Pressure (bar),MassFlow (kg/hr),MoleFlow (kmol/hr)
-WATER1,80.0,2.0,1,N/A
-WATER2,20.0,2.0,1,N/A
-OUT,50.2486564,2.0,1,N/A

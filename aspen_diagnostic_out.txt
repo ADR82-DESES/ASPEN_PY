@@ -1,3 +1,0 @@
-Simulation: C:\Users\domingueza\ASPEN_PY\Methanol Plant\MethanolPlant.apw
-Timestamp: Wed Mar 11 14:20:48 2026
-

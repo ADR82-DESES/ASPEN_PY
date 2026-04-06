@@ -1,7 +1,0 @@
-============================================================
-ASPEN PLUS MIXER SIMULATION
-============================================================
-
-[1] Connecting...
-OK - Connected to: Aspen Plus 40.0 OLE Services
-FAIL - (-2147352567, 'Ocurrió una excepción.', (2002, 'Aspen Plus 40.0 OLE Services', 'Application has not been initialized or has been closed since the last initialization. InitNew or InitFromFile must be  called before this property or method may be executed.', None, 0, 0), None)

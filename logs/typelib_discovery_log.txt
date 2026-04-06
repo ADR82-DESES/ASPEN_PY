@@ -1,6 +1,0 @@
-Apwn.Document CLSID: {CF916C06-D17A-4A07-8548-787F4B0F99CB}
-Error: [WinError 2] El sistema no puede encontrar el archivo especificado
-
-======================================================================
-RESEARCH COMPLETE
-======================================================================

@@ -1,9 +1,0 @@
-======================================================================
-ASPEN PLUS ENGINE RESEARCH
-======================================================================
-Engine object: <COMObject <unknown>>
-Engine methods: ['AddRef', 'AddStopPoint', 'ClearStopPoints', 'ConnectionDialog', 'ControlPanel', 'DeleteStopPoint', 'Dummy', 'EngineFilesSettings', 'ExportReport', 'GetIDsOfNames', 'GetStopPoint', 'GetTypeInfo', 'GetTypeInfoCount', 'Host', 'HostCount', 'HostDescription', 'Invoke', 'IsRunning', 'MoveTo', 'OptionSettings', 'ProcessInput', 'QueryInterface', 'Ready', 'Reinit', 'ReinitializeEO', 'Release', 'Run', 'Run2', 'RunControl', 'RunSettings', 'Step', 'Stop', 'StopPointCount', 'StopPoints', 'SynchronizeEO']
-
-======================================================================
-RESEARCH COMPLETE
-======================================================================

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Antigravity to Aspen Plus"
+  short_description: "Build and run Aspen Plus from Antigravity"
+  default_prompt: "Use $antigravity-to-aspen-plus to build, run, and export an Aspen Plus simulation from an Antigravity process spec."
