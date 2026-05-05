@@ -8,12 +8,19 @@ wheels/
 
 # Virtual environments
 .venv
+.pixi/
+.pixi-cache/
+
+# Notebook artifacts
+.ipynb_checkpoints/
 
 # Aspen Plus generated / runtime artifacts
 Methanol Plant/results/
 Methanol Plant/_session_tmp/
 Methanol Plant/MethanolPlant_output.*
 Methanol Plant/MethanolPlant_generated.inp
+process_runs/
+.jcodemunch-cache/
 
 # Ad-hoc debug / exploration scripts
 debug_aspen.py

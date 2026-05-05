@@ -60,10 +60,31 @@ def mock_aspen_factory(
 
         if path == r"\Data\Results Summary\Run-Status\Output\PER_ERROR":
             return _node(diagnostics.get("PER_ERROR"))
+        if path == r"\Data\Convergence\Batch-Options\Output\PER_ERROR":
+            value = diagnostics.get("ALT_PER_ERROR")
+            return _node(value) if value is not None else None
+        if path == r"\Data\Convergence\Sequence\Batch-Options\Output\PER_ERROR":
+            value = diagnostics.get("ALT_SEQUENCE_PER_ERROR")
+            return _node(value) if value is not None else None
+        if path == r"\Data\Results Summary\Convergence\Output\PER_ERROR":
+            value = diagnostics.get("ALT_SUMMARY_PER_ERROR")
+            return _node(value) if value is not None else None
         if path == r"\Data\Results Summary\Run-Status\Output\NERROR":
             return _node(diagnostics.get("NERROR"))
+        if path == r"\Data\Results Summary\Convergence\Output\NERROR":
+            value = diagnostics.get("ALT_NERROR")
+            return _node(value) if value is not None else None
         if path == r"\Data\Results Summary\Run-Status\Output\NWARN":
             return _node(diagnostics.get("NWARN"))
+        if path == r"\Data\Results Summary\Convergence\Output\NWARN":
+            value = diagnostics.get("ALT_NWARN")
+            return _node(value) if value is not None else None
+        if path == r"\Data\Results Summary\Run-Status\Output\MESSAGES":
+            value = diagnostics.get("MESSAGES")
+            return _node(value) if value is not None else None
+        if path == r"\Data\Results Summary\Convergence\Output\MESSAGES":
+            value = diagnostics.get("ALT_MESSAGES")
+            return _node(value) if value is not None else None
 
         stream_prefix = "\\Data\\Streams\\"
         if path.startswith(stream_prefix):
@@ -289,18 +310,24 @@ def test_purity_expression_mol_pct() -> None:
 
 
 def test_purity_expression_none() -> None:
+    """When no purity expression is in the spec, purity_fraction must be None.
+
+    Previously DEFAULT_PURITY_EXPRESSION = "CH3OH wt% in MEOH-PRO" was used as
+    a fallback, which caused non-methanol processes to get a nonsensical purity.
+    """
     spec = _base_spec(with_purity=False)
     aspen = mock_aspen_factory(_base_stream_values(), _base_block_values())
     kpis = extract_results(aspen, spec)["kpis"]
-    assert kpis["purity_fraction"] == pytest.approx(0.99)
+    assert kpis["purity_fraction"] is None
 
 
 def test_purity_expression_defaults_when_purity_target_missing() -> None:
+    """targets section present but no purity key → purity_fraction must be None."""
     spec = _base_spec(with_purity=False)
     spec["targets"] = {"production_rate_tpd": 1000.0, "tolerance": 0.01}
     aspen = mock_aspen_factory(_base_stream_values(), _base_block_values())
     kpis = extract_results(aspen, spec)["kpis"]
-    assert kpis["purity_fraction"] == pytest.approx(0.99)
+    assert kpis["purity_fraction"] is None
 
 
 def test_yield_fraction_component_based_default() -> None:
@@ -402,3 +429,144 @@ def test_extract_results_no_crash_on_failed_sim() -> None:
     }
     assert results["diagnostics"]["convergence_status"] == "failed"
     assert results["kpis"]["convergence_status"] == "failed"
+
+
+def test_pick_product_stream_generic_process_no_meoh() -> None:
+    """_pick_product_stream must work for non-methanol processes.
+
+    When there is no MEOH-PRO stream and no CH3OH column, the product should be
+    identified from the spec's flowsheet topology (product streams = outputs that
+    are not inputs of any block), picking the one with highest mass_flow.
+    Previously the function returned None after failing to find MEOH-PRO and
+    finding no CH3OH_mass_frac column.
+    """
+    from aspen_automation.extractor import extract_results
+
+    spec: Dict[str, Any] = {
+        "components": [
+            {"id": "NH3", "name": "AMMONIA"},
+            {"id": "H2", "name": "HYDROGEN"},
+        ],
+        "streams": [
+            {"name": "H2-FEED"},
+            {"name": "NH3-PROD"},
+        ],
+        "blocks": [{"name": "SYN-1", "type": "RGIBBS"}],
+        "flowsheet": [
+            {"block": "SYN-1", "inputs": ["H2-FEED"], "outputs": ["NH3-PROD"]},
+        ],
+        "targets": {"purity": {"expression": "NH3 wt% in NH3-PROD"}},
+    }
+    stream_values = {
+        "H2-FEED": {
+            "TEMP_OUT": 25.0,
+            "PRES_OUT": 1.0,
+            "MASSFLMX": 5000.0,
+            "MOLEFLMX": 200.0,
+            "MOLEFRAC": {"NH3": 0.0, "H2": 1.0},
+            "MASSFRAC": {"NH3": 0.0, "H2": 1.0},
+        },
+        "NH3-PROD": {
+            "TEMP_OUT": 30.0,
+            "PRES_OUT": 1.0,
+            "MASSFLMX": 4800.0,
+            "MOLEFLMX": 180.0,
+            "MOLEFRAC": {"NH3": 0.95, "H2": 0.05},
+            "MASSFRAC": {"NH3": 0.94, "H2": 0.06},
+        },
+    }
+    block_values = {"SYN-1": {"TYPE": "RGIBBS", "QNET": 1000.0}}
+    aspen = mock_aspen_factory(stream_values, block_values)
+    kpis = extract_results(aspen, spec)["kpis"]
+    # NH3-PROD is the only product stream by topology; production_rate must be non-None
+    assert kpis["production_rate_tpd"] is not None
+    assert kpis["production_rate_tpd"] == pytest.approx(4800.0 * 24.0 / 1000.0)
+    assert kpis["purity_fraction"] == pytest.approx(0.94)
+
+
+def test_extract_results_uses_fallback_convergence_path() -> None:
+    spec = _base_spec()
+    aspen = mock_aspen_factory(
+        _base_stream_values(),
+        _base_block_values(),
+        diagnostics={"ALT_PER_ERROR": 0, "ALT_NERROR": 0, "ALT_NWARN": 1},
+    )
+
+    results = extract_results(aspen, spec)
+
+    assert results["diagnostics"]["convergence_status"] == "converged"
+    assert results["diagnostics"]["per_error_path"] == r"\Data\Convergence\Batch-Options\Output\PER_ERROR"
+    assert results["kpis"]["convergence_status"] == "converged"
+
+
+# ---------------------------------------------------------------------------
+# process_defaults integration tests
+# ---------------------------------------------------------------------------
+
+def test_purity_falls_back_to_process_defaults_expression() -> None:
+    """When targets has no purity, process_defaults.purity_expression is used."""
+    spec = _base_spec(with_purity=False)
+    spec["process_defaults"] = {"purity_expression": "CH3OH wt% in MEOH-PRO"}
+    aspen = mock_aspen_factory(_base_stream_values(), _base_block_values())
+    kpis = extract_results(aspen, spec)["kpis"]
+    assert kpis["purity_fraction"] == pytest.approx(0.99)
+
+
+def test_targets_purity_takes_priority_over_process_defaults() -> None:
+    """targets.purity.expression wins over process_defaults.purity_expression."""
+    spec = _base_spec(with_purity=True, purity_expression="CH3OH mol% in MEOH-PRO")
+    spec["process_defaults"] = {"purity_expression": "CH3OH wt% in MEOH-PRO"}
+    aspen = mock_aspen_factory(_base_stream_values(), _base_block_values())
+    kpis = extract_results(aspen, spec)["kpis"]
+    assert kpis["purity_fraction"] == pytest.approx(0.95)  # mol%, not wt% 0.99
+
+
+def test_process_defaults_product_stream_overrides_topology() -> None:
+    """process_defaults.product_stream picks the named product even when topology has
+    multiple candidates and another one has higher mass_flow.
+    """
+    spec = _base_spec(with_purity=False)
+    # Two product streams: MEOH-PRO and WASTE-H2O both appear as flowsheet outputs
+    # that are not consumed by any block.
+    spec["streams"].append({"name": "WASTE-H2O"})
+    spec["flowsheet"] = [
+        {"block": "R1", "inputs": ["FEED-A"], "outputs": ["INT-1"]},
+        {"block": "HX1", "inputs": ["INT-1"], "outputs": ["MEOH-PRO", "WASTE-H2O"]},
+    ]
+    # WASTE-H2O has higher mass_flow → topology-only would pick WASTE-H2O (800000 > 100000)
+    spec["process_defaults"] = {"product_stream": "MEOH-PRO"}
+    stream_values = _base_stream_values()
+    stream_values["WASTE-H2O"] = {
+        "TEMP_OUT": 45.0,
+        "PRES_OUT": 1.2,
+        "MASSFLMX": 800000.0,
+        "MOLEFLMX": 50.0,
+        "MOLEFRAC": {"CH3OH": 0.01, "H2O": 0.99},
+        "MASSFRAC": {"CH3OH": 0.01, "H2O": 0.99},
+    }
+    aspen = mock_aspen_factory(stream_values, _base_block_values())
+    kpis = extract_results(aspen, spec)["kpis"]
+    # process_defaults.product_stream="MEOH-PRO" must override topology + mass_flow bias
+    # MEOH-PRO mass_flow=100000 kg/hr → 2400 tpd
+    assert kpis["production_rate_tpd"] == pytest.approx(100000.0 * 24.0 / 1000.0)
+
+
+def test_process_defaults_convergence_block_used_when_per_error_absent() -> None:
+    """process_defaults.convergence_block is queried when PER_ERROR paths return None.
+
+    Note: mock_aspen_factory uses `diagnostics or default`, so we pass a non-empty
+    dict that omits PER_ERROR to prevent the fallback to the default PER_ERROR=0.
+    """
+    spec = _base_spec()
+    spec["process_defaults"] = {"convergence_block": "B-ATR"}
+    block_values = _base_block_values()
+    block_values["B-ATR"] = {"BLKSTAT": 0}  # converged
+    # Non-empty diagnostics dict with no PER_ERROR key: all per_error paths return None.
+    aspen = mock_aspen_factory(
+        _base_stream_values(),
+        block_values,
+        diagnostics={"NERROR": 0, "NWARN": 0},
+    )
+    results = extract_results(aspen, spec)
+    assert results["diagnostics"]["convergence_status"] == "converged"
+    assert results["kpis"]["convergence_status"] == "converged"

@@ -483,6 +483,20 @@ class FlowsheetingOptions(BaseModel):
     mass_balance: bool = Field(default=True, description="Enable mass balance calculation")
     energy_balance: bool = Field(default=True, description="Enable energy balance calculation")
 
+
+class ProcessDefaults(BaseModel):
+    """Process-specific defaults stored in the YAML template.
+
+    These values are used as fallbacks when the same information is not
+    provided via ``targets`` or inferred from the flowsheet topology.
+    All fields are optional so templates can set only what is relevant.
+    """
+    model_config = ConfigDict(extra="forbid")
+    purity_expression: Optional[str] = None
+    product_stream: Optional[str] = None
+    convergence_block: Optional[str] = None
+
+
 class PlantSpecification(BaseModel):
     model_config = ConfigDict(extra="forbid")
     metadata: Metadata
@@ -490,6 +504,7 @@ class PlantSpecification(BaseModel):
     properties: Properties
 
     flowsheeting_options: Optional[FlowsheetingOptions] = None
+    process_defaults: Optional[ProcessDefaults] = None
     flowsheet: List[FlowsheetConnection]
     streams: List[Stream]
     blocks: List[Block]

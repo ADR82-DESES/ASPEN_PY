@@ -57,7 +57,7 @@ flowsheet:
     outputs: ["PURGE", "RECYCLE"]
   - block: "B-DIST"
     inputs: ["CRUDE-ME"]
-    outputs: ["MEOH-PRO", "WASTE-H2"]
+    outputs: ["MEOH-PRO", "WASTE-H2O"]
 
 streams:
   - name: "NG-FEED"
@@ -208,7 +208,7 @@ streams:
       CO2: 0.0003
       CO: 0.0001
       CH4: 0.0001
-  - name: "WASTE-H2"
+  - name: "WASTE-H2O"
     temperature: 45
     pressure: 1.2
     mass_flow: 43333.3
@@ -313,6 +313,11 @@ reaction_sets:
   - id: "RXN-SET1"
     block_type: "REQUIL"
     reaction_ids: [1, 2]
+
+process_defaults:
+  purity_expression: "CH3OH wt% in MEOH-PRO"
+  product_stream: "MEOH-PRO"
+  convergence_block: "B-ATR"
 
 targets:
   production_rate_tpd: 10000

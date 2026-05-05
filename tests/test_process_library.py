@@ -1,0 +1,427 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
+
+import pandas as pd
+
+from aspen_automation.process_library import (
+    discover_processes,
+    load_process_spec,
+    run_process,
+    run_process_library,
+    scan_process_library,
+    validate_process_spec_file,
+)
+from aspen_automation.process_spec_coherence import analyze_process_spec_coherence
+from aspen_automation.exceptions import BuildError
+
+
+ROOT = Path(__file__).resolve().parents[1]
+METHANOL_TEMPLATE_PATH = ROOT / "templates" / "methanol_plant_atr.yaml"
+PROCESS_LIBRARY_ROOT = ROOT / "process_library"
+NOTEBOOK_PATH = ROOT / "notebooks" / "process_library_runner.ipynb"
+
+
+def _write_yaml_from_template(target: Path) -> None:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(METHANOL_TEMPLATE_PATH.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def test_process_library_methanol_spec_validates() -> None:
+    report = validate_process_spec_file(PROCESS_LIBRARY_ROOT / "methanol" / "process.yaml")
+    assert report["valid"], report["errors"]
+
+
+def test_process_library_methanol_spec_has_buildable_screening_warnings() -> None:
+    spec = load_process_spec(PROCESS_LIBRARY_ROOT / "methanol")
+    coherence = analyze_process_spec_coherence(spec)
+    assert coherence["passed"] is True
+    messages = [issue["message"] for issue in coherence["issues"] if issue["severity"] == "warning"]
+    assert any("High-purity target" in message for message in messages)
+    assert any("Property method" in message for message in messages)
+    assert any("equilibrium reactor model" in message for message in messages)
+
+
+def test_scan_process_library_discovers_valid_and_invalid_processes(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    _write_yaml_from_template(library_root / "methanol" / "process.yaml")
+
+    (library_root / "ammonia").mkdir(parents=True, exist_ok=True)
+
+    hydrogen_dir = library_root / "hydrogen"
+    hydrogen_dir.mkdir(parents=True, exist_ok=True)
+    _write_yaml_from_template(hydrogen_dir / "one.yaml")
+    _write_yaml_from_template(hydrogen_dir / "two.yaml")
+
+    scan = scan_process_library(library_root)
+
+    assert [process.name for process in scan.processes] == ["methanol"]
+    assert {issue.process_name for issue in scan.issues} == {"ammonia", "hydrogen"}
+    assert discover_processes(library_root)[0].spec_path.name == "process.yaml"
+
+
+def test_run_process_writes_outputs_to_process_specific_run_dir(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    process_dir = library_root / "methanol"
+    _write_yaml_from_template(process_dir / "process.yaml")
+    runs_root = tmp_path / "process_runs"
+
+    fake_aspen = MagicMock(name="aspen")
+    fake_session_result = SimpleNamespace(
+        build_mode="auto",
+        build_mechanism_used="InitFromFile2",
+        build_fallback_attempted=False,
+        diagnostics={},
+        convergence_status="converged",
+        simulation_time_seconds=12.5,
+        aspen=fake_aspen,
+    )
+    fake_results = {
+        "streams": pd.DataFrame([{"stream_name": "NG-FEED", "temperature": 40.0}]),
+        "blocks": pd.DataFrame([{"block_name": "B-ATR", "block_type": "RGIBBS", "duty_kw": 10.0}]),
+        "material_balance": pd.DataFrame([{"component": "CH4", "closure_pct": -1.5}]),
+        "energy_balance": pd.DataFrame([{"block_name": "TOTAL", "duty_mw": 12.3}]),
+        "kpis": {
+            "production_rate_tpd": 10000.0,
+            "purity_fraction": 0.9985,
+            "convergence_status": "converged",
+        },
+        "diagnostics": {"convergence_status": "converged", "per_error": 0},
+    }
+
+    with patch(
+        "aspen_automation.process_library.run_simulation_session",
+        return_value=fake_session_result,
+    ), patch(
+        "aspen_automation.process_library.extract_results",
+        return_value=fake_results,
+    ), patch(
+        "aspen_automation.process_library.analyze_process_spec_coherence",
+        return_value={"passed": True, "issues": []},
+    ):
+        result = run_process(process_dir, runs_root, visible=False)
+
+    assert result.succeeded
+    assert result.layout is not None
+    assert result.layout.generated_inp_path.is_file()
+    assert result.layout.results_dir.joinpath("streams.csv").is_file()
+    assert result.layout.results_dir.joinpath("blocks.csv").is_file()
+    assert result.layout.results_dir.joinpath("material_balance.csv").is_file()
+    assert result.layout.results_dir.joinpath("energy_balance.csv").is_file()
+    assert result.layout.results_dir.joinpath("kpis.json").is_file()
+    assert result.layout.results_dir.joinpath("acceptance.json").is_file()
+    assert result.layout.results_dir.joinpath("diagnostics.json").is_file()
+    assert result.layout.results_dir.joinpath("simulation_diagnostics.json").is_file()
+    assert result.layout.output_apw_path == result.layout.run_dir / "methanol_output.apw"
+    fake_aspen.SaveAs.assert_called_once_with(str(result.layout.output_apw_path))
+    acceptance = json.loads(result.layout.results_dir.joinpath("acceptance.json").read_text(encoding="utf-8"))
+    assert "passed" in acceptance
+
+
+def test_run_process_blocks_when_coherence_fails(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    process_dir = library_root / "methanol"
+    _write_yaml_from_template(process_dir / "process.yaml")
+    process_yaml = process_dir / "process.yaml"
+    process_yaml.write_text(
+        process_yaml.read_text(encoding="utf-8").replace("fraction: 0.05", "fraction: 0.10", 1),
+        encoding="utf-8",
+    )
+    runs_root = tmp_path / "process_runs"
+
+    result = run_process(process_dir, runs_root, visible=False)
+
+    assert result.status == "coherence_failed"
+    assert result.succeeded is False
+    assert result.layout is not None
+    assert result.layout.results_dir.joinpath("coherence_report.json").is_file()
+    coherence = json.loads(result.layout.results_dir.joinpath("coherence_report.json").read_text(encoding="utf-8"))
+    assert coherence["passed"] is False
+
+
+def test_run_process_flags_unreadable_results_after_converged_session(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    process_dir = library_root / "methanol"
+    _write_yaml_from_template(process_dir / "process.yaml")
+    runs_root = tmp_path / "process_runs"
+
+    fake_aspen = MagicMock(name="aspen")
+    fake_session_result = SimpleNamespace(
+        build_mode="auto",
+        build_mechanism_used="InitFromFile2",
+        build_fallback_attempted=False,
+        diagnostics={"convergence_status": "converged", "per_error": 0},
+        convergence_status="converged",
+        simulation_time_seconds=7.5,
+        aspen=fake_aspen,
+    )
+    unreadable_results = {
+        "streams": pd.DataFrame([{"stream_name": "NG-FEED", "temperature": None, "pressure": None}]),
+        "blocks": pd.DataFrame([{"block_name": "B-ATR", "block_type": "RGIBBS", "duty_kw": None}]),
+        "material_balance": pd.DataFrame(),
+        "energy_balance": pd.DataFrame(),
+        "kpis": {
+            "production_rate_tpd": None,
+            "purity_fraction": None,
+            "convergence_status": "unknown",
+        },
+        "diagnostics": {"convergence_status": "unknown", "per_error": None},
+    }
+
+    with patch(
+        "aspen_automation.process_library.run_simulation_session",
+        return_value=fake_session_result,
+    ), patch(
+        "aspen_automation.process_library.extract_results",
+        return_value=unreadable_results,
+    ), patch(
+        "aspen_automation.process_library.analyze_process_spec_coherence",
+        return_value={"passed": True, "issues": []},
+    ):
+        result = run_process(process_dir, runs_root, visible=False)
+
+    assert result.status == "results_unreadable"
+    assert result.succeeded is False
+    assert result.layout is not None
+    simulation_diagnostics = json.loads(
+        result.layout.results_dir.joinpath("simulation_diagnostics.json").read_text(encoding="utf-8")
+    )
+    assert simulation_diagnostics["status"] == "results_unreadable"
+    assert simulation_diagnostics["stream_numeric_rows"] == 0
+    assert simulation_diagnostics["block_numeric_rows"] == 0
+    assert result.layout.results_dir.joinpath("yaml_update_suggestions.json").is_file()
+
+
+def test_run_process_flags_empty_flowsheet_as_build_failed(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    process_dir = library_root / "methanol"
+    _write_yaml_from_template(process_dir / "process.yaml")
+    runs_root = tmp_path / "process_runs"
+
+    build_error = BuildError(
+        "Aspen import did not materialize a usable flowsheet.",
+        build_mode="auto",
+        mechanism_tried="Import",
+        diagnostics={
+            "build_valid": False,
+            "generated_inp_path": "temp_simulation.inp",
+            "generated_inp_file": {"path": "temp_simulation.inp", "exists": False, "size_bytes": None},
+            "aspen_preflight": {
+                "v14_verified": True,
+                "aspen_version": "40.0",
+                "preflight_status": "v14_connected",
+            },
+            "flowsheet_verification": {
+                "build_valid": False,
+                "stream_count": 0,
+                "block_count": 0,
+                "stream_samples": [],
+                "block_samples": [],
+            },
+            "import_attempts": [
+                {"mechanism": "Import", "path_variant": "raw_string", "success": False, "error": "empty tree"},
+                {
+                    "mechanism": "InitFromFile2",
+                    "path_variant": "raw_string",
+                    "success": False,
+                    "error": "Unable to open file",
+                },
+            ],
+            "per_error": 0,
+        },
+    )
+
+    with patch(
+        "aspen_automation.process_library.run_simulation_session",
+        side_effect=build_error,
+    ), patch(
+        "aspen_automation.process_library.analyze_process_spec_coherence",
+        return_value={"passed": True, "issues": []},
+    ):
+        result = run_process(process_dir, runs_root, visible=False)
+
+    assert result.status == "build_failed"
+    assert result.succeeded is False
+    assert result.layout is not None
+    build_diagnostics = json.loads(result.layout.results_dir.joinpath("build_diagnostics.json").read_text(encoding="utf-8"))
+    assert build_diagnostics["status"] == "build_failed"
+    assert build_diagnostics["build_valid"] is False
+    assert build_diagnostics["diagnostics"]["aspen_preflight"]["v14_verified"] is True
+    assert build_diagnostics["diagnostics"]["import_attempts"][1]["error"] == "Unable to open file"
+    simulation_diagnostics = json.loads(
+        result.layout.results_dir.joinpath("simulation_diagnostics.json").read_text(encoding="utf-8")
+    )
+    assert simulation_diagnostics["status"] == "build_failed"
+    assert simulation_diagnostics["run_status"] == "not_started"
+    assert simulation_diagnostics["session_diagnostics"]["aspen_preflight"]["aspen_version"] == "40.0"
+
+
+def test_run_process_reports_soft_connection_failure_without_generic_runtime_error(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    process_dir = library_root / "methanol"
+    _write_yaml_from_template(process_dir / "process.yaml")
+    runs_root = tmp_path / "process_runs"
+
+    fake_session_result = SimpleNamespace(
+        build_mode="auto",
+        build_mechanism_used="none",
+        build_fallback_attempted=False,
+        diagnostics={
+            "error": "Aspen Plus V14 connection check failed during InitNew(): license unavailable",
+            "connection_error_type": "AspenConnectionError",
+            "aspen_connection_verified": False,
+            "aspen_preflight": {
+                "connection_verified": False,
+                "v14_verified": False,
+                "v14_version_verified": False,
+                "version_status": "unreported",
+                "preflight_status": "init_failed",
+                "aspen_version": None,
+            },
+        },
+        convergence_status="failed",
+        simulation_time_seconds=0.0,
+        aspen=None,
+    )
+
+    with patch(
+        "aspen_automation.process_library.run_simulation_session",
+        return_value=fake_session_result,
+    ), patch(
+        "aspen_automation.process_library.analyze_process_spec_coherence",
+        return_value={"passed": True, "issues": []},
+    ):
+        result = run_process(process_dir, runs_root, visible=False)
+
+    assert result.status == "connection_failed"
+    assert result.succeeded is False
+    assert result.error == fake_session_result.diagnostics["error"]
+    assert result.layout is not None
+
+    build_diagnostics = json.loads(result.layout.results_dir.joinpath("build_diagnostics.json").read_text(encoding="utf-8"))
+    assert build_diagnostics["status"] == "connection_failed"
+    assert build_diagnostics["build_valid"] is False
+    assert build_diagnostics["diagnostics"]["aspen_preflight"]["preflight_status"] == "init_failed"
+
+    simulation_diagnostics = json.loads(
+        result.layout.results_dir.joinpath("simulation_diagnostics.json").read_text(encoding="utf-8")
+    )
+    assert simulation_diagnostics["status"] == "connection_failed"
+    assert simulation_diagnostics["summary"] == fake_session_result.diagnostics["error"]
+    assert simulation_diagnostics["run_status"] == "not_started"
+    assert simulation_diagnostics["session_diagnostics"]["connection_error_type"] == "AspenConnectionError"
+
+
+def test_run_process_writes_safe_yaml_update_proposal_for_high_confidence_runtime_issue(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    process_dir = library_root / "methanol"
+    _write_yaml_from_template(process_dir / "process.yaml")
+    runs_root = tmp_path / "process_runs"
+
+    fake_aspen = MagicMock(name="aspen")
+    fake_session_result = SimpleNamespace(
+        build_mode="auto",
+        build_mechanism_used="InitFromFile2",
+        build_fallback_attempted=False,
+        diagnostics={"convergence_status": "converged", "per_error": 0},
+        convergence_status="converged",
+        simulation_time_seconds=10.0,
+        aspen=fake_aspen,
+    )
+    partial_results = {
+        "streams": pd.DataFrame([{"stream_name": "MEOH-PRO", "temperature": 35.0, "mass_flow": 1000.0}]),
+        "blocks": pd.DataFrame([{"block_name": "B-ATR", "block_type": "RGIBBS", "duty_kw": 10.0}]),
+        "material_balance": pd.DataFrame(),
+        "energy_balance": pd.DataFrame(),
+        "kpis": {
+            "production_rate_tpd": 10000.0,
+            "purity_fraction": None,
+            "convergence_status": "converged",
+        },
+        "diagnostics": {"convergence_status": "converged", "per_error": 0},
+    }
+    coherence_report = {
+        "passed": True,
+        "issues": [
+            {
+                "severity": "warning",
+                "location": "properties.databanks",
+                "message": "No explicit databanks are configured, so the run will fall back to defaults.",
+                "suggestion": "Declare the databanks explicitly in YAML so the property environment is intentional and reproducible.",
+            }
+        ],
+    }
+
+    with patch(
+        "aspen_automation.process_library.run_simulation_session",
+        return_value=fake_session_result,
+    ), patch(
+        "aspen_automation.process_library.extract_results",
+        return_value=partial_results,
+    ), patch(
+        "aspen_automation.process_library.analyze_process_spec_coherence",
+        return_value=coherence_report,
+    ):
+        result = run_process(process_dir, runs_root, visible=False)
+
+    assert result.status == "results_incomplete"
+    assert result.succeeded is False
+    assert result.layout is not None
+    suggestion_artifact = json.loads(
+        result.layout.results_dir.joinpath("yaml_update_suggestions.json").read_text(encoding="utf-8")
+    )
+    assert suggestion_artifact["generated_yaml"] is True
+    proposal_path = result.layout.results_dir / "process_update_proposal.yaml"
+    assert proposal_path.is_file()
+    proposal_text = proposal_path.read_text(encoding="utf-8")
+    assert "databanks:" in proposal_text
+    assert "APV140 PURE32" in proposal_text
+
+
+def test_run_process_library_continues_after_failure(tmp_path: Path) -> None:
+    library_root = tmp_path / "process_library"
+    _write_yaml_from_template(library_root / "methanol" / "process.yaml")
+    _write_yaml_from_template(library_root / "ammonia" / "process.yaml")
+
+    def _fake_run(process_dir: Path, runs_root: Path, **_: object):
+        name = Path(process_dir).name
+        if name == "methanol":
+            return SimpleNamespace(process_name=name, succeeded=False, status="failed", error="boom")
+        return SimpleNamespace(process_name=name, succeeded=True, status="succeeded", error=None)
+
+    with patch("aspen_automation.process_library.run_process", side_effect=_fake_run):
+        results = run_process_library(library_root, tmp_path / "process_runs", continue_on_error=True)
+
+    assert [result.process_name for result in results] == ["ammonia", "methanol"]
+    assert {result.status for result in results} == {"failed", "succeeded"}
+
+
+def test_process_library_notebook_has_required_sections() -> None:
+    notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
+    cells = notebook["cells"]
+    joined_sources = "\n".join("".join(cell.get("source", [])) for cell in cells)
+
+    assert "Environment setup and imports" in joined_sources
+    assert "Repository path resolution" in joined_sources
+    assert "Process library path configuration" in joined_sources
+    assert "YAML schema / expected fields overview" in joined_sources
+    assert "Discovery of all available process folders" in joined_sources
+    assert "Shared helper functions" in joined_sources
+    assert "YAML coherence analysis per discovered process" in joined_sources
+    assert "Suggested YAML improvements per discovered process" in joined_sources
+    assert "One execution section per discovered process" in joined_sources
+    assert "Codex session analysis per discovered process" in joined_sources
+    assert "Output summary and validation" in joined_sources
+    assert "analyze_process_spec_coherence" in joined_sources
+    assert "apply_process_spec_improvements" in joined_sources
+    assert "suggest_process_spec_improvements" in joined_sources
+    assert "write_process_spec_file" in joined_sources
+    assert "build_codex_spec_markdown" in joined_sources
+    assert "build_codex_improvement_markdown" in joined_sources
+    assert "build_codex_results_markdown" in joined_sources
+    assert "load_result_artifact_tables" in joined_sources
+    assert "input(" in joined_sources
+    assert "process_library" in joined_sources

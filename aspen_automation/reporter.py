@@ -4,6 +4,7 @@ import os
 from typing import Any, Dict
 
 import pandas as pd
+from .serialization import spec_to_plain_dict
 from .schema import PlantSpecification
 
 
@@ -33,12 +34,8 @@ def _write_json_reports(results: Dict[str, Any], run_dir: str) -> None:
 
 
 def _extract_spec_metadata(spec: Any) -> Dict[str, Any]:
-    if isinstance(spec, dict):
-        metadata = spec.get("metadata", {})
-        return metadata if isinstance(metadata, dict) else {}
-
-    if isinstance(spec, PlantSpecification):
-        metadata = spec.model_dump().get("metadata", {})
+    if isinstance(spec, (dict, PlantSpecification)):
+        metadata = spec_to_plain_dict(spec).get("metadata", {})
         return metadata if isinstance(metadata, dict) else {}
 
     return {}

@@ -8,21 +8,18 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import pandas as pd
 
 from .exceptions import ExtractionError
+from .serialization import spec_to_plain_dict
 from .schema import PlantSpecification
+from .simulation_diagnostics import read_aspen_run_diagnostics
 
 logger = logging.getLogger("aspen_automation.extractor")
 
-DEFAULT_PURITY_EXPRESSION = "CH3OH wt% in MEOH-PRO"
 ENERGY_BALANCE_VIEW_LEGACY = "legacy"
 ENERGY_BALANCE_VIEW_SUMMARY = "summary"
 
 
 def _spec_to_dict(spec: Union[PlantSpecification, Dict[str, Any]]) -> Dict[str, Any]:
-    if isinstance(spec, PlantSpecification):
-        return spec.model_dump()
-    if isinstance(spec, dict):
-        return spec
-    raise TypeError(f"spec must be PlantSpecification or dict; got {type(spec).__name__}")
+    return spec_to_plain_dict(spec)
 
 
 def _as_float(value: Any) -> Optional[float]:
@@ -427,27 +424,21 @@ def _energy_balance_summary_from_blocks(blocks_df: pd.DataFrame) -> pd.DataFrame
     )
 
 
-def extract_diagnostics(aspen: Any) -> Dict[str, Any]:
-    per_error = _get_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\PER_ERROR")
-    error_count = _get_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\NERROR")
-    warning_count = _get_node_value(aspen, r"\Data\Results Summary\Run-Status\Output\NWARN")
-
-    if per_error is None:
-        convergence_status = "unknown"
-    elif per_error == 0:
-        convergence_status = "converged"
-    else:
-        convergence_status = "failed"
-
-    return {
-        "per_error": per_error,
-        "error_count": error_count,
-        "warning_count": warning_count,
-        "convergence_status": convergence_status,
-    }
+def extract_diagnostics(aspen: Any, spec_dict: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    block_names: Optional[List[str]] = None
+    if spec_dict is not None:
+        process_defaults = spec_dict.get("process_defaults") or {}
+        if isinstance(process_defaults, dict):
+            cb = process_defaults.get("convergence_block")
+            if cb:
+                block_names = [str(cb)]
+    return read_aspen_run_diagnostics(aspen, block_names=block_names)
 
 
-def _pick_product_stream(streams_df: pd.DataFrame) -> Optional[pd.Series]:
+def _pick_product_stream(
+    streams_df: pd.DataFrame,
+    product_stream_names: Optional[List[str]] = None,
+) -> Optional[pd.Series]:
     if streams_df.empty:
         return None
 
@@ -455,40 +446,37 @@ def _pick_product_stream(streams_df: pd.DataFrame) -> Optional[pd.Series]:
     if stream_name_col is None:
         return None
 
-    meoh_mask = streams_df[stream_name_col].astype(str).str.upper() == "MEOH-PRO"
-    if meoh_mask.any():
-        return streams_df.loc[meoh_mask].iloc[0]
+    candidate_df = streams_df
+    if product_stream_names:
+        names_upper = {str(n).upper() for n in product_stream_names}
+        mask = streams_df[stream_name_col].astype(str).str.upper().isin(names_upper)
+        if mask.any():
+            candidate_df = streams_df.loc[mask]
 
-    methanol_col = _resolve_column_case_insensitive(streams_df, "CH3OH_mass_frac")
-    if methanol_col is not None:
-        methanol_values = pd.to_numeric(streams_df[methanol_col], errors="coerce")
-        if methanol_values.notna().any():
-            best_index = methanol_values.idxmax()
-            return streams_df.loc[best_index]
-
-    mass_flow_col = _resolve_column_case_insensitive(streams_df, "mass_flow")
+    mass_flow_col = _resolve_column_case_insensitive(candidate_df, "mass_flow")
     if mass_flow_col is not None:
-        mass_flow_values = pd.to_numeric(streams_df[mass_flow_col], errors="coerce")
+        mass_flow_values = pd.to_numeric(candidate_df[mass_flow_col], errors="coerce")
         if mass_flow_values.notna().any():
             best_index = mass_flow_values.idxmax()
-            return streams_df.loc[best_index]
+            return candidate_df.loc[best_index]
     return None
 
 
-def _target_purity_expression(spec_dict: Dict[str, Any]) -> str:
+def _target_purity_expression(spec_dict: Dict[str, Any]) -> Optional[str]:
     targets = spec_dict.get("targets")
-    if not isinstance(targets, dict):
-        return DEFAULT_PURITY_EXPRESSION
+    if isinstance(targets, dict):
+        purity = targets.get("purity")
+        if isinstance(purity, dict):
+            expression = purity.get("expression")
+            if expression:
+                return str(expression)
 
-    purity = targets.get("purity")
-    if purity is None:
-        return DEFAULT_PURITY_EXPRESSION
-    if isinstance(purity, dict):
-        expression = purity.get("expression")
-        if expression:
-            return str(expression)
-        return DEFAULT_PURITY_EXPRESSION
-    return DEFAULT_PURITY_EXPRESSION
+    process_defaults = spec_dict.get("process_defaults") or {}
+    if isinstance(process_defaults, dict):
+        fallback = process_defaults.get("purity_expression")
+        if fallback:
+            return str(fallback)
+    return None
 
 
 def _target_yield_config(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -597,11 +585,21 @@ def calculate_kpis(
     blocks_df: pd.DataFrame,
 ) -> Dict[str, Any]:
     spec_dict = _spec_to_dict(spec)
-    diagnostics = extract_diagnostics(aspen)
+    diagnostics = extract_diagnostics(aspen, spec_dict=spec_dict)
 
     production_rate_tpd: Optional[float] = None
     yield_fraction: Optional[float] = None
-    product_row = _pick_product_stream(streams_df)
+    process_defaults = spec_dict.get("process_defaults") or {}
+    explicit_product = (
+        process_defaults.get("product_stream")
+        if isinstance(process_defaults, dict)
+        else None
+    )
+    if explicit_product:
+        product_row = _pick_product_stream(streams_df, product_stream_names=[str(explicit_product)])
+    else:
+        _, spec_product_streams = _identify_feed_product_streams(spec_dict)
+        product_row = _pick_product_stream(streams_df, product_stream_names=spec_product_streams)
 
     if product_row is not None:
         mass_flow = _as_float(product_row.get("mass_flow"))
@@ -609,13 +607,14 @@ def calculate_kpis(
             production_rate_tpd = mass_flow * 24.0 / 1000.0
 
     purity_expression = _target_purity_expression(spec_dict)
-    purity_fraction = _evaluate_purity(streams_df, purity_expression)
+    purity_fraction = _evaluate_purity(streams_df, purity_expression) if purity_expression else None
 
     default_yield_component: Optional[str] = None
-    try:
-        default_yield_component, _, _ = _parse_purity_expression(purity_expression)
-    except ValueError:
-        default_yield_component = None
+    if purity_expression:
+        try:
+            default_yield_component, _, _ = _parse_purity_expression(purity_expression)
+        except ValueError:
+            default_yield_component = None
 
     yield_target = _target_yield_config(spec_dict)
     yield_component = _optional_text(yield_target.get("component")) or default_yield_component
@@ -691,7 +690,7 @@ def extract_results(
 
         material_balance = calculate_material_balance(aspen, spec_dict)
         energy_balance = _energy_balance_from_blocks(blocks_df, energy_balance_view=energy_balance_view)
-        diagnostics = extract_diagnostics(aspen)
+        diagnostics = extract_diagnostics(aspen, spec_dict=spec_dict)
         kpis = calculate_kpis(aspen, spec_dict, streams_df, blocks_df)
 
         metadata = {

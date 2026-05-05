@@ -80,6 +80,7 @@ def run_simulation(
     output_dir: str = "results/",
     visible: bool = True,
     timeout_seconds: int = 300,
+    build_timeout_seconds: int = 180,
     keep_alive: bool = False,
     report_format: str = "html",
     energy_balance_view: str = ENERGY_BALANCE_VIEW_LEGACY,
@@ -98,6 +99,7 @@ def run_simulation(
         output_dir=output_dir,
         visible=visible,
         timeout_seconds=timeout_seconds,
+        build_timeout_seconds=build_timeout_seconds,
         keep_alive=True,
         raise_on_connection_error=raise_on_connection_error,
     )
@@ -131,4 +133,3 @@ def run_simulation(
                 inp_path=os.path.join(output_dir, "temp_simulation.inp"),
                 keep_alive=keep_alive,
             )
-

@@ -84,3 +84,42 @@ def test_empty_spec():
     report = validate_spec({})
     assert report["valid"] is False
     assert len(report["errors"]) >= 6 # Missing all 6 required sections
+
+
+def test_process_defaults_model_accepts_all_fields():
+    """ProcessDefaults Pydantic model must exist and accept all three fields."""
+    from aspen_automation.schema import ProcessDefaults
+    pd_model = ProcessDefaults(
+        purity_expression="CH3OH wt% in MEOH-PRO",
+        product_stream="MEOH-PRO",
+        convergence_block="B-ATR",
+    )
+    assert pd_model.purity_expression == "CH3OH wt% in MEOH-PRO"
+    assert pd_model.product_stream == "MEOH-PRO"
+    assert pd_model.convergence_block == "B-ATR"
+
+
+def test_process_defaults_model_accepts_partial_fields():
+    """ProcessDefaults fields are all optional; partial construction must not raise."""
+    from aspen_automation.schema import ProcessDefaults
+    pd_model = ProcessDefaults(purity_expression="NH3 wt% in NH3-PROD")
+    assert pd_model.purity_expression == "NH3 wt% in NH3-PROD"
+    assert pd_model.product_stream is None
+    assert pd_model.convergence_block is None
+
+
+def test_plant_specification_accepts_process_defaults():
+    """PlantSpecification must accept an optional process_defaults section."""
+    from aspen_automation.schema import PlantSpecification
+    spec_dict = load_fixture("methanol_atr.yaml")
+    spec_dict["process_defaults"] = {
+        "purity_expression": "CH3OH wt% in MEOH-PRO",
+        "product_stream": "MEOH-PRO",
+        "convergence_block": "B-ATR",
+    }
+    report = validate_spec(spec_dict)
+    assert report["valid"] is True
+    ps = PlantSpecification.model_validate(spec_dict)
+    assert ps.process_defaults is not None
+    assert ps.process_defaults.product_stream == "MEOH-PRO"
+    assert ps.process_defaults.convergence_block == "B-ATR"

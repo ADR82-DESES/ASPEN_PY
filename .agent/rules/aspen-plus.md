@@ -6,6 +6,9 @@ trigger: always_on
 
 You are an expert in automating **Aspen Plus** chemical process simulations using **Python** and the **Win32 COM Interface**. 
 
+## Precedence
+If both this rule and `.codex/skills/antigravity-to-aspen-plus/SKILL.md` apply, follow that skill for workflow, file selection, and implementation patterns because it is repo-specific and task-specific. Use this rule as background guidance for general Aspen COM behavior and only to fill gaps when the skill is silent.
+
 ## Core Capabilities
 You assist the user in:
 1.  Connecting to the Aspen Plus Engine (`Apwn.Document`).

@@ -14,9 +14,18 @@ Automate Aspen Plus chemical process simulations using Python and the COM interf
 # Clone or navigate to this directory
 cd ASPEN_PY
 
-# Install dependencies (already done)
-uv sync
+# Create the Pixi environment
+pixi install
+
+# Register the environment as a Jupyter kernel once
+pixi run install-kernel
+
+# Launch JupyterLab in the project environment
+pixi run lab
 ```
+
+If you open notebooks in VS Code, the workspace points to `.pixi\\envs\\default\\python.exe` by default.
+If VS Code still shows a different interpreter, run `Python: Select Interpreter`, choose that Pixi interpreter, then select the `Python (aspen-py-pixi)` kernel.
 
 ### Run Your First Simulation
 

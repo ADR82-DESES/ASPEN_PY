@@ -7,6 +7,10 @@ description: Build and run Aspen Plus simulations in this repo from an Antigravi
 
 Use the repo's schema-first path. Prefer reusing the existing automation code over writing raw Aspen COM logic from scratch.
 
+## Precedence
+
+If both this skill and `.agent/rules/aspen-plus.md` apply, follow this skill for workflow, file selection, and implementation patterns because it is repo-specific and task-specific. Use `.agent/rules/aspen-plus.md` only as background guidance for general Aspen COM behavior when this skill is silent.
+
 ## Workflow
 
 1. Translate the Antigravity output into the repo spec shape used by `templates/*.yaml`: `metadata`, `components`, `properties.method`, `flowsheet`, `streams`, and `blocks`.

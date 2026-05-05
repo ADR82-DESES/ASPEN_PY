@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+import uuid
 from pathlib import Path
 from typing import Any, Callable
 from unittest.mock import patch
@@ -54,6 +56,7 @@ class _FakeEngine:
 
 class _FakeAspen:
     def __init__(self, nodes: dict[str, _FakeNode]) -> None:
+        self.Version = "40.0"
         self.Visible = 0
         self.SuppressDialogs = 0
         self.Tree = _FakeTree(nodes)
@@ -62,6 +65,9 @@ class _FakeAspen:
         self.quit_called = False
 
     def InitFromFile2(self, path: str) -> None:
+        self.loaded_paths.append(path)
+
+    def InitFromArchive2(self, path: str) -> None:
         self.loaded_paths.append(path)
 
     def InitNew(self) -> None:
@@ -122,6 +128,7 @@ def _build_fake_tree_nodes(template_spec: dict[str, Any]) -> dict[str, _FakeNode
     }
 
     nodes: dict[str, _FakeNode] = {
+        r"\Data": _FakeNode(element_names=[]),
         r"\Data\Streams": _FakeNode(element_names=sorted(all_stream_names)),
         r"\Data\Blocks": _FakeNode(element_names=block_names),
         r"\Data\Results Summary\Run-Status\Output\PER_ERROR": _FakeNode(0),
@@ -180,7 +187,7 @@ def _track_step(
     return _wrapped
 
 
-def test_methanol_template_end_to_end_pipeline_with_mocked_aspen(tmp_path: Path) -> None:
+def test_methanol_template_end_to_end_pipeline_with_mocked_aspen() -> None:
     root_dir = Path(__file__).resolve().parents[2]
     template_path = root_dir / "templates" / "methanol_plant_atr.yaml"
     template_spec = load_spec(str(template_path))
@@ -196,42 +203,64 @@ def test_methanol_template_end_to_end_pipeline_with_mocked_aspen(tmp_path: Path)
     real_generate_reports = runner_module.generate_reports
     real_validate_acceptance = runner_module.validate_acceptance
 
-    with (
-        patch.object(session_module, "_connect_aspen", return_value=fake_aspen),
-        patch.object(runner_module, "load_spec", side_effect=_track_step("spec", real_load_spec, observed_steps)),
-        patch.object(session_module, "_build_auto", side_effect=_track_step("build", real_build_auto, observed_steps)),
-        patch.object(session_module, "_run_simulation", side_effect=_track_step("run", real_run, observed_steps)),
-        patch.object(runner_module, "extract_results", side_effect=_track_step("extract", real_extract, observed_steps)),
-        patch.object(
-            runner_module,
-            "generate_reports",
-            side_effect=_track_step("report", real_generate_reports, observed_steps),
-        ),
-        patch.object(
-            runner_module,
-            "validate_acceptance",
-            side_effect=_track_step("acceptance", real_validate_acceptance, observed_steps),
-        ),
-    ):
-        result = runner_module.run_simulation(
-            str(template_path),
-            build_mode="auto",
-            visible=False,
-            output_dir=str(tmp_path),
-        )
+    temp_root = root_dir / "test_results"
+    temp_root.mkdir(exist_ok=True)
+    tmpdir = temp_root / f"methanol_pipeline_{uuid.uuid4().hex}"
+    tmpdir.mkdir(exist_ok=False)
+    try:
+        with (
+            patch.object(session_module, "_connect_aspen", return_value=fake_aspen),
+            patch.object(
+                session_module,
+                "build_flowsheet_via_com",
+                return_value={
+                    "build_mechanism": "com_block_builder",
+                    "build_valid": True,
+                    "flowsheet_verification": {
+                        "build_valid": True,
+                        "stream_count": len(template_spec["streams"]),
+                        "block_count": len(template_spec["blocks"]),
+                        "stream_samples": [stream["name"] for stream in template_spec["streams"][:5]],
+                        "block_samples": [block["name"] for block in template_spec["blocks"][:5]],
+                    },
+                },
+            ),
+            patch.object(runner_module, "load_spec", side_effect=_track_step("spec", real_load_spec, observed_steps)),
+            patch.object(session_module, "_build_auto", side_effect=_track_step("build", real_build_auto, observed_steps)),
+            patch.object(session_module, "_run_simulation", side_effect=_track_step("run", real_run, observed_steps)),
+            patch.object(runner_module, "extract_results", side_effect=_track_step("extract", real_extract, observed_steps)),
+            patch.object(
+                runner_module,
+                "generate_reports",
+                side_effect=_track_step("report", real_generate_reports, observed_steps),
+            ),
+            patch.object(
+                runner_module,
+                "validate_acceptance",
+                side_effect=_track_step("acceptance", real_validate_acceptance, observed_steps),
+            ),
+        ):
+            result = runner_module.run_simulation(
+                str(template_path),
+                build_mode="auto",
+                visible=False,
+                output_dir=str(tmpdir),
+            )
 
-    assert observed_steps == expected_steps
-    assert result["acceptance"]["passed"] is True
+        assert observed_steps == expected_steps
+        assert result["acceptance"]["passed"] is True
 
-    report_dir = Path(result["report_dir"])
-    assert report_dir.is_dir()
-    expected_files = {
-        "streams.csv",
-        "blocks.csv",
-        "material_balance.csv",
-        "energy_balance.csv",
-        "kpis.json",
-        "diagnostics.json",
-        "run_summary.html",
-    }
-    assert expected_files.issubset({path.name for path in report_dir.iterdir()})
+        report_dir = Path(result["report_dir"])
+        assert report_dir.is_dir()
+        expected_files = {
+            "streams.csv",
+            "blocks.csv",
+            "material_balance.csv",
+            "energy_balance.csv",
+            "kpis.json",
+            "diagnostics.json",
+            "run_summary.html",
+        }
+        assert expected_files.issubset({path.name for path in report_dir.iterdir()})
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)

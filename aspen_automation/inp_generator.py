@@ -98,6 +98,14 @@ ALL_SECTION_ORDER = [
     "REACTIONS",
 ]
 
+UNSUPPORTED_BLOCK_TYPE_ERRORS = {
+    "RADFRAC": (
+        "Block type 'RADFRAC' is not currently supported by generate_inp.",
+        "Use a supported separator such as SEP/FLASH2 for buildable-first runs, "
+        "or implement a dedicated RADFRAC INP emitter before using this block type.",
+    ),
+}
+
 
 def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: Optional[str] = None) -> str:
     """
@@ -105,11 +113,11 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
     """
     spec_obj = _ensure_spec(spec)
 
-    is_flowsheet_empty = not spec_obj.streams and not spec_obj.blocks
     if not spec_obj.streams:
         raise ValidationError("Spec must contain at least one stream", {"valid": False, "errors": [{"severity": "error", "message": "Spec must contain at least one stream"}]})
     if not spec_obj.blocks:
         raise ValidationError("Spec must contain at least one block", {"valid": False, "errors": [{"severity": "error", "message": "Spec must contain at least one block"}]})
+    _validate_generator_compatibility(spec_obj)
 
     profile_generation = len(spec_obj.blocks) >= 100 or len(spec_obj.flowsheet) >= 100
     start_time = time.perf_counter() if profile_generation else None
@@ -141,8 +149,8 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
     sections.append(f"PROPERTIES {spec_obj.properties.method}")
 
 
-    # 7. FLOWSHEETING OPTIONS (Omit as it causes ITSORT.1 in V14)
-    # sections.append(_generate_flowsheeting_options(spec_obj.flowsheeting_options))
+    # 7. FLOWSHEETING OPTIONS
+    sections.append(_generate_flowsheeting_options(spec_obj.flowsheeting_options))
 
     # 8. FLOWSHEET
     sections.append(_generate_flowsheet(spec_obj.flowsheet))
@@ -156,12 +164,20 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
         sections.append(_generate_block(block))
 
     # 11. CHEMISTRY (Optional)
-    # Removed for RGIBBS stability
-    
-    # 12. REACTIONS (Optional)
-    # Removed for RGIBBS stability
+    if spec_obj.chemistry:
+        for chemistry in spec_obj.chemistry:
+            sections.append(_generate_chemistry(chemistry))
 
-    inp_content = "\n\n".join(sections)
+    # 12. REACTIONS (Optional)
+    reaction_lookup = _build_reaction_lookup(spec_obj.chemistry)
+    if spec_obj.reaction_sets:
+        for reaction_set in spec_obj.reaction_sets:
+            sections.append(_generate_reactions(reaction_set, reaction_lookup))
+
+    inp_content = "\n\n".join(sections) + "\n"
+    validation_report = validate_inp(inp_content)
+    if not validation_report["valid"]:
+        raise ValidationError("Generated INP failed validation", validation_report)
 
     if output_path:
         with open(output_path, "w", encoding="utf-8") as f:
@@ -175,6 +191,29 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
         )
 
     return inp_content
+
+
+def _validate_generator_compatibility(spec_obj: PlantSpecification) -> None:
+    errors: List[Dict[str, Any]] = []
+
+    for index, block in enumerate(spec_obj.blocks):
+        block_type = block.type.upper()
+        unsupported = UNSUPPORTED_BLOCK_TYPE_ERRORS.get(block_type)
+        if unsupported is None:
+            continue
+
+        message, suggestion = unsupported
+        errors.append(
+            {
+                "severity": "error",
+                "location": f"blocks[{index}].type",
+                "message": message,
+                "suggestion": suggestion,
+            }
+        )
+
+    if errors:
+        raise ValidationError("Generator compatibility validation failed.", {"valid": False, "errors": errors})
 
 
 def _ensure_spec(spec: Union[PlantSpecification, Dict[str, Any]]) -> PlantSpecification:
@@ -315,7 +354,12 @@ def _generate_flowsheeting_options(options: Optional[Any]) -> str:
         mass_bal = "YES" if options.mass_balance else "NO"
         energy_bal = "YES" if options.energy_balance else "NO"
 
-    return ""  # Omitted for V14 stability
+    return "\n".join(
+        [
+            "FLOWSHEETING-OPTIONS",
+            f"    MASS-BAL={mass_bal} ENERGY-BAL={energy_bal}",
+        ]
+    )
 
 
 
@@ -370,23 +414,23 @@ def _generate_stream(stream: Stream) -> str:
     lines.append(
         f"    SUBSTREAM MIXED TEMP={_format_value(stream.temperature)} "
         f"PRES={_format_value(stream.pressure)} "
-        f"{flow_type}={_format_value(flow_val)}"
+        "&"
     )
+    lines.append(f"        {flow_type}={_format_value(flow_val)}")
 
     comp_items = list(stream.composition.items())
     if comp_items:
-        # Use simpler one-pair-per-line format which is more robust in V14
         comp_type = "MOLE-FRAC"
-        for comp_id, val in comp_items:
-            lines.append(f"    {comp_type} {comp_id} {_format_value(val)}")
+        lines.append(f"    {comp_type}")
+        for index, (comp_id, val) in enumerate(comp_items):
+            terminator = " /" if index == len(comp_items) - 1 else " / &"
+            lines.append(f"        {comp_id} {_format_value(val)}{terminator}")
 
     return "\n".join(lines)
 
 
 def _generate_block(block: Block) -> str:
     block_type = block.type.upper()
-    if block_type == "REQUIL":
-        block_type = "RGIBBS"
 
     lines = [f"BLOCK {block.name} {block_type}"]
 
@@ -399,17 +443,18 @@ def _generate_block(block: Block) -> str:
         return "\n".join(lines)
 
     if block.parameters:
+        _BLOCK_PARAM_REMAPS = {
+            "COMPR": {"TYPE": "STYPE"},
+        }
+        remap = _BLOCK_PARAM_REMAPS.get(block_type, {})
         mapped_params = {}
         for k, v in block.parameters.items():
-            if block_type == "COMPR" and k.upper() == "EFF":
-                mapped_params["SEFF"] = v
-            else:
-                mapped_params[k.upper()] = v
-        param_str = " ".join([f"{k}={_format_value(v)}" for k, v in mapped_params.items()])
-        lines.append(f"    PARAM {param_str}")
+            key = k.upper()
+            mapped_params[remap.get(key, key)] = v
+        lines.extend(_generate_param_lines(mapped_params))
 
-    if block.reactions and block_type != "RGIBBS":
-        pass  # Removed for RGIBBS stability
+    if block.reactions:
+        lines.append(f"    REACTIONS {block.reactions}")
 
     return "\n".join(lines)
 
@@ -433,18 +478,30 @@ def _generate_sep_block(block: Block) -> List[str]:
     lines: List[str] = []
 
     if block.parameters:
-        param_str = " ".join([f"{k.upper()}={_format_value(v)}" for k, v in block.parameters.items()])
-        lines.append(f"    PARAM {param_str}")
+        lines.extend(_generate_param_lines({k.upper(): v for k, v in block.parameters.items()}))
 
     if block.sep_fractions:
+        if not block.parameters:
+            lines.append("    PARAM")
         for frac in block.sep_fractions:
-            # Standard SEP syntax for V14: FRAC STRM=<outlet> COMP=<comp> FRAC=<fraction>
-            # Avoid positional notation to prevent 'too many items' or 'unknown keyword' errors.
-            lines.append(f"    FRAC STRM={frac.stream} COMP={frac.component} FRAC={_format_value(frac.fraction)}")
+            lines.append(
+                "    FRAC "
+                f"STRM={frac.stream} "
+                f"SUBSTRM={frac.substream} "
+                f"COMP={frac.component} "
+                f"FRAC={_format_value(frac.fraction)}"
+            )
 
     if block.reactions:
         lines.append(f"    REACTIONS {block.reactions}")
 
+    return lines
+
+
+def _generate_param_lines(parameters: Dict[str, Any]) -> List[str]:
+    lines = ["    PARAM"]
+    for key, value in parameters.items():
+        lines.append(f"        {key}={_format_value(value)}")
     return lines
 
 
@@ -460,21 +517,33 @@ def _generate_chemistry(chem: Chemistry) -> str:
 
 
 def _generate_reac_data_line(rxn_id: int, params: Optional[ReactionParameters]) -> str:
-    # Just default REAC-DATA ID to avoid V14 model-match errors
-    return f"    REAC-DATA {rxn_id}"
+    parts = [f"    REAC-DATA {rxn_id}"]
+    if not params:
+        return parts[0]
+
+    parts.append(params.reaction_type.value)
+    if params.phase:
+        parts.append(f"PHASE={params.phase}")
+    if params.equilibrium_basis:
+        parts.append(f"KBASIS={params.equilibrium_basis}")
+    if params.equilibrium_form:
+        parts.append(f"KFORM={params.equilibrium_form}")
+    if params.rate_basis:
+        parts.append(f"RBASIS={params.rate_basis}")
+    return " ".join(parts)
 
 def _generate_reactions(reaction_set: ReactionSet, reaction_lookup: Dict[int, Reaction]) -> str:
-    block_type = "EQUIL" if reaction_set.block_type == "REQUIL" else reaction_set.block_type
+    block_type = reaction_set.block_type.upper()
     lines = [f"REACTIONS {reaction_set.id} {block_type}"]
     for rxn_id in reaction_set.reaction_ids:
+        if block_type == "REQUIL":
+            lines.append(f"    REAC-DATA {rxn_id}")
+            continue
         reaction = reaction_lookup.get(rxn_id)
         params = reaction.parameters if reaction else None
         lines.append(_generate_reac_data_line(rxn_id, params))
         lines.extend(_generate_reaction_parameter_lines(rxn_id, params))
     return "\n".join(lines)
-
-
-    return " ".join(tokens)
 
 
 def _generate_reaction_parameter_lines(rxn_id: int, params: Optional[ReactionParameters]) -> List[str]:

@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
 
 from .parser import load_spec
+from .serialization import spec_to_plain_dict
 from .schema import PlantSpecification
 
 
@@ -22,11 +23,7 @@ def _coerce_float(value: Any) -> Optional[float]:
 
 
 def _spec_to_dict(spec: SpecInput) -> Dict[str, Any]:
-    if isinstance(spec, PlantSpecification):
-        return spec.model_dump()
-    if isinstance(spec, Mapping):
-        return dict(spec)
-    raise TypeError(f"spec must be PlantSpecification or mapping; got {type(spec).__name__}")
+    return spec_to_plain_dict(spec)
 
 
 def validate_acceptance(results: Dict[str, Any], spec: SpecInput) -> Dict[str, Any]:

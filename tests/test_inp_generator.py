@@ -1,6 +1,10 @@
 import os
+import re
+import shutil
+import uuid
 import pytest
 
+from aspen_automation.exceptions import ValidationError
 from aspen_automation.inp_generator import generate_inp, validate_inp
 from aspen_automation.schema import PlantSpecification
 from aspen_automation.parser import load_spec
@@ -88,6 +92,54 @@ def test_generate_complex_inp():
     assert "BLOCK REFORMER" in inp
 
 
+def test_methanol_template_stream_compositions_use_canonical_rows():
+    path = os.path.join(os.path.dirname(__file__), "..", "templates", "methanol_plant_atr.yaml")
+    spec = load_spec(path)
+    inp = generate_inp(spec)
+    report = validate_inp(inp)
+
+    assert report["valid"]
+    assert not any(
+        re.match(r"\s+(?:MOLE|MASS)-FRAC\s+\S+\s+[-+0-9.]", line)
+        for line in inp.splitlines()
+    )
+    assert "    MOLE-FRAC\n        O2 0.995 / &\n        N2 0.005 /" in inp
+
+
+def test_validate_inp_rejects_inline_composition_rows_without_terminators():
+    inp = """TITLE 'Bad Composition'
+IN-UNITS MET PRESSURE=BAR TEMPERATURE=C FLOW='KG/HR'
+DEF-STREAMS CONVEN ALL
+DATABANKS 'APV140 PURE32'
+PROP-SOURCES 'APV140 PURE32'
+COMPONENTS
+    H2O WATER /
+    ET-OH ETHANOL /
+PROPERTIES NRTL
+FLOWSHEETING-OPTIONS
+    MASS-BAL=YES ENERGY-BAL=YES
+FLOWSHEET
+    BLOCK B1 IN=S1 OUT=S2
+STREAM S1
+    SUBSTREAM MIXED TEMP=25.0 PRES=1.0 &
+        MASS-FLOW=100.0
+    MOLE-FRAC H2O 0.5
+    MOLE-FRAC ET-OH 0.5
+STREAM S2
+    SUBSTREAM MIXED TEMP=25.0 PRES=1.0 &
+        MASS-FLOW=100.0
+    MOLE-FRAC
+        H2O 0.5 / &
+        ET-OH 0.5 /
+BLOCK B1 MIXER
+"""
+
+    report = validate_inp(inp)
+
+    assert not report["valid"]
+    assert any("Composition line missing '/' terminator" in e["message"] for e in report["errors"])
+
+
 def test_inp_unit_conversion():
     spec = PlantSpecification(**{
         "metadata": {
@@ -171,11 +223,21 @@ def test_inp_chemistry_section():
     assert "B 1.0 /" in inp
 
 
-def test_generate_inp_file_output(minimal_spec, tmp_path):
-    output_path = tmp_path / "test.inp"
-    generate_inp(minimal_spec, output_path=str(output_path))
-    assert output_path.exists()
-    content = output_path.read_text()
+def test_generate_inp_file_output(minimal_spec):
+    base_dir = os.path.abspath("test_results")
+    os.makedirs(base_dir, exist_ok=True)
+    tmpdir = os.path.join(base_dir, f"inp_generator_{uuid.uuid4().hex}")
+    os.makedirs(tmpdir, exist_ok=False)
+
+    try:
+        output_path = os.path.join(tmpdir, "test.inp")
+        generate_inp(minimal_spec, output_path=str(output_path))
+        assert os.path.exists(output_path)
+        with open(output_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
     assert "TITLE 'Minimal Plant'" in content
 
 
@@ -383,8 +445,9 @@ def test_reactions_section_and_block_link():
 
     inp = generate_inp(spec)
     assert "REACTIONS RXN-SET1 REQUIL" in inp
-    assert "REAC-DATA 1 EQUIL PHASE=V KBASIS=FUGACITY KFORM=LNK-1/T" in inp
-    assert "K-STOIC 1 1.0 -1000.0 0.0 0.0" in inp
+    assert "REAC-DATA 1" in inp
+    assert "REAC-DATA 1 EQUIL" not in inp
+    assert "K-STOIC 1 1.0 -1000.0 0.0 0.0" not in inp
     assert "BLOCK R1 REQUIL" in inp
     assert "REACTIONS RXN-SET1" in inp
 
@@ -430,7 +493,55 @@ def test_fsplit_and_sep_blocks():
     assert "BLOCK SPLIT1 FSPLIT" in inp
     assert "FRAC RECYCLE 0.9" in inp
     assert "BLOCK SEP1 SEP" in inp
+    assert "BLOCK SEP1 SEP\n    PARAM\n    FRAC STRM=PROD" in inp
     assert "FRAC STRM=PROD SUBSTRM=MIXED COMP=A FRAC=0.99" in inp
+    assert inp.endswith("\n")
+
+
+def test_compressor_efficiency_uses_aspen_eff_keyword():
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "Compressor",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}
+        },
+        "components": [{"id": "A", "name": "A"}],
+        "properties": {"method": "NRTL"},
+        "flowsheet": [{"block": "C1", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 25, "pressure": 1, "mass_flow": 100, "composition": {"A": 1.0}},
+            {"name": "PROD", "temperature": 25, "pressure": 5, "mass_flow": 100, "composition": {"A": 1.0}},
+        ],
+        "blocks": [{"name": "C1", "type": "COMPR", "parameters": {"PRES": 5, "EFF": 0.85}}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "        EFF=0.85" in inp
+    assert "SEFF=0.85" not in inp
+
+
+def test_generate_inp_rejects_unsupported_radfrac_until_emitter_exists():
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "Unsupported Column",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}
+        },
+        "components": [{"id": "A", "name": "A"}],
+        "properties": {"method": "NRTL"},
+        "flowsheet": [{"block": "COL1", "inputs": ["FEED"], "outputs": ["DIST", "BOT"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 25, "pressure": 1, "mass_flow": 100, "composition": {"A": 1.0}},
+            {"name": "DIST", "temperature": 25, "pressure": 1, "mass_flow": 50, "composition": {"A": 1.0}},
+            {"name": "BOT", "temperature": 25, "pressure": 1, "mass_flow": 50, "composition": {"A": 1.0}},
+        ],
+        "blocks": [{"name": "COL1", "type": "RADFRAC"}],
+    })
+
+    with pytest.raises(ValidationError) as exc_info:
+        generate_inp(spec)
+
+    assert "RADFRAC" in exc_info.value.report["errors"][0]["message"]
+    assert exc_info.value.report["errors"][0]["location"] == "blocks[0].type"
 
 
 def test_edge_cases_optional_fields():
@@ -669,3 +780,35 @@ BLOCK B1 HEATER
     
     assert any("Section 'CHEMISTRY' is out of order" in e for e in errors)
 
+
+def test_compr_type_parameter_maps_to_stype():
+    """COMPR blocks with a 'TYPE' parameter must emit 'STYPE' in the INP.
+
+    Aspen Plus COMPR uses STYPE (not TYPE) for the compression model selector.
+    Emitting TYPE=ISENTROPIC is silently ignored by the simulator, leaving the
+    compressor at its default type.
+    """
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "Compressor STYPE",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
+        },
+        "components": [{"id": "A", "name": "A"}],
+        "properties": {"method": "NRTL"},
+        "flowsheet": [{"block": "C1", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 25, "pressure": 1, "mass_flow": 100, "composition": {"A": 1.0}},
+            {"name": "PROD", "temperature": 25, "pressure": 5, "mass_flow": 100, "composition": {"A": 1.0}},
+        ],
+        "blocks": [
+            {"name": "C1", "type": "COMPR", "parameters": {"PRES": 5, "TYPE": "ISENTROPIC", "EFF": 0.85}}
+        ],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "STYPE=ISENTROPIC" in inp, "Expected STYPE keyword in COMPR block INP output"
+    bare_type_lines = [l.strip() for l in inp.splitlines() if "TYPE=" in l and not l.strip().startswith("S")]
+    assert not bare_type_lines, f"Must not emit bare TYPE= for COMPR (Aspen ignores it): {bare_type_lines}"
+    assert "EFF=0.85" in inp
+    assert "PRES=5.0" in inp

@@ -19,7 +19,7 @@ def detect_format(filepath: str) -> str:
 def load_yaml(filepath: str) -> Dict[str, Any]:
     """Load YAML file."""
     try:
-        with open(filepath, 'r') as f:
+        with open(filepath, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise ParserError(f"YAML parsing error in {filepath}: {str(e)}") from e
@@ -29,7 +29,7 @@ def load_yaml(filepath: str) -> Dict[str, Any]:
 def load_json(filepath: str) -> Dict[str, Any]:
     """Load JSON file."""
     try:
-        with open(filepath, 'r') as f:
+        with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
     except json.JSONDecodeError as e:
         raise ParserError(f"JSON parsing error in {filepath} at line {e.lineno}: {e.msg}") from e

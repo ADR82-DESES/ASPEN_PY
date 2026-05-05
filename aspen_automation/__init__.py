@@ -4,9 +4,43 @@ from .schema import PlantSpecification
 from .exceptions import ValidationError, ParserError, SchemaError, ExtractionError, AspenConnectionError, BuildError, SimulationError
 from .extractor import extract_results
 from .inp_generator import generate_inp
-from .session import run_simulation_session, SessionResult
+from .batch_engine import (
+    AspenBatchResult,
+    discover_aspen_engine_path,
+    parse_aspen_history,
+    run_aspen_batch,
+    sanitize_run_id,
+)
+from .com_builder import build_flowsheet_via_com, infer_external_feed_streams
+from .session import check_aspen_v14_connection, run_simulation_session, SessionResult
 from .reporter import generate_reports
 from .acceptance import validate_acceptance, print_acceptance_report, load_template
+from .process_spec_coherence import (
+    analyze_process_spec_coherence,
+    apply_process_spec_improvements,
+    build_codex_improvement_markdown,
+    build_codex_spec_markdown,
+    suggest_process_spec_improvements,
+    write_process_spec_file,
+)
+from .process_results_analysis import (
+    build_codex_results_markdown,
+    load_result_artifact_tables,
+    resolve_result_artifact_paths,
+)
+from .process_library import (
+    ProcessDefinition,
+    ProcessIssue,
+    ProcessLayout,
+    ProcessLibraryScan,
+    ProcessRunResult,
+    discover_processes,
+    scan_process_library,
+    load_process_spec,
+    validate_process_spec_file,
+    run_process,
+    run_process_library,
+)
 from .runner import run_simulation
 
 __all__ = [
@@ -23,10 +57,38 @@ __all__ = [
     "extract_results",
     "generate_reports",
     "generate_inp",
+    "AspenBatchResult",
+    "discover_aspen_engine_path",
+    "parse_aspen_history",
+    "run_aspen_batch",
+    "sanitize_run_id",
+    "build_flowsheet_via_com",
+    "infer_external_feed_streams",
+    "check_aspen_v14_connection",
     "run_simulation_session",
     "SessionResult",
     "run_simulation",
     "validate_acceptance",
     "print_acceptance_report",
     "load_template",
+    "analyze_process_spec_coherence",
+    "apply_process_spec_improvements",
+    "build_codex_improvement_markdown",
+    "build_codex_spec_markdown",
+    "suggest_process_spec_improvements",
+    "write_process_spec_file",
+    "build_codex_results_markdown",
+    "load_result_artifact_tables",
+    "resolve_result_artifact_paths",
+    "ProcessDefinition",
+    "ProcessIssue",
+    "ProcessLayout",
+    "ProcessLibraryScan",
+    "ProcessRunResult",
+    "discover_processes",
+    "scan_process_library",
+    "load_process_spec",
+    "validate_process_spec_file",
+    "run_process",
+    "run_process_library",
 ]
