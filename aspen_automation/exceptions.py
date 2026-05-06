@@ -25,6 +25,7 @@ class AspenConnectionError(Exception):
         super().__init__(message)
 
 class AspenNotRunningError(AspenConnectionError):
+    """Raised when Aspen Plus is not running and cannot be reached via COM."""
     def __init__(self):
         super().__init__(
             "Aspen Plus is not running. "
