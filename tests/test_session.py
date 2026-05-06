@@ -887,3 +887,29 @@ def test_cleanup_session_deletes_temp_inp_when_keep_alive_false():
 
         assert not _os.path.exists(inp_path), "INP file must be removed after cleanup"
 
+
+# ---------------------------------------------------------------------------
+# Task 3: AspenNotRunningError guard in run_simulation_session
+# ---------------------------------------------------------------------------
+
+def test_run_simulation_session_raises_when_aspen_not_running(spec, output_dir):
+    with patch("aspen_automation.session.check_aspen_running", return_value=False):
+        with pytest.raises(AspenNotRunningError):
+            run_simulation_session(spec, output_dir=output_dir)
+
+def test_run_simulation_session_proceeds_when_aspen_running(spec, output_dir):
+    mock_aspen = MagicMock()
+    with patch("aspen_automation.session.check_aspen_running", return_value=True), \
+         patch("aspen_automation.session._connect_aspen", return_value=mock_aspen), \
+         patch("aspen_automation.session._verify_aspen_v14_connection", return_value={"connection_verified": True, "v14_verified": True, "v14_version_verified": True, "aspen_version": "40.0"}), \
+         patch("aspen_automation.session._build_auto", return_value={"status": "built", "mechanism": "com", "fallback_attempted": False, "diagnostics": {}}), \
+         patch("aspen_automation.session._run_simulation", return_value=("converged", 0.0, [], {})), \
+         patch("aspen_automation.session._cleanup_session"):
+        result = run_simulation_session(spec, output_dir=output_dir)
+    assert result.convergence_status == "converged"
+
+def test_run_simulation_session_not_running_error_is_connection_error(spec, output_dir):
+    with patch("aspen_automation.session.check_aspen_running", return_value=False):
+        with pytest.raises(AspenConnectionError):
+            run_simulation_session(spec, output_dir=output_dir)
+

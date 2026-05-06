@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from .schema import PlantSpecification
 from .com_builder import build_flowsheet_via_com
 from .inp_generator import generate_inp
-from .exceptions import AspenConnectionError, BuildError, SimulationError, ValidationError
+from .exceptions import AspenConnectionError, AspenNotRunningError, BuildError, SimulationError, ValidationError
 from .parser import load_spec
 from .simulation_diagnostics import read_aspen_run_diagnostics
 from .validator import validate_spec
@@ -1604,6 +1604,9 @@ def run_simulation_session(
     inp_filename = "temp_simulation.inp"
     inp_path = os.path.join(output_dir, inp_filename)
     
+    if not check_aspen_running():
+        raise AspenNotRunningError()
+
     aspen = None
     force_cleanup = False
     try:
