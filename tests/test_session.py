@@ -28,7 +28,21 @@ from aspen_automation.session import (
     _import_file_with_verification,
 )
 from aspen_automation.schema import PlantSpecification, Metadata, UnitSystem, Properties
-from aspen_automation.exceptions import ValidationError
+from aspen_automation.exceptions import ValidationError, AspenNotRunningError
+
+
+def test_aspen_not_running_error_is_connection_error():
+    err = AspenNotRunningError()
+    assert isinstance(err, AspenConnectionError)
+
+def test_aspen_not_running_error_message_contains_portal():
+    err = AspenNotRunningError()
+    assert "Porticada" in str(err)
+    assert "porticada.unican.es" in str(err)
+
+def test_aspen_not_running_error_takes_no_args():
+    err = AspenNotRunningError()
+    assert err is not None
 
 
 # ---------------------------------------------------------------------------

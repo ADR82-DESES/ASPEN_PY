@@ -24,6 +24,14 @@ class AspenConnectionError(Exception):
         self.details = details
         super().__init__(message)
 
+class AspenNotRunningError(AspenConnectionError):
+    def __init__(self):
+        super().__init__(
+            "Aspen Plus is not running. "
+            "Please launch Aspen 14 from the Porticada portal "
+            "(https://porticada.unican.es) and try again."
+        )
+
 class BuildError(Exception):
     """Raised when the flowsheet simulation fails to initialize or load properly."""
     def __init__(self, message: str, build_mode: str = "unknown", mechanism_tried: str = "unknown", diagnostics: dict = None):
