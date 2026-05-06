@@ -1,7 +1,7 @@
 from .parser import load_spec
 from .validator import validate_spec
 from .schema import PlantSpecification
-from .exceptions import ValidationError, ParserError, SchemaError, ExtractionError, AspenConnectionError, BuildError, SimulationError
+from .exceptions import ValidationError, ParserError, SchemaError, ExtractionError, AspenConnectionError, AspenNotRunningError, BuildError, SimulationError
 from .extractor import extract_results
 from .inp_generator import generate_inp
 from .batch_engine import (
@@ -12,7 +12,7 @@ from .batch_engine import (
     sanitize_run_id,
 )
 from .com_builder import build_flowsheet_via_com, infer_external_feed_streams
-from .session import check_aspen_v14_connection, run_simulation_session, SessionResult
+from .session import check_aspen_running, check_aspen_v14_connection, run_simulation_session, SessionResult
 from .reporter import generate_reports
 from .acceptance import validate_acceptance, print_acceptance_report, load_template
 from .process_spec_coherence import (
@@ -52,6 +52,7 @@ __all__ = [
     "SchemaError", 
     "ExtractionError",
     "AspenConnectionError",
+    "AspenNotRunningError",
     "BuildError",
     "SimulationError",
     "extract_results",
@@ -64,6 +65,7 @@ __all__ = [
     "sanitize_run_id",
     "build_flowsheet_via_com",
     "infer_external_feed_streams",
+    "check_aspen_running",
     "check_aspen_v14_connection",
     "run_simulation_session",
     "SessionResult",
