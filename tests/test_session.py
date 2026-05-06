@@ -46,27 +46,25 @@ def test_aspen_not_running_error_takes_no_args():
     assert err is not None
 
 
-def test_check_aspen_running_returns_false_when_win32_unavailable():
-    with patch("aspen_automation.session.win32", None):
+def _make_tasklist_result(found: bool):
+    mock = MagicMock()
+    mock.stdout = "AspenPlus.exe   12345 Console   1   500 KB\n" if found else "INFO: No tasks are running which match the specified criteria.\n"
+    return mock
+
+def test_check_aspen_running_returns_true_when_process_found():
+    with patch("aspen_automation.session.subprocess.run", return_value=_make_tasklist_result(True)):
+        assert check_aspen_running() is True
+
+def test_check_aspen_running_returns_false_when_process_not_found():
+    with patch("aspen_automation.session.subprocess.run", return_value=_make_tasklist_result(False)):
         assert check_aspen_running() is False
 
-def test_check_aspen_running_returns_true_when_active_object_succeeds():
-    mock_win32 = MagicMock()
-    mock_win32.GetActiveObject.return_value = MagicMock()
-    with patch("aspen_automation.session.win32", mock_win32):
-        assert check_aspen_running() is True
-    mock_win32.GetActiveObject.assert_called_once_with("Apwn.Document")
-
-def test_check_aspen_running_returns_false_when_active_object_raises():
-    mock_win32 = MagicMock()
-    mock_win32.GetActiveObject.side_effect = Exception("not running")
-    with patch("aspen_automation.session.win32", mock_win32):
+def test_check_aspen_running_returns_false_when_subprocess_raises():
+    with patch("aspen_automation.session.subprocess.run", side_effect=Exception("timeout")):
         assert check_aspen_running() is False
 
 def test_check_aspen_running_never_raises():
-    mock_win32 = MagicMock()
-    mock_win32.GetActiveObject.side_effect = RuntimeError("catastrophic")
-    with patch("aspen_automation.session.win32", mock_win32):
+    with patch("aspen_automation.session.subprocess.run", side_effect=RuntimeError("catastrophic")):
         result = check_aspen_running()
     assert result is False
 

@@ -334,12 +334,21 @@ def _connect_aspen() -> Any:
 
 
 def check_aspen_running() -> bool:
-    """Returns True if Aspen Plus is currently running and reachable via COM."""
-    if win32 is None:
-        return False
+    """Returns True if Aspen Plus is currently running.
+
+    Uses process detection (tasklist) rather than COM GetActiveObject because
+    Aspen Plus does not register its COM objects in the Windows Running Object
+    Table (ROT), making GetActiveObject unreliable regardless of whether Aspen
+    is running.
+    """
     try:
-        win32.GetActiveObject(ASPEN_DOCUMENT_PROG_ID)
-        return True
+        result = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq AspenPlus.exe", "/NH"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return "AspenPlus.exe" in result.stdout
     except Exception:
         return False
 
