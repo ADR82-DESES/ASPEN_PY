@@ -333,6 +333,17 @@ def _connect_aspen() -> Any:
         raise AspenConnectionError(f"Failed to connect to Aspen Plus: {e}", details=details)
 
 
+def check_aspen_running() -> bool:
+    """Returns True if Aspen Plus is currently running and reachable via COM."""
+    if win32 is None:
+        return False
+    try:
+        win32.GetActiveObject(ASPEN_DOCUMENT_PROG_ID)
+        return True
+    except Exception:
+        return False
+
+
 def _node_summary(aspen: Any, path: str, *, sample_limit: int = 5) -> Dict[str, Any]:
     summary: Dict[str, Any] = {
         "path": path,

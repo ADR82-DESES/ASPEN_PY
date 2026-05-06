@@ -12,6 +12,7 @@ sys.modules["win32com.client"] = MagicMock()
 
 from aspen_automation.session import (
     check_aspen_v14_connection,
+    check_aspen_running,
     run_simulation_session,
     SessionResult,
     AspenConnectionError,
@@ -43,6 +44,31 @@ def test_aspen_not_running_error_message_contains_portal():
 def test_aspen_not_running_error_takes_no_args():
     err = AspenNotRunningError()
     assert err is not None
+
+
+def test_check_aspen_running_returns_false_when_win32_unavailable():
+    with patch("aspen_automation.session.win32", None):
+        assert check_aspen_running() is False
+
+def test_check_aspen_running_returns_true_when_active_object_succeeds():
+    mock_win32 = MagicMock()
+    mock_win32.GetActiveObject.return_value = MagicMock()
+    with patch("aspen_automation.session.win32", mock_win32):
+        assert check_aspen_running() is True
+    mock_win32.GetActiveObject.assert_called_once_with("Apwn.Document")
+
+def test_check_aspen_running_returns_false_when_active_object_raises():
+    mock_win32 = MagicMock()
+    mock_win32.GetActiveObject.side_effect = Exception("not running")
+    with patch("aspen_automation.session.win32", mock_win32):
+        assert check_aspen_running() is False
+
+def test_check_aspen_running_never_raises():
+    mock_win32 = MagicMock()
+    mock_win32.GetActiveObject.side_effect = RuntimeError("catastrophic")
+    with patch("aspen_automation.session.win32", mock_win32):
+        result = check_aspen_running()
+    assert result is False
 
 
 # ---------------------------------------------------------------------------
