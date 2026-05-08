@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -23,6 +25,12 @@ ROOT = Path(__file__).resolve().parents[1]
 METHANOL_TEMPLATE_PATH = ROOT / "templates" / "methanol_plant_atr.yaml"
 PROCESS_LIBRARY_ROOT = ROOT / "process_library"
 NOTEBOOK_PATH = ROOT / "notebooks" / "process_library_runner.ipynb"
+
+
+def _make_test_workspace(prefix: str) -> Path:
+    workspace = ROOT / "test_results" / f"{prefix}_{uuid.uuid4().hex}"
+    workspace.mkdir(parents=True, exist_ok=False)
+    return workspace
 
 
 def _write_yaml_from_template(target: Path) -> None:
@@ -63,62 +71,127 @@ def test_scan_process_library_discovers_valid_and_invalid_processes(tmp_path: Pa
     assert discover_processes(library_root)[0].spec_path.name == "process.yaml"
 
 
-def test_run_process_writes_outputs_to_process_specific_run_dir(tmp_path: Path) -> None:
-    library_root = tmp_path / "process_library"
-    process_dir = library_root / "methanol"
-    _write_yaml_from_template(process_dir / "process.yaml")
-    runs_root = tmp_path / "process_runs"
+def test_run_process_writes_outputs_to_process_specific_run_dir() -> None:
+    workspace = _make_test_workspace("run_process_outputs")
+    try:
+        library_root = workspace / "process_library"
+        process_dir = library_root / "methanol"
+        _write_yaml_from_template(process_dir / "process.yaml")
+        runs_root = workspace / "process_runs"
 
-    fake_aspen = MagicMock(name="aspen")
-    fake_session_result = SimpleNamespace(
-        build_mode="auto",
-        build_mechanism_used="InitFromFile2",
-        build_fallback_attempted=False,
-        diagnostics={},
-        convergence_status="converged",
-        simulation_time_seconds=12.5,
-        aspen=fake_aspen,
-    )
-    fake_results = {
-        "streams": pd.DataFrame([{"stream_name": "NG-FEED", "temperature": 40.0}]),
-        "blocks": pd.DataFrame([{"block_name": "B-ATR", "block_type": "RGIBBS", "duty_kw": 10.0}]),
-        "material_balance": pd.DataFrame([{"component": "CH4", "closure_pct": -1.5}]),
-        "energy_balance": pd.DataFrame([{"block_name": "TOTAL", "duty_mw": 12.3}]),
-        "kpis": {
-            "production_rate_tpd": 10000.0,
-            "purity_fraction": 0.9985,
-            "convergence_status": "converged",
-        },
-        "diagnostics": {"convergence_status": "converged", "per_error": 0},
-    }
+        fake_aspen = MagicMock(name="aspen")
+        fake_session_result = SimpleNamespace(
+            build_mode="auto",
+            build_mechanism_used="com_block_builder",
+            build_fallback_attempted=False,
+            diagnostics={
+                "build_valid": True,
+                "flowsheet_verification": {
+                    "build_valid": True,
+                    "stream_count": 3,
+                    "block_count": 2,
+                    "stream_samples": ["NG-FEED", "STEAM", "O2-FEED"],
+                    "block_samples": ["MIX-FEED", "B-ATR"],
+                },
+            },
+            convergence_status="converged",
+            simulation_time_seconds=12.5,
+            aspen=fake_aspen,
+        )
+        fake_results = {
+            "streams": pd.DataFrame([{"stream_name": "NG-FEED", "temperature": 40.0}]),
+            "blocks": pd.DataFrame([{"block_name": "B-ATR", "block_type": "RGIBBS", "duty_kw": 10.0}]),
+            "material_balance": pd.DataFrame([{"component": "CH4", "closure_pct": -1.5}]),
+            "energy_balance": pd.DataFrame([{"block_name": "TOTAL", "duty_mw": 12.3}]),
+            "kpis": {
+                "production_rate_tpd": 10000.0,
+                "purity_fraction": 0.9985,
+                "convergence_status": "converged",
+            },
+            "diagnostics": {"convergence_status": "converged", "per_error": 0},
+        }
 
-    with patch(
-        "aspen_automation.process_library.run_simulation_session",
-        return_value=fake_session_result,
-    ), patch(
-        "aspen_automation.process_library.extract_results",
-        return_value=fake_results,
-    ), patch(
-        "aspen_automation.process_library.analyze_process_spec_coherence",
-        return_value={"passed": True, "issues": []},
-    ):
-        result = run_process(process_dir, runs_root, visible=False)
+        with patch(
+            "aspen_automation.process_library.run_simulation_session",
+            return_value=fake_session_result,
+        ) as mock_run_session, patch(
+            "aspen_automation.process_library.extract_results",
+            return_value=fake_results,
+        ), patch(
+            "aspen_automation.process_library.analyze_process_spec_coherence",
+            return_value={"passed": True, "issues": []},
+        ):
+            result = run_process(process_dir, runs_root, visible=False)
 
-    assert result.succeeded
-    assert result.layout is not None
-    assert result.layout.generated_inp_path.is_file()
-    assert result.layout.results_dir.joinpath("streams.csv").is_file()
-    assert result.layout.results_dir.joinpath("blocks.csv").is_file()
-    assert result.layout.results_dir.joinpath("material_balance.csv").is_file()
-    assert result.layout.results_dir.joinpath("energy_balance.csv").is_file()
-    assert result.layout.results_dir.joinpath("kpis.json").is_file()
-    assert result.layout.results_dir.joinpath("acceptance.json").is_file()
-    assert result.layout.results_dir.joinpath("diagnostics.json").is_file()
-    assert result.layout.results_dir.joinpath("simulation_diagnostics.json").is_file()
-    assert result.layout.output_apw_path == result.layout.run_dir / "methanol_output.apw"
-    fake_aspen.SaveAs.assert_called_once_with(str(result.layout.output_apw_path))
-    acceptance = json.loads(result.layout.results_dir.joinpath("acceptance.json").read_text(encoding="utf-8"))
-    assert "passed" in acceptance
+        assert result.succeeded
+        mock_run_session.assert_called_once()
+        assert mock_run_session.call_args.kwargs["build_mode"] == "auto"
+        assert result.layout is not None
+        assert result.layout.generated_inp_path.is_file()
+        build_diagnostics = json.loads(result.layout.results_dir.joinpath("build_diagnostics.json").read_text(encoding="utf-8"))
+        assert build_diagnostics["build_mode"] == "auto"
+        assert build_diagnostics["build_mechanism_used"] == "com_block_builder"
+        assert build_diagnostics["flowsheet_verification"]["stream_count"] == 3
+        assert build_diagnostics["flowsheet_verification"]["block_count"] == 2
+        assert result.layout.results_dir.joinpath("streams.csv").is_file()
+        assert result.layout.results_dir.joinpath("blocks.csv").is_file()
+        assert result.layout.results_dir.joinpath("material_balance.csv").is_file()
+        assert result.layout.results_dir.joinpath("energy_balance.csv").is_file()
+        assert result.layout.results_dir.joinpath("kpis.json").is_file()
+        assert result.layout.results_dir.joinpath("acceptance.json").is_file()
+        assert result.layout.results_dir.joinpath("diagnostics.json").is_file()
+        assert result.layout.results_dir.joinpath("simulation_diagnostics.json").is_file()
+        assert result.layout.output_apw_path == result.layout.run_dir / "methanol_output.apw"
+        fake_aspen.SaveAs.assert_called_once_with(str(result.layout.output_apw_path))
+        acceptance = json.loads(result.layout.results_dir.joinpath("acceptance.json").read_text(encoding="utf-8"))
+        assert "passed" in acceptance
+    finally:
+        shutil.rmtree(workspace, ignore_errors=True)
+
+
+def test_run_process_passes_explicit_com_auto_without_remapping() -> None:
+    workspace = _make_test_workspace("run_process_com_auto")
+    try:
+        library_root = workspace / "process_library"
+        process_dir = library_root / "methanol"
+        _write_yaml_from_template(process_dir / "process.yaml")
+        runs_root = workspace / "process_runs"
+
+        build_error = BuildError(
+            "legacy INP import failed",
+            build_mode="com-auto",
+            mechanism_tried="isolated_inp_import_worker",
+            diagnostics={
+                "build_valid": False,
+                "flowsheet_verification": {
+                    "build_valid": False,
+                    "stream_count": 0,
+                    "block_count": 0,
+                    "stream_samples": [],
+                    "block_samples": [],
+                },
+            },
+        )
+
+        with patch(
+            "aspen_automation.process_library.run_simulation_session",
+            side_effect=build_error,
+        ) as mock_run_session, patch(
+            "aspen_automation.process_library.analyze_process_spec_coherence",
+            return_value={"passed": True, "issues": []},
+        ):
+            result = run_process(process_dir, runs_root, visible=False, build_mode="com-auto")
+
+        mock_run_session.assert_called_once()
+        assert mock_run_session.call_args.kwargs["build_mode"] == "com-auto"
+        assert result.status == "build_failed"
+        assert result.layout is not None
+        assert result.layout.generated_inp_path.is_file()
+        build_diagnostics = json.loads(result.layout.results_dir.joinpath("build_diagnostics.json").read_text(encoding="utf-8"))
+        assert build_diagnostics["build_mode"] == "com-auto"
+        assert build_diagnostics["build_mechanism_used"] == "isolated_inp_import_worker"
+    finally:
+        shutil.rmtree(workspace, ignore_errors=True)
 
 
 def test_run_process_blocks_when_coherence_fails(tmp_path: Path) -> None:

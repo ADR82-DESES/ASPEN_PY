@@ -1266,9 +1266,17 @@ def _build_com_auto(
     """
     log(f"Build mode: com-auto. Target: {path}")
     result.build_mode = "com-auto"
-    
-    full_path = _generate_inp_file(spec, path, build_mode="com-auto", result=result)
     is_inp = path.lower().endswith(".inp")
+    if is_inp:
+        legacy_warning = (
+            "build_mode='com-auto' uses the legacy Aspen INP import path for diagnostics. "
+            "Generated INP files can fail Aspen input-language import before streams and blocks "
+            "materialize; use build_mode='auto' for the robust COM block builder path."
+        )
+        result.diagnostics["legacy_inp_import_warning"] = legacy_warning
+        log(legacy_warning, level="WARNING")
+
+    full_path = _generate_inp_file(spec, path, build_mode="com-auto", result=result)
 
     if is_inp:
         log("Detected .inp file - building reloadable archive in isolated Aspen worker...")

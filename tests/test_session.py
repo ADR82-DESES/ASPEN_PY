@@ -314,8 +314,9 @@ def test_03_com_only_diagnostic(mock_win32, spec, output_dir, mock_aspen):
 
 # Case 4: auto primary success
 @patch("aspen_automation.session.generate_inp")
+@patch("aspen_automation.session.check_aspen_running", return_value=True)
 @patch("aspen_automation.session.win32")
-def test_04_auto_primary_success(mock_win32, mock_gen, spec, output_dir, mock_aspen):
+def test_04_auto_primary_success(mock_win32, mock_running, mock_gen, spec, output_dir, mock_aspen):
     _mock_dispatch(mock_win32, mock_aspen)
 
     with patch("aspen_automation.session.build_flowsheet_via_com", return_value=_builder_success()) as mock_builder:
@@ -386,8 +387,9 @@ def test_05_auto_build_error_preserves_diagnostics(mock_win32, mock_gen, spec, o
 
 # Case 6: auto path does not generate INP as part of the default build
 @patch("aspen_automation.session.generate_inp")
+@patch("aspen_automation.session.check_aspen_running", return_value=True)
 @patch("aspen_automation.session.win32")
-def test_06_auto_does_not_generate_inp(mock_win32, mock_gen, spec, output_dir, mock_aspen):
+def test_06_auto_does_not_generate_inp(mock_win32, mock_running, mock_gen, spec, output_dir, mock_aspen):
     _mock_dispatch(mock_win32, mock_aspen)
 
     with patch("aspen_automation.session.build_flowsheet_via_com", return_value=_builder_success()):
@@ -397,9 +399,10 @@ def test_06_auto_does_not_generate_inp(mock_win32, mock_gen, spec, output_dir, m
 
 
 @patch("aspen_automation.session.generate_inp")
+@patch("aspen_automation.session.check_aspen_running", return_value=True)
 @patch("aspen_automation.session.win32")
 def test_com_auto_inp_failure_preserves_empty_tree_and_initfromfile_diagnostics(
-    mock_win32, mock_gen, spec, output_dir
+    mock_win32, mock_running, mock_gen, spec, output_dir
 ):
     aspen = MagicMock()
     aspen.Version = "40.0"
@@ -449,6 +452,7 @@ def test_com_auto_inp_failure_preserves_empty_tree_and_initfromfile_diagnostics(
             run_simulation_session(spec, build_mode="com-auto", output_dir=output_dir)
 
     diagnostics = exc_info.value.diagnostics
+    assert "legacy Aspen INP import path" in diagnostics["legacy_inp_import_warning"]
     assert diagnostics["InitFromFile2_error"] == "Unable to open file"
     assert diagnostics["aspen_preflight"]["v14_verified"] is True
     assert diagnostics["generated_inp_path"].endswith("temp_simulation.inp")
@@ -910,4 +914,3 @@ def test_run_simulation_session_not_running_error_is_connection_error(spec, outp
     with patch("aspen_automation.session.check_aspen_running", return_value=False):
         with pytest.raises(AspenConnectionError):
             run_simulation_session(spec, output_dir=output_dir)
-
