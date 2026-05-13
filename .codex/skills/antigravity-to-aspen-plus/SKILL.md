@@ -1,6 +1,6 @@
 ---
 name: antigravity-to-aspen-plus
-description: Build, run, diagnose, and replicate Aspen Plus process simulations from an Antigravity/process-library specification. Use when Codex needs to create or port the schema-first Aspen automation stack: process.yaml specs, INP generation, Aspen batch translation to BKP, COM BKP loading/extraction, notebook-only execution, diagnostics, result CSV/JSON export, and live Aspen troubleshooting.
+description: Build, run, tune, diagnose, and replicate Aspen Plus process simulations from an Antigravity/process-library specification. Use when Codex needs to create or port the schema-first Aspen automation stack: process.yaml specs, INP generation, Aspen batch translation to BKP, COM BKP loading/extraction, notebook-only execution, diagnostics, result CSV/JSON export, methanol production tuning, and live Aspen troubleshooting.
 ---
 
 # Antigravity To Aspen Plus
@@ -21,7 +21,7 @@ This skill is self-contained. It includes a working source snapshot under `asset
 
 - `assets/source/aspen_automation/`: the batch-first Aspen automation package.
 - `assets/source/notebooks/process_library_runner.ipynb`: the notebook-only workflow.
-- `assets/source/process_library/methanol/process.yaml`: the working methanol process example.
+- `assets/source/process_library/methanol/process.yaml`: the working methanol process example, tuned to the validated 10k TPD screening case.
 - `assets/source/tests/`: unit, contract, and live integration test sources.
 - `assets/source/pyproject.toml` and `assets/source/pixi.toml`: environment references.
 - `scripts/bootstrap_aspen_automation.py`: non-destructive copy script for fresh projects.
@@ -107,6 +107,7 @@ Gate 2 is the BKP COM load/extraction gate:
 
 - Load the batch-created `.bkp` with `InitFromArchive2`.
 - Extract streams, blocks, material balance, energy balance, KPIs, diagnostics, and reports.
+- Extract readable CSV/JSON results before saving a new `.apw`; treat `SaveAs` as best-effort because Aspen COM can solve cleanly and still drop during archive saving.
 - Do not call `run_simulation_session(..., build_mode="auto")`.
 - Do not re-enter the COM block builder.
 
@@ -218,6 +219,32 @@ For ATR-like methanol process work:
 - Report synthesis-loop diagnostics: CO conversion, CO2 conversion, H2 consumption, methanol formation, methane change, recycle/feed stoichiometric number, CH4 mole fraction, and CO2 mole fraction.
 - Tune in this order: prove methanol formation, tune reactor kinetic scale/sizing, tune purge/recycle losses, then tune ATR steam/O2 to move SN toward about 2.0, then improve purification.
 - Treat 10k TPD/nameplate targets as late-stage acceptance targets, not first live-run blockers.
+
+Validated 10k TPD screening recipe for the bundled methanol case:
+
+- Keep `B-SYN` as `RPLUG` with methanol-selective POWERLAW reactions only: CO hydrogenation, CO2 hydrogenation, and WGS/RWGS. Do not attach methanation.
+- Keep the live-validated screening kinetics unless recalibrating: pre-exponential factors `0.01`, `0.005`, and `0.002`; activation energies `0.0`; rate basis `MOLARITY`.
+- Keep purge/recycle at `PURGE=0.15` and `RECYCLE=0.85` for the validated target case.
+- Scale the true fresh feeds, not every intermediate stream: `NG-FEED=440000 kg/hr`, `STEAM=297000 kg/hr`, `O2-FEED=528000 kg/hr`.
+- Set `B-SYN` sizing to `LENGTH=19.613`, `DIAM=4.0`, `NPOINT=20`. `CAT-WT` is documented but inactive unless the INP generator emits it.
+- Keep `process_defaults.product_stream: MEOH-PRO` so production KPIs use the purified product stream, not the purge or largest terminal stream.
+- Live canonical validation produced about `10000.06 TPD` component CH3OH, `10001.28 TPD` total `MEOH-PRO`, `99.9878 wt%` CH3OH, and `R-OUT` CH3OH mole fraction about `0.05804`.
+- The validated loop SN was about `1.566`; this is acceptable for the screening model that met production/purity, but mark it as a future calibration/tuning item rather than pretending it is plant-optimized.
+
+Useful reactor-length bracket at 2x fresh-feed scale with `DIAM=4.0`:
+
+- `LENGTH=19.4`: about `9888 TPD` CH3OH.
+- `LENGTH=19.6`: about `9993 TPD` CH3OH.
+- `LENGTH=19.613`: about `10000 TPD` CH3OH.
+- `LENGTH=19.8`: about `10098 TPD` CH3OH.
+- `LENGTH=20.0`: about `10203 TPD` CH3OH.
+
+Avoid these tuning traps:
+
+- Do not solve low methanol by switching `B-SYN` back to `RGIBBS`; unconstrained Gibbs tends to select methanation or otherwise nonselective chemistry.
+- Do not increase POWERLAW pre-exponential factors blindly beyond the stable range; high factors such as large `x300/x1000` style cases can trigger RPLUG numerical failures.
+- Do not promote larger reactor geometries without a clean `.his`; cases such as very large `LENGTH/DIAM` can fail inside RPLUG despite producing a `.bkp`.
+- Do not require `.apw` save success for run success when CSV/JSON extraction is readable and diagnostics record `output_archive_save_status`.
 
 Reactor-only kinetic sanity diagnostic:
 

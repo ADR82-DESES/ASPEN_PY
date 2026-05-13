@@ -729,8 +729,15 @@ def load_bkp_and_extract_results(
 
         results: dict[str, Any] = {}
         if status == "converged":
-            aspen.SaveAs(str(layout.output_apw_path))
             results = extract_results(aspen, spec)
+            try:
+                aspen.SaveAs(str(layout.output_apw_path))
+                session_result.diagnostics["output_archive_path"] = str(layout.output_apw_path)
+                session_result.diagnostics["output_archive_save_status"] = "saved"
+            except Exception as exc:
+                session_result.diagnostics["output_archive_path"] = str(layout.output_apw_path)
+                session_result.diagnostics["output_archive_save_status"] = "skipped"
+                session_result.diagnostics["output_archive_save_error"] = str(exc)
 
         return BkpExtractionResult(
             session_result=session_result,

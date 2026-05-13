@@ -1,4 +1,4 @@
 interface:
   display_name: "Antigravity to Aspen Plus"
-  short_description: "Bootstrap and run batch-first Aspen Plus automation"
-  default_prompt: "Use $antigravity-to-aspen-plus to bootstrap the bundled Aspen automation source, then run the notebook-first workflow: process.yaml specs, INP generation, batch .bkp translation, COM load/extraction, diagnostics, and result analysis."
+  short_description: "Bootstrap, run, and tune batch-first Aspen Plus automation"
+  default_prompt: "Use $antigravity-to-aspen-plus to bootstrap the bundled Aspen automation source, then run the notebook-first workflow: process.yaml specs, INP generation, batch .bkp translation, COM load/extraction, diagnostics, result analysis, and methanol production tuning."

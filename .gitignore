@@ -26,6 +26,8 @@ process_runs_*/
 
 # Simulation / pipeline run outputs
 process_library/
+!.codex/skills/antigravity-to-aspen-plus/assets/source/process_library/
+!.codex/skills/antigravity-to-aspen-plus/assets/source/process_library/**
 logs/
 *.log
 
