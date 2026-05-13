@@ -1,0 +1,13 @@
+metadata:
+  title: "Invalid Units"
+  units:
+    pressure: "invalid_pressure" # Invalid
+    temperature: "invalid_temp"
+    flow: "invalid_flow"
+
+components: []
+properties:
+  method: "IDEAL"
+blocks: []
+flowsheet: []
+streams: []

@@ -1,0 +1,37 @@
+metadata:
+  title: "Duplicate Test"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+  - id: "CH4"
+    name: "DUPLICATE-METHANE"
+
+properties:
+  method: "RK-SOAVE"
+
+streams:
+  - name: "S1"
+    temperature: 40.0
+    pressure: 30.0
+    mass_flow: 100.0
+    composition:
+      CH4: 1.0
+  - name: "S1"
+    temperature: 50.0
+    pressure: 30.0
+    mass_flow: 100.0
+    composition:
+      CH4: 1.0
+
+blocks:
+  - name: "B1"
+    type: "MIXER"
+  - name: "B1"
+    type: "HEATER"
+
+flowsheet: []

@@ -1,0 +1,31 @@
+[workspace]
+name = "aspen-py"
+version = "0.1.0"
+description = "Pixi environment for Aspen Plus automation and the process library notebook"
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[dependencies]
+python = "3.12.*"
+pandas = ">=2.0"
+pydantic = ">=2.0"
+pyyaml = ">=6.0"
+pywin32 = ">=311"
+pytest = ">=7.0"
+pytest-cov = ">=4.0"
+ipykernel = ">=6.0"
+jupyterlab = ">=4.0"
+notebook = ">=7.0"
+
+[tasks]
+lab = "jupyter lab"
+notebook = "jupyter notebook"
+process-library-notebook = "jupyter lab notebooks/process_library_runner.ipynb"
+install-kernel = "python -m ipykernel install --user --name aspen-py-pixi --display-name \"Python (aspen-py-pixi)\""
+
+[pypi-dependencies]
+mcp = ">=1.27.0, <2"
+httpx = "*"
+pathspec = ">=1.0.4, <2"
+tiktoken = ">=0.12.0, <0.13"
+tree-sitter-language-pack = ">=1.5.0, <2"

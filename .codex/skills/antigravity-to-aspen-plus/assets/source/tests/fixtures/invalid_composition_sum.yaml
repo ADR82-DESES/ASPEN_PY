@@ -1,0 +1,27 @@
+metadata:
+  title: "Invalid Composition Sum"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components:
+  - id: "A"
+    name: "A"
+  - id: "B"
+    name: "B"
+
+properties:
+  method: "IDEAL"
+
+blocks: []
+flowsheet: []
+
+streams:
+  - name: "S1"
+    temperature: 25
+    pressure: 1
+    mole_flow: 100
+    composition:
+      A: 0.5
+      B: 0.4 # Sum = 0.9, should fail

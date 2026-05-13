@@ -1,0 +1,26 @@
+metadata:
+  title: "Unknown Field"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+  unknown_field: "This should fail?" # Actually, we are not strict about unknown fields in top-level metadata yet in the code, but we might want to be.
+  # Wait, the PLAN said "Forbid Unknown Fields" in previous conversation, but my IMPLEMENTATION in schema.py `validate_types` etc check for valid types but I didn't implement strict "no unknown fields" check in `validate_schema_structure` other than required sections.
+  # Re-reading the plan: "For each stream: check name, temperature... Return errors with missing field".
+  # It doesn't explicitly say "Return error for unknown field".
+  # However, I should check if I missed something.
+  # The user instruction said "Follow the below plan verbatim".
+  # The plan section 4.2 doesn't explicitly mention "forbid unknown fields".
+  # But conversation `a3cfeb59...` said "Forbid Unknown Fields".
+  # The prompt says: "I have created the following plan... Follow the below plan verbatim".
+  # So I should follow the CURRENT PLAN.
+  # The CURRENT PLAN in section 4.2 `validate_schema_structure` says: "Check required top-level sections... Return errors for missing sections".
+  # It does NOT say "Check for unknown sections".
+  # So I will skip testing "unknown fields" as error for now unless I interpret "strict schema" implies it.
+  # But let's create a file that fails a defined validation rule.
+
+components: []
+properties: {}
+blocks: []
+flowsheet: []
+streams: []

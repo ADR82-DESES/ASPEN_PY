@@ -21,47 +21,47 @@ Found 11 promising ProgIDs:
 ----------------------------------------------------------------------
 
 Trying: Aspen Custom Modeler Language
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: Aspen Model Library
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: Aspen Model Runner Language
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.ACM.ARTRxnModelWizard40_0.RxnModelProc
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.Adb.CsLayer.AdbUnits
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.AspenPlus.HybridModelLibManager.40.0
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.AspenPlus.PfsDialogs.PFSFlowsheetDialogs.400
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: Aspentech.ConceptualDesignBuilder.Interface.Launcher.V14.0
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.Framework.UnitOpCollection
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.Modeler.ACMExpHelper.40.0
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 Trying: AspenTech.Modeler.ACMExpLibManager.40.0
-  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='1667730611312'>
+  [SUCCESS] Created: <MagicMock name='mock.client.Dispatch()' id='3103956981552'>
   Useful methods: ['mock_add_spec']
 
 [3] Deep Dive into Working APIs...

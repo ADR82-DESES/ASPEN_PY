@@ -1,0 +1,11 @@
+metadata:
+  title: "Missing Components"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+# Missing components section
+
+properties:
+  method: "NRTL"

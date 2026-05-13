@@ -1,0 +1,88 @@
+metadata:
+  title: "Methanol Production Plant"
+  description: "Autothermal Reforming of Methane to Methanol"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+  - id: "H2O"
+    name: "WATER"
+  - id: "CO"
+    name: "CARBON-MONOXIDE"
+  - id: "CO2"
+    name: "CARBON-DIOXIDE"
+  - id: "H2"
+    name: "HYDROGEN"
+  - id: "O2"
+    name: "OXYGEN"
+  - id: "N2"
+    name: "NITROGEN"
+  - id: "CH3OH"
+    name: "METHANOL"
+
+properties:
+  method: "RK-SOAVE"
+
+blocks:
+  - name: "MIX-FEED"
+    type: "MIXER"
+  - name: "REFORMER"
+    type: "RGIBBS"
+  - name: "COOL-01"
+    type: "HEATER"
+  - name: "SEP-01"
+    type: "FLASH2"
+  - name: "SYN-RXN"
+    type: "REQUIL"
+
+flowsheet:
+  - block: "MIX-FEED"
+    inputs: ["NAT-GAS", "STEAM", "OXYGEN"]
+    outputs: ["FEED-RX"]
+
+  - block: "REFORMER"
+    inputs: ["FEED-RX"]
+    outputs: ["SYNGAS"]
+
+  - block: "COOL-01"
+    inputs: ["SYNGAS"]
+    outputs: ["SYN-COLD"]
+
+  - block: "SYN-RXN"
+    inputs: ["SYN-COLD"]
+    outputs: ["CRUDE-ME"]
+
+  - block: "SEP-01"
+    inputs: ["CRUDE-ME"]
+    outputs: ["VAP-PURG", "LIQ-PROD"]
+
+streams:
+  - name: "NAT-GAS"
+    temperature: 25
+    pressure: 30
+    mole_flow: 1000
+    composition:
+      CH4: 0.95
+      N2: 0.05
+
+  - name: "STEAM"
+    temperature: 250
+    pressure: 30
+    mole_flow: 2000
+    composition:
+      H2O: 1.0
+
+  - name: "OXYGEN"
+    temperature: 25
+    pressure: 30
+    mole_flow: 500
+    composition:
+      O2: 1.0
+
+# Optional chemistry section might be needed if reactions were explicit,
+# but for RGIBBS and REQUIL in simplest form it might be implicit or handled by blocks.
+# The schema validates connectivity and types/units/components.

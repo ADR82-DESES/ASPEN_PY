@@ -1,0 +1,21 @@
+metadata:
+  title: "Invalid Chemistry Test"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+components:
+  - id: "H2O"
+    name: "WATER"
+properties:
+  method: "IDEAL"
+streams: []
+blocks: []
+flowsheet: []
+chemistry:
+  - id: "CHEM1"
+    reactions:
+      - id: 1
+        stoichiometry:
+          - component: "UNDEFINED_COMP"
+            coefficient: -1.0
