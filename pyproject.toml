@@ -21,3 +21,26 @@ dev = [
     "tiktoken>=0.12.0,<0.13.0",
     "tree-sitter-language-pack>=1.5.0,<2.0.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [
+    ".codex_pytest_tmp*",
+    ".git",
+    ".jcodemunch-cache",
+    ".pixi",
+    ".pixi-cache",
+    ".pytest_cache",
+    ".pytest_tmp",
+    ".tmp_*",
+    "archive",
+    "build",
+    "dist",
+    "logs",
+    "manual_verify_*",
+    "process_runs",
+    "process_runs_*",
+    "pytest-cache-files-*",
+    "pytest_tmp",
+    "test_results",
+]

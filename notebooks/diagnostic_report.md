@@ -101,5 +101,5 @@ process_runs/methanol/run_<timestamp>/methanol_generated.inp
 ## Next Steps
 
 1. Repair or reinstall Aspen Plus, focusing on the localization/language pack component.
-2. After repair, re-run: `pixi run python run_minimal.py` as a quick smoke test before re-running the full notebook.
+2. After repair, re-run the Gate 1/Gate 2 cells in `notebooks/process_library_runner.ipynb`; `run_minimal.py` is now only a compatibility wrapper.
 3. If Aspen Plus is not available on this machine, the notebook can still be used up to and including Step 8 (coherence + YAML improvement) for spec authoring and validation workflows.

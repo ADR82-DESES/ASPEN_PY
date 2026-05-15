@@ -15,6 +15,7 @@ from aspen_automation.batch_engine import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ARCHIVED_METHANOL_PLANT = ROOT / "archive" / "aspen_artifacts" / "Methanol Plant"
 
 
 def test_sanitize_run_id_is_lowercase_alphanumeric_and_eight_chars() -> None:
@@ -33,8 +34,8 @@ def test_make_unique_run_id_avoids_existing_artifacts(tmp_path: Path) -> None:
 
 
 def test_parse_aspen_history_extracts_translation_errors() -> None:
-    history = ROOT / "Methanol Plant" / "MethanolPlant.his"
-    source = ROOT / "Methanol Plant" / "MethanolPlant.inp"
+    history = ARCHIVED_METHANOL_PLANT / "MethanolPlant.his"
+    source = ARCHIVED_METHANOL_PLANT / "MethanolPlant.inp"
 
     diagnostics = parse_aspen_history(history, source_inp_path=source)
 

@@ -149,7 +149,7 @@ The cell raises immediately if Aspen is not running, preventing the notebook fro
 
 1. Open browser → Porticada portal → launch **Aspen 14**
 2. Wait for Aspen Plus to fully load
-3. Run `pixi run python run_minimal.py` **or** open the notebook and run all cells
+3. Open `notebooks/process_library_runner.ipynb` and run the preflight/Gate 1 cells
 4. Simulation proceeds normally
 
 ---

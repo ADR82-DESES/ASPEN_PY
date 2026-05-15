@@ -12,8 +12,8 @@
 - Property method: RK-SOAVE
 
 Reference files:
-- `Methanol Plant/MethanolPlant.inp`
-- `Methanol Plant/DESIGN_BASIS.md`
+- `archive/aspen_artifacts/Methanol Plant/MethanolPlant.inp`
+- `archive/aspen_artifacts/Methanol Plant/DESIGN_BASIS.md`
 
 ### Process Sections
 

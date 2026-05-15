@@ -10,7 +10,7 @@ from aspen_automation.schema import PlantSpecification, VALID_BLOCK_TYPES
 from aspen_automation.parser import load_spec
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
-REFERENCE_DIR = os.path.join(os.path.dirname(__file__), "..", "Methanol Plant")
+REFERENCE_DIR = os.path.join(os.path.dirname(__file__), "..", "archive", "aspen_artifacts", "Methanol Plant")
 
 
 @pytest.fixture

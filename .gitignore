@@ -15,26 +15,32 @@ wheels/
 .ipynb_checkpoints/
 
 # Aspen Plus generated / runtime artifacts
-Methanol Plant/results/
-Methanol Plant/_session_tmp/
-Methanol Plant/MethanolPlant_output.*
-Methanol Plant/MethanolPlant_generated.inp
-Methanol Plant/*.def
 process_runs/
 process_runs_*/
 .jcodemunch-cache/
+/*.apw
+/*.bkp
+/*.def
+/*.his
+/*.inp
+/*.stdout.txt
+/*.stderr.txt
+/*.sum
+**/_*.def
+process_library/**/process.bak*.yaml
 
 # Simulation / pipeline run outputs
-process_library/
-!.codex/skills/antigravity-to-aspen-plus/assets/source/process_library/
-!.codex/skills/antigravity-to-aspen-plus/assets/source/process_library/**
 logs/
 *.log
+archive/runtime_outputs/
+archive/local_outputs/
+/promising_apis_log.txt
 
 # Pytest temporary output directories
 pytest_tmp/
 .pytest_tmp/
 .codex_pytest_tmp*/
+pytest-cache-files-*/
 .tmp_*/
 manual_verify_*/
 test_results/

@@ -176,6 +176,6 @@ REACTIONS RXN-SET1 REQUIL
 ## Canonical Reference
 
 For a complete example of the target output format, refer to:
-`Methanol Plant/MethanolPlant.inp`
+`archive/aspen_artifacts/Methanol Plant/MethanolPlant.inp`
 
 This file serves as the canonical reference for all generated structure and syntax.
