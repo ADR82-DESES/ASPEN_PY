@@ -1,0 +1,41 @@
+metadata:
+  title: "Minimal Mixer IDEAL Test"
+  description: "Simplest possible simulation with IDEAL properties"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+
+components:
+  - id: "H2"
+    name: "HYDROGEN"
+  - id: "CO"
+    name: "CARBON-MONOXIDE"
+
+properties:
+  method: "IDEAL"
+
+flowsheet:
+  - block: "B1"
+    inputs: ["FEED"]
+    outputs: ["PROD"]
+
+streams:
+  - name: "FEED"
+    temperature: 250
+    pressure: 1
+    mass_flow: 1000
+    composition:
+      H2: 0.5
+      CO: 0.5
+  - name: "PROD"
+    temperature: 250
+    pressure: 1
+    mass_flow: 1000
+    composition:
+      H2: 0.5
+      CO: 0.5
+
+blocks:
+  - name: "B1"
+    type: "MIXER"

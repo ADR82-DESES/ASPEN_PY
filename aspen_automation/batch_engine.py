@@ -55,6 +55,13 @@ class AspenBatchResult:
         return str(artifact["path"])
 
     @property
+    def history_path(self) -> str | None:
+        artifact = self.artifacts.get(".his")
+        if not artifact or not artifact.get("path"):
+            return None
+        return str(artifact["path"])
+
+    @property
     def succeeded(self) -> bool:
         return (
             not self.timed_out
@@ -77,6 +84,7 @@ class AspenBatchResult:
             "stderr_path": self.stderr_path,
             "artifacts": self.artifacts,
             "archive_path": self.archive_path,
+            "history_path": self.history_path,
             "succeeded": self.succeeded,
             "history_diagnostics": self.history_diagnostics,
             "taskkill_diagnostics": self.taskkill_diagnostics,

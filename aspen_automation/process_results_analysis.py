@@ -279,6 +279,18 @@ def _summarize_blocks(blocks_df: pd.DataFrame) -> tuple[list[str], dict[str, Any
             )
             lines.append(f"- Largest absolute block duties: {top_duties}.")
 
+    raw_unit_col = _resolve_column(blocks_df, "duty_raw_unit")
+    if raw_unit_col is not None:
+        raw_units = sorted(
+            {
+                str(value)
+                for value in blocks_df[raw_unit_col].dropna().unique()
+                if str(value).strip()
+            }
+        )
+        if raw_units:
+            lines.append(f"- Duty unit basis: raw Aspen values are {'/'.join(raw_units)}; summaries use corrected `duty_mw`.")
+
     work_kw = _numeric_series(blocks_df, "net_work_kw")
     if work_kw.notna().any():
         total_work_mw = float(work_kw.fillna(0.0).sum()) / 1000.0

@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 METHANOL_PROCESS_DIR = ROOT / "process_library" / "methanol"
 METHANOL_PROCESS_YAML = METHANOL_PROCESS_DIR / "process.yaml"
 NOTEBOOK_PATH = ROOT / "notebooks" / "process_library_runner.ipynb"
+METHANOL_NOTEBOOK_PATH = ROOT / "notebooks" / "methanol_example_runner.ipynb"
 
 
 def _copy_methanol_process(target_process_dir: Path) -> Path:
@@ -73,6 +74,24 @@ def _fake_extracted_results(*, readable: bool = True) -> dict:
                     "CH3OH_mass_frac": 0.9986,
                     "CH3OH_mole_frac": 0.9986,
                 },
+                {
+                    "stream_name": "VENT-GAS",
+                    "temperature": 30.0,
+                    "pressure": 1.8,
+                    "mass_flow": 75000.0,
+                    "mole_flow": 4000.0,
+                    "CH3OH_mass_frac": 0.30,
+                    "CH3OH_mole_frac": 0.18,
+                },
+                {
+                    "stream_name": "VENT-TOT",
+                    "temperature": 54.0,
+                    "pressure": 1.5,
+                    "mass_flow": 64060.0,
+                    "mole_flow": 1986.0,
+                    "CH3OH_mass_frac": 0.38,
+                    "CH3OH_mole_frac": 0.384,
+                },
             ]
         ),
         "blocks": pd.DataFrame(
@@ -98,7 +117,7 @@ def _fake_extracted_results(*, readable: bool = True) -> dict:
             "convergence_status": "converged",
         },
         "diagnostics": {"convergence_status": "converged", "per_error": 0},
-        "metadata": {"stream_count": 2, "block_count": 2, "component_count": 8},
+        "metadata": {"stream_count": 3, "block_count": 2, "component_count": 8},
     }
 
 
@@ -169,7 +188,7 @@ def test_codex_authored_yaml_generates_valid_inp() -> None:
     assert "APV140 PURE32" in inp
     assert "COMPONENTS" in inp
     assert "CH4 METHANE" in inp
-    assert "PROPERTIES RK-SOAVE" in inp
+    assert "PROPERTIES NRTL" in inp
     assert "FLOWSHEET" in inp
     assert "STREAM NG-FEED" in inp
     assert "BLOCK MIX-FEED MIXER" in inp
@@ -373,24 +392,33 @@ def test_notebook_static_contract() -> None:
     joined_sources = "\n".join(_cell_source(cell) for cell in notebook["cells"])
 
     ordered_markers = [
+        "Process Library Runner: Process-Agnostic Batch-First Aspen Workflow",
         "Environment setup and imports",
         "Aspen Plus pre-flight check",
-        "Repository path resolution",
+        "Process evidence intake for Codex-authored YAML",
         "Process library path configuration",
         "Discovery of all available process folders",
         "YAML coherence analysis per discovered process",
         "Suggested YAML improvements per discovered process",
         "Gate 1: Aspen batch translator",
-        "Gate 2: Kinetic BKP load, COM extraction, and reports",
+        "Gate 2: BKP COM load, extraction, and reports",
         "Gate 2 diagnostics and evidence bundle",
         "Codex session analysis per discovered process",
-        "Kinetic remediation and tuning worksheet",
-        "Live methanol production tuning campaign",
         "Output summary and validation",
     ]
     marker_positions = [joined_sources.index(marker) for marker in ordered_markers]
     assert marker_positions == sorted(marker_positions)
 
+    assert "build_process_intake_artifacts" in joined_sources
+    assert "PROCESS_NAME" in joined_sources
+    assert "USER_PROCESS_BRIEF" in joined_sources
+    assert "SOURCE_PDFS" in joined_sources
+    assert "SOURCE_URLS" in joined_sources
+    assert "WEB_SEARCH_QUERIES" in joined_sources
+    assert "REFERENCE_NOTES" in joined_sources
+    assert "source_manifest.json" in joined_sources
+    assert "process_research_brief.md" in joined_sources
+    assert "codex_process_yaml_prompt.md" in joined_sources
     assert joined_sources.index("check_aspen_running") < joined_sources.index("run_aspen_batch(")
     assert joined_sources.index("run_aspen_batch(") < joined_sources.index("run_process_batch_first(")
     assert "run_process(" not in joined_sources
@@ -399,28 +427,43 @@ def test_notebook_static_contract() -> None:
     assert "run_process_batch_first" in joined_sources
     assert "ENFORCE_ACCEPTANCE_TARGETS = False" in joined_sources
     assert "enforce_acceptance_targets=ENFORCE_ACCEPTANCE_TARGETS" in joined_sources
+    assert "def batch_history_path" in joined_sources
+    assert "batch_result.history_path" not in joined_sources
     assert "context_probe.json" in joined_sources
     assert "build_diagnostics.json" in joined_sources
     assert "simulation_diagnostics.json" in joined_sources
     assert "live_aspen_summary.json" in joined_sources
     assert "validate_process_spec_file" in joined_sources
     assert "analyze_process_spec_coherence" in joined_sources
+    assert "build_codex_spec_markdown(process.name, process.spec_path, validation_report, coherence_report)" in joined_sources
     assert "suggest_process_spec_improvements" in joined_sources
     assert "write_process_spec_file" in joined_sources
     assert "load_result_artifact_tables" in joined_sources
     assert "build_codex_results_markdown" in joined_sources
-    assert "B-SYN selectivity diagnostics" in joined_sources
-    assert "recycle composition diagnostics" in joined_sources
-    assert "PURGE_SWEEP_FRACTIONS" in joined_sources
-    assert "ATR_TUNING_FACTORS" in joined_sources
-    assert "run_methanol_tuning_campaign" in joined_sources
-    assert "RUN_METHANOL_TUNING_CAMPAIGN = False" in joined_sources
-    assert "tuning_campaign_summary.csv" in joined_sources
-    assert "tuning_campaign_summary.json" in joined_sources
-    assert "best_process.yaml" in joined_sources
+    assert "B-SYN selectivity diagnostics" not in joined_sources
+    assert "PURGE_SWEEP_FRACTIONS" not in joined_sources
+    assert "ATR_TUNING_FACTORS" not in joined_sources
+    assert "run_methanol_tuning_campaign" not in joined_sources
+    assert "MEOH-PRO" not in joined_sources
     analysis_cell = next(
         _cell_source(cell)
         for cell in notebook["cells"]
         if cell.get("id") == "codex-csv-analysis"
     )
     assert analysis_cell.index("if not result.succeeded:") < analysis_cell.index("load_result_artifact_tables(result)")
+
+
+def test_methanol_example_notebook_contains_methanol_specific_workflow() -> None:
+    notebook = json.loads(METHANOL_NOTEBOOK_PATH.read_text(encoding="utf-8"))
+    joined_sources = "\n".join(_cell_source(cell) for cell in notebook["cells"])
+
+    assert "Methanol Example Runner: Kinetic Batch-First Aspen Workflow" in joined_sources
+    assert 'ONLY_PROCESSES: set[str] | None = {"methanol"}' in joined_sources
+    assert "B-SYN selectivity diagnostics" in joined_sources
+    assert "recycle composition diagnostics" in joined_sources
+    assert "PURGE_SWEEP_FRACTIONS" in joined_sources
+    assert "ATR_TUNING_FACTORS" in joined_sources
+    assert "run_methanol_tuning_campaign" in joined_sources
+    assert "tuning_campaign_summary.csv" in joined_sources
+    assert "tuning_campaign_summary.json" in joined_sources
+    assert "best_process.yaml" in joined_sources

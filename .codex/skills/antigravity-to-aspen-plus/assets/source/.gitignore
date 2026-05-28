@@ -1,0 +1,65 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.pixi/
+.pixi-cache/
+
+# Notebook artifacts
+.ipynb_checkpoints/
+
+# Aspen Plus generated / runtime artifacts
+process_runs/
+process_runs_*/
+.jcodemunch-cache/
+/*.apw
+/*.bkp
+/*.def
+/*.his
+/*.inp
+/*.stdout.txt
+/*.stderr.txt
+/*.sum
+**/_*.def
+process_library/**/process.bak*.yaml
+
+# Simulation / pipeline run outputs
+logs/
+*.log
+archive/runtime_outputs/
+archive/local_outputs/
+/promising_apis_log.txt
+
+# Pytest temporary output directories
+pytest_tmp/
+.pytest_tmp/
+.codex_pytest_tmp*/
+pytest-cache-files-*/
+.tmp_*/
+manual_verify_*/
+test_results/
+
+# Local tooling and IDE config
+.claude/
+.vscode/
+.jcodemunch.jsonc
+Antonio_Codex_Skills/
+
+# Codex skill binaries / external skill packs (not project source)
+.codex/skills/skill-benchmarking/
+.codex/skills/skill-benchmarking.7z
+.codex/skills/scientific-article-writer/
+
+# Stray log files
+stream_test_log.txt
+
+# Ad-hoc debug / exploration scripts
+debug_aspen.py
+explore_tree2.py
+save_aspen_output.py

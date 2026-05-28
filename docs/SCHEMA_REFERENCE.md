@@ -60,11 +60,30 @@ Global property method settings.
 
 **Fields:**
 - `method`: The property method to use (e.g., "NRTL", "RK-SOAVE").
+- `databanks`: Optional explicit Aspen databanks used for `DATABANKS` and `PROP-SOURCES`.
+- `binary_parameters`: Optional source-tagged binary interaction parameter declarations.
+  For NRTL high-purity methanol/water service, the methanol-water pair should be
+  declared with either verified Aspen databanks or explicit verified values.
 
 **Example:**
 ```yaml
 properties:
   method: "NRTL"
+  databanks:
+    - APV140 PURE32
+    - APV140 AQUEOUS
+    - APV140 VLE-IG
+    - APV140 VLE-LIT
+  binary_parameters:
+    - components: [CH3OH, H2O]
+      model: NRTL
+      source_type: aspen_databank
+      databanks:
+        - APV140 VLE-IG
+        - APV140 VLE-LIT
+      basis: Aspen Plus V14 NRTL property databank interaction parameters
+      provenance:
+        source: Aspen Plus V14 property databanks
 ```
 
 ### Blocks
@@ -74,12 +93,32 @@ Definitions of unit operation blocks.
 **Fields:**
 - `name` (required): Unique name of the block.
 - `type` (required): Type of the block (e.g., "MIXER", "FLASH2").
+- `parameters.P-OUT` (required for `VALVE`): outlet pressure in the spec pressure units.
+- `radfrac` (required for `RADFRAC`): rigorous column settings.
 
 **Example:**
 ```yaml
 blocks:
   - name: "MIX-01"
     type: "MIXER"
+```
+
+RADFRAC requires one flowsheet feed, exactly two products, and:
+```yaml
+blocks:
+  - name: B-DIST
+    type: RADFRAC
+    radfrac:
+      n_stages: 30
+      feed_stage: 16
+      condenser: TOTAL
+      reboiler: KETTLE
+      top_pressure: 1.5
+      pressure_drop_per_stage: 0.02
+      reflux_ratio: 2.0
+      bottoms_rate: 43333.3
+      rate_basis: MASS
+      max_outer_iterations: 50
 ```
 
 ### Streams
@@ -132,9 +171,14 @@ The `aspen_automation` package enforces several validation rules when loading a 
 4.  **Units**: Units must be one of the supported values.
 5.  **References**:
     -   Components referenced in streams/reactions must be defined in `components`.
+    -   Components referenced in `properties.binary_parameters` must be defined in `components`.
     -   Blocks referenced in `flowsheet` must be defined in `blocks`.
     -   Streams referenced in `flowsheet` inputs/outputs must be defined in `streams`.
 6.  **Composition**: Mole/mass fractions in a stream must sum to approximately 1.0 (tolerance: 0.1%).
+7.  **Binary parameters**: Source-tagged binary parameter entries require a two-component pair and `provenance.source`; databank-backed entries require `databanks`, and explicit entries require supported numeric NRTL fields.
+8.  **Rigorous columns**: `RADFRAC` requires complete `radfrac` settings, `n_stages >= 3`, `1 <= feed_stage <= n_stages`, positive pressure, nonnegative pressure drop, positive reflux, one rate spec, one feed, and either two liquid products or one condenser vapor vent plus two liquid products. `VALVE` requires positive `parameters.P-OUT`.
+9.  **Product conditions**: `targets.product_conditions` entries must reference existing streams and define at least one pressure or temperature target with nonnegative tolerance.
+10. **Component loss limits**: `targets.component_loss_limits` entries must reference an existing stream and component, define exactly one of `max_kg_hr` or `max_tpd`, and may include exactly one baseline (`baseline_kg_hr` or `baseline_tpd`) for recovery reporting.
 
 ## API Usage
 

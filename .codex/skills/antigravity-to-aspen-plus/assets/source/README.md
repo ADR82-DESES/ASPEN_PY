@@ -1,48 +1,91 @@
-# Bundled Aspen Automation Source
+# Aspen Plus Batch-First Automation
 
-This directory is a portable snapshot of the schema-first, batch-first Aspen Plus workflow used by the `antigravity-to-aspen-plus` skill.
+This repository builds, runs, diagnoses, and tunes Aspen Plus process simulations from schema-first `process.yaml` specifications.
 
-## What To Copy
-
-Use the skill bootstrap script from the skill root:
-
-```powershell
-python .codex\skills\antigravity-to-aspen-plus\scripts\bootstrap_aspen_automation.py --target .
-```
-
-The script copies the automation package, notebook, process-library example, tests, and environment files into a clean project without overwriting different existing files unless `--force` is supplied.
-
-## Included Workflow
-
-The normal live workflow is:
+The supported workflow is:
 
 ```text
 process.yaml -> generate_inp -> Aspen batch .his/.bkp gate -> InitFromArchive2 -> CSV/JSON extraction -> notebook diagnostics
 ```
 
-The notebook-first surface is `notebooks/process_library_runner.ipynb`. A user should launch Aspen Plus from AppsAnywhere/Porticada or a local Aspen install, open the notebook, restart the kernel, and run cells top-to-bottom.
+The main user surface is the process-agnostic `notebooks/process_library_runner.ipynb`.
+The methanol case is a separate worked example at `notebooks/methanol_example_runner.ipynb`.
 
-## Methanol Example
+## Quick Start
 
-`process_library/methanol/process.yaml` is the working ATR-like methanol screening case. The validated 10k TPD configuration uses:
+1. Launch Aspen Plus from AppsAnywhere/Porticada or your local Aspen installation.
+2. Confirm the supported Pixi environment manager is available, then create the project environment:
 
-- `NG-FEED=440000 kg/hr`
-- `STEAM=297000 kg/hr`
-- `O2-FEED=528000 kg/hr`
-- `B-SYN RPLUG LENGTH=19.613`
-- `B-SYN DIAM=4.0`
-- `PURGE=0.15`, `RECYCLE=0.85`
-- `process_defaults.product_stream=MEOH-PRO`
+```powershell
+pixi --version
+pixi install
+pixi run install-kernel
+```
 
-The live validated case produced about `10000.06 TPD` component CH3OH and `99.9878 wt%` CH3OH in `MEOH-PRO`.
+3. Open the generic process notebook:
+
+```powershell
+pixi run process-library-notebook
+```
+
+4. Restart the notebook kernel and run cells top-to-bottom.
+
+For a new process, fill the process-intake cell to write `source_manifest.json`, `process_research_brief.md`, and `codex_process_yaml_prompt.md`; then use Codex to create or revise `process_library/<process_name>/process.yaml`.
+
+For the worked methanol example and tuning campaign:
+
+```powershell
+pixi run methanol-example-notebook
+```
+
+The canonical 10k TPD methanol screening case lives at `process_library/methanol/process.yaml`, but it is an example/regression fixture rather than the default assumption for every process.
+
+## Repository Layout
+
+```text
+aspen_automation/       Supported Python package
+process_library/        Canonical process specs
+notebooks/              Generic live workflow plus methanol example notebook
+tests/                  Unit, contract, and integration tests
+docs/                   Maintained documentation
+templates/              Legacy-compatible YAML/INP templates
+tools/                  Developer tooling
+third_party/            Vendored/submodule code
+archive/                Preserved legacy probes, artifacts, and historical docs
+.codex/                 Codex skills and portable Aspen workflow bundle
+```
+
+Root `main.py`, `run_methanol_plant.py`, and `run_minimal.py` are compatibility wrappers. They point to the archived legacy scripts and the supported generic notebook workflow; they do not launch live Aspen runs by surprise.
 
 ## Validation
 
-For a port or source update, run:
+Run the supported non-integration suite:
 
 ```powershell
-pixi run pytest tests/test_process_library.py tests/test_methanol_tuning.py tests/test_inp_generator.py tests/test_validator.py tests/test_notebook_purpose_contract.py -q --basetemp=.codex_pytest_tmp_aspen_focused
-pixi run pytest tests -q --ignore=tests/integration --basetemp=.codex_pytest_tmp_aspen_all
+pixi run test
 ```
 
-Live validation should be split into Gate 1 batch translation, Gate 2 BKP COM load/extraction, and final acceptance with targets enforced only after readable results are stable.
+For a focused validation/orchestration check:
+
+```powershell
+pixi run test-focused
+```
+
+Direct `python -m pytest ...` runs are useful only as emergency diagnostics when Pixi is unavailable; the supported project path is the Python 3.12 Pixi workspace in `pixi.toml`.
+
+Live Aspen validation is split into:
+
+1. Gate 1 batch translation: generated INP emits clean `.his` and `.bkp`.
+2. Gate 2 BKP COM load/extraction: readable CSV/JSON results.
+3. Process acceptance: production and purity targets enforced only after readable results are stable.
+
+## Current Methanol Target
+
+The canonical methanol spec is tuned to the live-validated screening target:
+
+- Component CH3OH production: about `10000 TPD`
+- Total `MEOH-PRO`: about `10001 TPD`
+- CH3OH purity: about `99.99 wt%`
+- Product stream: `MEOH-PRO`
+
+Historical COM experiments, old generated Aspen files, and one-off probes were preserved under `archive/` for reference.

@@ -52,6 +52,9 @@ Generated files:
 
 `diagnostics.json`
 - Key-value map of run diagnostics and status details (for example, error counts, warning counts, convergence metadata).
+- Batch-first process-library runs also write `build_diagnostics.json` and
+  `simulation_diagnostics.json`; these include `model_quality_warnings` and
+  `nrtl_binary_parameters_status` when NRTL binary-parameter coverage is relevant.
 
 ## HTML Format
 

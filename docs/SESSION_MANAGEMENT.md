@@ -6,25 +6,28 @@ The `aspen_automation.session` module provides a robust interface for orchestrat
 
 ## Build Modes
 
+For supported process-library runs, prefer `run_process_batch_first(...)`. It generates INP, verifies Aspen batch translation, then loads the batch-created BKP with `InitFromArchive2` before extracting CSV/JSON results. The session build modes below remain available for diagnostics and compatibility.
+
 | Mode | Description | Mechanism |
 | :--- | :--- | :--- |
-| `auto` | Default. Tries `InitFromFile2`, falls back to `InitNew` + `Import`. | Hybrid |
+| `auto` | Legacy diagnostic path. Builds through the live COM block builder. | COM block builder |
 | `inp-only` | Generates INP and uses `InitFromFile2`. | File-based |
 | `com-only` | Uses direct COM manipulation (Diagnostic). | COM (Diagnostic/dev, implemented) |
+| `com-auto` | Deprecated diagnostic path retained for compatibility. | Legacy INP import/archive fallback |
 
-## Auto Fallback Logic
+## Diagnostic Build Paths
 
 ```mermaid
 graph TD
-    A[Start Build Auto] --> B{InitFromFile2 Success?}
-    B -- Yes --> C[Use InitFromFile2]
-    B -- No --> D[InitNew]
-    D --> E{Import Method?}
-    E -- Import --> F[Use aspen.Import]
-    E -- ImportSimulation --> G[Use aspen.ImportSimulation]
-    F --> H[Success]
-    G --> H
-    E -- Failure --> I[BuildError]
+    A[Supported workflow] --> B[run_process_batch_first]
+    B --> C[Aspen batch .his/.bkp gate]
+    C --> D[InitFromArchive2 extraction]
+    E[Diagnostic workflow] --> F[run_simulation_session]
+    F --> G{build_mode}
+    G --> H[auto COM block builder]
+    G --> I[inp-only InitFromFile2]
+    G --> J[com-only InitNew]
+    G --> K[com-auto deprecated legacy import]
 ```
 
 ## API Reference
@@ -52,7 +55,7 @@ def run_simulation_session(
 | Name | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `spec` | `Union[PlantSpecification, Dict[str, Any], str]` | - | Specification model, raw dict, or file path. |
-| `build_mode` | `str` | `"auto"` | One of `"auto"`, `"inp-only"`, `"com-only"`. |
+| `build_mode` | `str` | `"auto"` | One of `"auto"`, `"inp-only"`, `"com-only"`, `"com-auto"` for diagnostic sessions. |
 | `output_dir` | `str` | `"results/"` | Directory for intermediate/output artifacts. |
 | `visible` | `bool` | `True` | Whether Aspen UI is visible. |
 | `timeout_seconds` | `int` | `300` | Maximum simulation runtime before timeout. |
@@ -80,7 +83,7 @@ Data class containing simulation results.
 
 ## Pipeline Integration
 
-Use `run_simulation_session` in compliant CI/CD pipelines to validate plant specifications automatically.
+Use `run_process_batch_first(...)` for supported process-library execution. Use `run_simulation_session` only for low-level diagnostic sessions where a live COM build mode is intentionally being tested.
 
 ## Troubleshooting
 

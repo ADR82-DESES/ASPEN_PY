@@ -17,6 +17,13 @@ logger = logging.getLogger("aspen_automation.extractor")
 ENERGY_BALANCE_VIEW_LEGACY = "legacy"
 ENERGY_BALANCE_VIEW_SUMMARY = "summary"
 METHANOL_COMPONENT_ID = "CH3OH"
+ASPEN_ENERGY_RATE_RAW_UNIT = "CAL/SEC"
+CAL_PER_SEC_TO_KW = 0.004184
+CAL_PER_SEC_TO_MW = CAL_PER_SEC_TO_KW / 1000.0
+STREAM_EXTRACTION_STATUS_DIRECT = "direct"
+STREAM_EXTRACTION_STATUS_MISSING = "missing"
+STREAM_EXTRACTION_STATUS_INFERRED = "inferred_by_block_closure"
+SEPARATOR_BLOCK_TYPES = {"SEP", "FLASH2", "FSPLIT"}
 
 
 def _spec_to_dict(spec: Union[PlantSpecification, Dict[str, Any]]) -> Dict[str, Any]:
@@ -60,6 +67,25 @@ def _get_text_node_value(aspen: Any, path: str) -> Optional[str]:
     if value is None:
         return None
     return str(value)
+
+
+def _aspen_stream_name_candidates(stream_name: str) -> List[str]:
+    candidates = [stream_name]
+    if len(stream_name) > 8:
+        candidates.append(stream_name[:8])
+    unique: List[str] = []
+    for candidate in candidates:
+        if candidate and candidate not in unique:
+            unique.append(candidate)
+    return unique
+
+
+def _get_stream_output_value(aspen: Any, stream_name: str, output_path: str) -> Tuple[Optional[float], Optional[str]]:
+    for candidate in _aspen_stream_name_candidates(stream_name):
+        value = _get_node_value(aspen, rf"\Data\Streams\{candidate}\Output\{output_path}")
+        if value is not None:
+            return value, candidate
+    return None, None
 
 
 def _get_element_names(aspen: Any, node_path: str) -> List[str]:
@@ -113,7 +139,24 @@ def _block_specs(spec_dict: Dict[str, Any]) -> List[Tuple[str, Optional[str]]]:
 
 
 def _streams_columns(component_ids: Sequence[str]) -> List[str]:
-    columns = ["stream_name", "temperature", "pressure", "mass_flow", "mole_flow"]
+    columns = [
+        "stream_name",
+        "extraction_status",
+        "extraction_source",
+        "extraction_note",
+        "temperature",
+        "pressure",
+        "mass_flow",
+        "mole_flow",
+    ]
+    for component_id in component_ids:
+        columns.append(f"{component_id}_mole_frac")
+        columns.append(f"{component_id}_mass_frac")
+    return columns
+
+
+def _stream_value_columns(component_ids: Sequence[str]) -> List[str]:
+    columns = ["temperature", "pressure", "mass_flow", "mole_flow"]
     for component_id in component_ids:
         columns.append(f"{component_id}_mole_frac")
         columns.append(f"{component_id}_mass_frac")
@@ -121,21 +164,40 @@ def _streams_columns(component_ids: Sequence[str]) -> List[str]:
 
 
 def _extract_stream_row(aspen: Any, stream_name: str, components: Sequence[str]) -> Dict[str, Any]:
+    source_alias: Optional[str] = None
+
+    def read_output(output_path: str) -> Optional[float]:
+        nonlocal source_alias
+        value, alias = _get_stream_output_value(aspen, stream_name, output_path)
+        if value is not None and alias is not None and source_alias is None:
+            source_alias = alias
+        return value
+
     row: Dict[str, Any] = {
         "stream_name": stream_name,
-        "temperature": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\TEMP_OUT\MIXED"),
-        "pressure": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\PRES_OUT\MIXED"),
-        "mass_flow": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\MASSFLMX\MIXED"),
-        "mole_flow": _get_node_value(aspen, rf"\Data\Streams\{stream_name}\Output\MOLEFLMX\MIXED"),
+        "temperature": read_output("TEMP_OUT\\MIXED"),
+        "pressure": read_output("PRES_OUT\\MIXED"),
+        "mass_flow": read_output("MASSFLMX\\MIXED"),
+        "mole_flow": read_output("MOLEFLMX\\MIXED"),
     }
 
+    component_stream_name = source_alias or stream_name
     for component in components:
         row[f"{component}_mole_frac"] = _get_node_value(
-            aspen, rf"\Data\Streams\{stream_name}\Output\MOLEFRAC\MIXED\{component}"
+            aspen, rf"\Data\Streams\{component_stream_name}\Output\MOLEFRAC\MIXED\{component}"
         )
         row[f"{component}_mass_frac"] = _get_node_value(
-            aspen, rf"\Data\Streams\{stream_name}\Output\MASSFRAC\MIXED\{component}"
+            aspen, rf"\Data\Streams\{component_stream_name}\Output\MASSFRAC\MIXED\{component}"
         )
+
+    has_any_value = any(_as_float(row.get(column)) is not None for column in _stream_value_columns(components))
+    row["extraction_status"] = STREAM_EXTRACTION_STATUS_DIRECT if has_any_value else STREAM_EXTRACTION_STATUS_MISSING
+    row["extraction_source"] = (
+        f"aspen_com:{source_alias}" if has_any_value and source_alias and source_alias != stream_name
+        else "aspen_com" if has_any_value
+        else None
+    )
+    row["extraction_note"] = None if has_any_value else "No output nodes returned from Aspen COM tree."
     return row
 
 
@@ -144,13 +206,119 @@ def extract_stream_properties(aspen: Any, stream_names: List[str], component_ids
     return pd.DataFrame(rows, columns=_streams_columns(component_ids))
 
 
+def _energy_rate_to_kw(value: Optional[float]) -> Optional[float]:
+    return value * CAL_PER_SEC_TO_KW if value is not None else None
+
+
+def _energy_rate_to_mw(value: Optional[float]) -> Optional[float]:
+    return value * CAL_PER_SEC_TO_MW if value is not None else None
+
+
+def _energy_unit_basis() -> Dict[str, Any]:
+    return {
+        "raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT,
+        "converted_unit": "MW",
+        "conversion": "1 CAL/SEC = 0.004184 kW = 0.000004184 MW",
+    }
+
+
+def _get_first_block_output_value(
+    aspen: Any,
+    block_name: str,
+    output_keys: Sequence[str],
+) -> Tuple[Optional[float], Optional[str]]:
+    for output_key in output_keys:
+        value = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\{output_key}")
+        if value is not None:
+            return value, output_key
+    return None, None
+
+
+def _blocks_columns() -> List[str]:
+    return [
+        "block_name",
+        "block_type",
+        "duty",
+        "duty_kw",
+        "duty_mw",
+        "duty_raw",
+        "duty_raw_unit",
+        "duty_source",
+        "condenser_duty_kw",
+        "condenser_duty_mw",
+        "condenser_duty_raw",
+        "condenser_duty_raw_unit",
+        "condenser_duty_source",
+        "reboiler_duty_kw",
+        "reboiler_duty_mw",
+        "reboiler_duty_raw",
+        "reboiler_duty_raw_unit",
+        "reboiler_duty_source",
+        "net_work_kw",
+        "net_work_mw",
+        "net_work_raw",
+        "net_work_raw_unit",
+        "net_work_source",
+        "conversion",
+        "efficiency",
+    ]
+
+
 def _extract_block_row(aspen: Any, block_name: str, block_type: Optional[str] = None) -> Dict[str, Any]:
     detected_type = block_type or _get_text_node_value(aspen, rf"\Data\Blocks\{block_name}\Input\TYPE")
-    duty_kw = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\QNET")
-    if duty_kw is None:
-        duty_kw = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\DUTY")
+    detected_type_upper = str(detected_type or "").upper()
 
-    net_work_kw = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\WNET")
+    duty_keys = ["QNET", "DUTY"]
+    if detected_type_upper == "RPLUG":
+        duty_keys.extend(["QCALC", "QREAC", "QREACT", "QRXN"])
+    duty_raw, duty_source = _get_first_block_output_value(aspen, block_name, duty_keys)
+
+    condenser_duty_raw = None
+    condenser_duty_source = None
+    reboiler_duty_raw = None
+    reboiler_duty_source = None
+    if detected_type_upper == "RADFRAC":
+        condenser_duty_raw, condenser_duty_source = _get_first_block_output_value(
+            aspen,
+            block_name,
+            [
+                "QCOND",
+                "QCOND1",
+                "COND-DUTY",
+                "COND_DUTY",
+                "CONDENSER-DUTY",
+                "CONDENSER_DUTY",
+                "QC",
+            ],
+        )
+        reboiler_duty_raw, reboiler_duty_source = _get_first_block_output_value(
+            aspen,
+            block_name,
+            [
+                "QREB",
+                "QREB1",
+                "REB-DUTY",
+                "REB_DUTY",
+                "REBOILER-DUTY",
+                "REBOILER_DUTY",
+                "QR",
+            ],
+        )
+        captured_parts = [
+            (condenser_duty_raw, condenser_duty_source),
+            (reboiler_duty_raw, reboiler_duty_source),
+        ]
+        captured_values = [abs(value) for value, _ in captured_parts if value is not None]
+        captured_sources = [str(source) for value, source in captured_parts if value is not None and source]
+        if captured_values:
+            duty_raw = sum(captured_values)
+            duty_source = "captured_sum_abs:" + "+".join(captured_sources)
+    duty_kw = _energy_rate_to_kw(duty_raw)
+    condenser_duty_kw = _energy_rate_to_kw(condenser_duty_raw)
+    reboiler_duty_kw = _energy_rate_to_kw(reboiler_duty_raw)
+
+    net_work_raw, net_work_source = _get_first_block_output_value(aspen, block_name, ["WNET"])
+    net_work_kw = _energy_rate_to_kw(net_work_raw)
     conversion = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\CONV")
     efficiency = _get_node_value(aspen, rf"\Data\Blocks\{block_name}\Output\EFF")
 
@@ -159,8 +327,25 @@ def _extract_block_row(aspen: Any, block_name: str, block_type: Optional[str] = 
         "block_type": detected_type,
         "duty": duty_kw,
         "duty_kw": duty_kw,
-        "duty_mw": (duty_kw / 1000.0) if duty_kw is not None else None,
+        "duty_mw": _energy_rate_to_mw(duty_raw),
+        "duty_raw": duty_raw,
+        "duty_raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT if duty_raw is not None else None,
+        "duty_source": duty_source,
+        "condenser_duty_kw": condenser_duty_kw,
+        "condenser_duty_mw": _energy_rate_to_mw(condenser_duty_raw),
+        "condenser_duty_raw": condenser_duty_raw,
+        "condenser_duty_raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT if condenser_duty_raw is not None else None,
+        "condenser_duty_source": condenser_duty_source,
+        "reboiler_duty_kw": reboiler_duty_kw,
+        "reboiler_duty_mw": _energy_rate_to_mw(reboiler_duty_raw),
+        "reboiler_duty_raw": reboiler_duty_raw,
+        "reboiler_duty_raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT if reboiler_duty_raw is not None else None,
+        "reboiler_duty_source": reboiler_duty_source,
         "net_work_kw": net_work_kw,
+        "net_work_mw": _energy_rate_to_mw(net_work_raw),
+        "net_work_raw": net_work_raw,
+        "net_work_raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT if net_work_raw is not None else None,
+        "net_work_source": net_work_source,
         "conversion": conversion,
         "efficiency": efficiency,
     }
@@ -168,17 +353,7 @@ def _extract_block_row(aspen: Any, block_name: str, block_type: Optional[str] = 
 
 def extract_block_performance(aspen: Any, block_names: List[str]) -> pd.DataFrame:
     rows = [_extract_block_row(aspen, block_name) for block_name in block_names]
-    columns = [
-        "block_name",
-        "block_type",
-        "duty",
-        "duty_kw",
-        "duty_mw",
-        "net_work_kw",
-        "conversion",
-        "efficiency",
-    ]
-    return pd.DataFrame(rows, columns=columns)
+    return pd.DataFrame(rows, columns=_blocks_columns())
 
 
 def _identify_feed_product_streams(
@@ -250,6 +425,243 @@ def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
     if column not in df.columns:
         return pd.Series(dtype="float64")
     return pd.to_numeric(df[column], errors="coerce")
+
+
+def _stream_index_by_name(streams_df: pd.DataFrame, stream_name: str) -> Optional[Any]:
+    stream_name_col = _resolve_column_case_insensitive(streams_df, "stream_name")
+    if stream_name_col is None:
+        return None
+    stream_mask = streams_df[stream_name_col].astype(str).str.upper() == stream_name.upper()
+    if not stream_mask.any():
+        return None
+    return streams_df.index[stream_mask][0]
+
+
+def _stream_row_is_blank(row: pd.Series, component_ids: Sequence[str]) -> bool:
+    return all(_as_float(row.get(column)) is None for column in _stream_value_columns(component_ids))
+
+
+def _component_mass_fraction(row: pd.Series, component_id: str) -> float:
+    value = _as_float(row.get(f"{component_id}_mass_frac"))
+    return value if value is not None else 0.0
+
+
+def _block_type_lookup(spec_dict: Dict[str, Any]) -> Dict[str, str]:
+    lookup: Dict[str, str] = {}
+    for block in spec_dict.get("blocks", []):
+        if not isinstance(block, dict):
+            continue
+        block_name = block.get("name")
+        block_type = block.get("type")
+        if block_name and block_type:
+            lookup[str(block_name).upper()] = str(block_type).upper()
+    return lookup
+
+
+def _infer_missing_separator_streams(
+    streams_df: pd.DataFrame,
+    spec_dict: Dict[str, Any],
+    component_ids: Sequence[str],
+) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    if streams_df.empty:
+        return streams_df, {
+            "inferred_streams": [],
+            "blank_streams_before_inference": [],
+            "blank_streams_after_inference": [],
+            "warnings": [],
+        }
+
+    inferred_df = streams_df.copy()
+    block_types = _block_type_lookup(spec_dict)
+    inferred_streams: List[Dict[str, Any]] = []
+    warnings: List[str] = []
+
+    blank_before = [
+        str(row.get("stream_name"))
+        for _, row in inferred_df.iterrows()
+        if _stream_row_is_blank(row, component_ids)
+    ]
+
+    for connection in spec_dict.get("flowsheet", []):
+        if not isinstance(connection, dict):
+            continue
+        block_name = str(connection.get("block") or "")
+        block_type = block_types.get(block_name.upper())
+        if block_type not in SEPARATOR_BLOCK_TYPES:
+            continue
+
+        inputs = connection.get("inputs")
+        outputs = connection.get("outputs")
+        if not isinstance(inputs, list) or not isinstance(outputs, list):
+            continue
+        if len(inputs) != 1 or len(outputs) != 2:
+            continue
+
+        output_indexes: List[Tuple[str, Any, pd.Series]] = []
+        for output_name in outputs:
+            output_index = _stream_index_by_name(inferred_df, str(output_name))
+            if output_index is None:
+                continue
+            output_indexes.append((str(output_name), output_index, inferred_df.loc[output_index]))
+        if len(output_indexes) != len(outputs):
+            continue
+
+        blank_outputs = [
+            (output_name, output_index, output_row)
+            for output_name, output_index, output_row in output_indexes
+            if _stream_row_is_blank(output_row, component_ids)
+        ]
+        if len(blank_outputs) != 1:
+            continue
+
+        input_name = str(inputs[0])
+        input_index = _stream_index_by_name(inferred_df, input_name)
+        if input_index is None:
+            warnings.append(f"Could not infer {blank_outputs[0][0]}: input stream {input_name} is missing.")
+            continue
+        input_row = inferred_df.loc[input_index]
+        input_mass_flow = _as_float(input_row.get("mass_flow"))
+        if input_mass_flow is None:
+            warnings.append(f"Could not infer {blank_outputs[0][0]}: input stream {input_name} has no mass flow.")
+            continue
+
+        known_outputs = [
+            (output_name, output_row)
+            for output_name, _, output_row in output_indexes
+            if output_name.upper() != blank_outputs[0][0].upper()
+        ]
+        known_mass_flows: List[Tuple[str, float, pd.Series]] = []
+        missing_known_mass_flow = False
+        for known_output_name, known_output_row in known_outputs:
+            known_mass_flow = _as_float(known_output_row.get("mass_flow"))
+            if known_mass_flow is None:
+                warnings.append(
+                    f"Could not infer {blank_outputs[0][0]}: output stream {known_output_name} has no mass flow."
+                )
+                missing_known_mass_flow = True
+                break
+            known_mass_flows.append((known_output_name, known_mass_flow, known_output_row))
+        if missing_known_mass_flow:
+            continue
+
+        inferred_name, inferred_index, _ = blank_outputs[0]
+        inferred_mass_flow = input_mass_flow - sum(mass_flow for _, mass_flow, _ in known_mass_flows)
+        if inferred_mass_flow < -1e-6:
+            warnings.append(
+                f"Could not infer {inferred_name}: output mass exceeds input mass around block {block_name}."
+            )
+            continue
+        inferred_mass_flow = max(inferred_mass_flow, 0.0)
+
+        component_mass_flows: Dict[str, float] = {}
+        for component_id in component_ids:
+            input_component_flow = input_mass_flow * _component_mass_fraction(input_row, component_id)
+            known_component_flow = sum(
+                known_mass_flow * _component_mass_fraction(known_output_row, component_id)
+                for _, known_mass_flow, known_output_row in known_mass_flows
+            )
+            residual_component_flow = input_component_flow - known_component_flow
+            if residual_component_flow < 0.0 and abs(residual_component_flow) <= 1e-6:
+                residual_component_flow = 0.0
+            component_mass_flows[component_id] = max(residual_component_flow, 0.0)
+
+        inferred_df.at[inferred_index, "mass_flow"] = inferred_mass_flow
+        for component_id, component_mass_flow in component_mass_flows.items():
+            inferred_df.at[inferred_index, f"{component_id}_mass_frac"] = (
+                component_mass_flow / inferred_mass_flow if inferred_mass_flow > 0.0 else 0.0
+            )
+
+        inferred_df.at[inferred_index, "extraction_status"] = STREAM_EXTRACTION_STATUS_INFERRED
+        inferred_df.at[inferred_index, "extraction_source"] = block_name
+        inferred_df.at[
+            inferred_index,
+            "extraction_note",
+        ] = f"Inferred by component-wise mass closure around {block_type} block {block_name}."
+        inferred_streams.append(
+            {
+                "stream_name": inferred_name,
+                "source_block": block_name,
+                "source_block_type": block_type,
+                "inferred_mass_flow": inferred_mass_flow,
+            }
+        )
+
+    blank_after = [
+        str(row.get("stream_name"))
+        for _, row in inferred_df.iterrows()
+        if _stream_row_is_blank(row, component_ids)
+    ]
+    blank_radfrac_product_streams: List[Dict[str, str]] = []
+    for connection in spec_dict.get("flowsheet", []):
+        if not isinstance(connection, dict):
+            continue
+        block_name = str(connection.get("block") or "")
+        if block_types.get(block_name.upper()) != "RADFRAC":
+            continue
+        outputs = connection.get("outputs")
+        if not isinstance(outputs, list):
+            continue
+        for output_name in outputs:
+            stream_index = _stream_index_by_name(inferred_df, str(output_name))
+            if stream_index is None or _stream_row_is_blank(inferred_df.loc[stream_index], component_ids):
+                blank_radfrac_product_streams.append(
+                    {"block_name": block_name, "stream_name": str(output_name)}
+                )
+
+    return inferred_df, {
+        "inferred_streams": inferred_streams,
+        "blank_streams_before_inference": blank_before,
+        "blank_streams_after_inference": blank_after,
+        "blank_radfrac_product_streams": blank_radfrac_product_streams,
+        "warnings": warnings,
+    }
+
+
+def _terminal_mass_closure_diagnostics(
+    streams_df: pd.DataFrame,
+    spec_dict: Dict[str, Any],
+) -> Dict[str, Any]:
+    feed_streams, product_streams = _identify_feed_product_streams(spec_dict)
+    missing_feed_streams: List[str] = []
+    missing_product_streams: List[str] = []
+
+    def _sum_mass_flow(stream_names: Sequence[str], missing: List[str]) -> float:
+        total = 0.0
+        for stream_name in stream_names:
+            stream_index = _stream_index_by_name(streams_df, stream_name)
+            if stream_index is None:
+                missing.append(stream_name)
+                continue
+            mass_flow = _as_float(streams_df.loc[stream_index].get("mass_flow"))
+            if mass_flow is None:
+                missing.append(stream_name)
+                continue
+            total += mass_flow
+        return total
+
+    input_mass_flow = _sum_mass_flow(feed_streams, missing_feed_streams)
+    output_mass_flow = _sum_mass_flow(product_streams, missing_product_streams)
+    mass_difference = output_mass_flow - input_mass_flow
+    relative_difference = mass_difference / input_mass_flow if input_mass_flow > 0 else None
+
+    if missing_feed_streams or missing_product_streams:
+        status = "incomplete"
+    elif relative_difference is not None and abs(relative_difference) <= 1e-3:
+        status = "closed"
+    else:
+        status = "open"
+
+    return {
+        "status": status,
+        "feed_streams": feed_streams,
+        "product_streams": product_streams,
+        "input_mass_flow": input_mass_flow,
+        "output_mass_flow": output_mass_flow,
+        "mass_difference": mass_difference,
+        "relative_difference": relative_difference,
+        "missing_feed_streams": missing_feed_streams,
+        "missing_product_streams": missing_product_streams,
+    }
 
 
 def _evaluate_purity(streams_df: pd.DataFrame, expression: str) -> Optional[float]:
@@ -345,10 +757,7 @@ def calculate_energy_balance(
         block_specs = [(name, None) for name in _get_element_names(aspen, r"\Data\Blocks")]
 
     block_rows = [_extract_block_row(aspen, name, block_type) for name, block_type in block_specs]
-    blocks_df = pd.DataFrame(
-        block_rows,
-        columns=["block_name", "block_type", "duty", "duty_kw", "duty_mw", "net_work_kw", "conversion", "efficiency"],
-    )
+    blocks_df = pd.DataFrame(block_rows, columns=_blocks_columns())
     return _energy_balance_from_blocks(blocks_df, energy_balance_view=energy_balance_view)
 
 
@@ -379,22 +788,37 @@ def _energy_balance_from_blocks(
 
 
 def _energy_balance_legacy_from_blocks(blocks_df: pd.DataFrame) -> pd.DataFrame:
-    columns = ["block_name", "duty", "duty_kw", "duty_mw"]
+    columns = ["block_name", "duty", "duty_kw", "duty_mw", "duty_raw", "duty_raw_unit", "duty_source"]
     if blocks_df.empty:
         return pd.DataFrame(
-            [{"block_name": "TOTAL", "duty": 0.0, "duty_kw": 0.0, "duty_mw": 0.0}],
+            [
+                {
+                    "block_name": "TOTAL",
+                    "duty": 0.0,
+                    "duty_kw": 0.0,
+                    "duty_mw": 0.0,
+                    "duty_raw": 0.0,
+                    "duty_raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT,
+                    "duty_source": "sum",
+                }
+            ],
             columns=columns,
         )
 
     legacy_df = blocks_df.reindex(columns=columns).copy()
     duty_kw = _numeric_series(legacy_df, "duty_kw").dropna()
+    duty_raw = _numeric_series(legacy_df, "duty_raw").dropna()
     total_duty_kw = float(duty_kw.sum()) if not duty_kw.empty else 0.0
+    total_duty_raw = float(duty_raw.sum()) if not duty_raw.empty else 0.0
 
     total_row = {
         "block_name": "TOTAL",
         "duty": total_duty_kw,
         "duty_kw": total_duty_kw,
         "duty_mw": total_duty_kw / 1000.0,
+        "duty_raw": total_duty_raw,
+        "duty_raw_unit": ASPEN_ENERGY_RATE_RAW_UNIT if not duty_raw.empty else None,
+        "duty_source": "sum",
     }
     return pd.concat([legacy_df, pd.DataFrame([total_row], columns=columns)], ignore_index=True)
 
@@ -782,8 +1206,8 @@ def calculate_kpis(
     methanol_mass_flow = _component_mass_flow_from_row(streams_df, product_row, METHANOL_COMPONENT_ID)
     methanol_tpd = methanol_mass_flow * 24.0 / 1000.0 if methanol_mass_flow is not None else None
 
-    duty_kw = _numeric_series(blocks_df, "duty_kw").dropna()
-    energy_consumption_mw = float(duty_kw.abs().sum() / 1000.0) if not duty_kw.empty else 0.0
+    duty_mw = _numeric_series(blocks_df, "duty_mw").dropna()
+    energy_consumption_mw = float(duty_mw.abs().sum()) if not duty_mw.empty else 0.0
     synthesis_loop = calculate_synthesis_loop_diagnostics(spec_dict, streams_df)
 
     return {
@@ -795,6 +1219,7 @@ def calculate_kpis(
         "methanol_tpd": methanol_tpd,
         "purity_fraction": purity_fraction,
         "energy_consumption_mw": energy_consumption_mw,
+        "energy_unit_basis": _energy_unit_basis(),
         "yield_fraction": yield_fraction,
         "convergence_status": diagnostics.get("convergence_status", "unknown"),
         "synthesis_loop": synthesis_loop,
@@ -820,16 +1245,18 @@ def extract_results(
 
         stream_rows = [_extract_stream_row(aspen, stream_name, component_ids) for stream_name in stream_names]
         streams_df = pd.DataFrame(stream_rows, columns=_streams_columns(component_ids))
+        streams_df, stream_extraction = _infer_missing_separator_streams(streams_df, spec_dict, component_ids)
+        terminal_mass_closure = _terminal_mass_closure_diagnostics(streams_df, spec_dict)
 
         block_rows = [_extract_block_row(aspen, name, block_type) for name, block_type in block_specs]
-        blocks_df = pd.DataFrame(
-            block_rows,
-            columns=["block_name", "block_type", "duty", "duty_kw", "duty_mw", "net_work_kw", "conversion", "efficiency"],
-        )
+        blocks_df = pd.DataFrame(block_rows, columns=_blocks_columns())
 
         material_balance = calculate_material_balance(aspen, spec_dict)
         energy_balance = _energy_balance_from_blocks(blocks_df, energy_balance_view=energy_balance_view)
         diagnostics = extract_diagnostics(aspen, spec_dict=spec_dict)
+        diagnostics["stream_extraction"] = stream_extraction
+        diagnostics["terminal_mass_closure"] = terminal_mass_closure
+        diagnostics["energy_unit_basis"] = _energy_unit_basis()
         kpis = calculate_kpis(aspen, spec_dict, streams_df, blocks_df)
 
         metadata = {
@@ -837,6 +1264,9 @@ def extract_results(
             "stream_count": int(len(streams_df)),
             "block_count": int(len(blocks_df)),
             "component_count": int(len(component_ids)),
+            "energy_unit_basis": _energy_unit_basis(),
+            "stream_extraction": stream_extraction,
+            "terminal_mass_closure": terminal_mass_closure,
         }
 
         return {

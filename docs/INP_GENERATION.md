@@ -65,14 +65,23 @@ IN-UNITS MET PRESSURE=BAR TEMPERATURE=C MASS-FLOW='KG/HR' MOLE-FLOW='KG/HR'
 ### DATABANKS and PROP-SOURCES
 - Each databank is single-quoted.
 - Continuation lines use `&`.
+- Databanks listed in `properties.binary_parameters[*].databanks` are merged into
+  the same `DATABANKS`/`PROP-SOURCES` flow. For the methanol NRTL screening case,
+  `APV140 VLE-IG`, `APV140 VLE-LIT`, and `APV140 LLE-ASPEN` are used as the
+  verified Aspen V14 source path for the CH3OH/H2O binary interaction parameters.
+- The generator does not emit unverified numeric NRTL interaction parameters.
+  Explicit values should only be added after their Aspen V14 batch syntax and
+  units are source-verified.
 
 Example:
 ```inp
 DATABANKS 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
-        'APV140 INORGANIC'
+        'APV140 INORGANIC' / 'APV140 VLE-IG' / 'APV140 VLE-LIT' / &
+        'APV140 LLE-ASPEN' / 'NOASPENPCD'
 
 PROP-SOURCES 'APV140 PURE32' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' / &
-        'APV140 INORGANIC'
+        'APV140 INORGANIC' / 'APV140 VLE-IG' / 'APV140 VLE-LIT' / &
+        'APV140 LLE-ASPEN'
 ```
 
 ### COMPONENTS
@@ -137,6 +146,34 @@ BLOCK SPLIT FSPLIT
 BLOCK B-DIST SEP
     PARAM
     FRAC STRM=MEOH-PRO SUBSTRM=MIXED COMP=CH3OH FRAC=0.99
+```
+
+**VALVE** is emitted for pressure letdown with an explicit outlet pressure:
+```inp
+BLOCK B-DP VALVE
+    PARAM P-OUT=1.8
+```
+
+For the canonical methanol process, the pressure letdown is followed by a
+low-pressure `FLASH2` stabilizer (`B-DEGAS`) before the final methanol/water
+column. This removes dissolved light gases with ordinary block syntax:
+```inp
+BLOCK B-DEGAS FLASH2
+    PARAM TEMP=80.0 PRES=0.0
+```
+
+**RADFRAC** is supported only when the YAML block has a complete `radfrac`
+payload and the flowsheet has exactly one feed and two material products. The
+current Aspen V14 batch form is:
+```inp
+BLOCK B-DIST RADFRAC
+    PARAM NSTAGE=30 ALGORITHM=STANDARD MAXOL=50 DAMPING=NONE
+    COL-CONFIG CONDENSER=TOTAL
+    FEEDS CRUDE-LQ 16
+    PRODUCTS MEOH-PRO 1 L / WASTE-H2O 30 L
+    P-SPEC 1 1.5
+    COL-SPECS DP-COL=0.58 MASS-B=68000.0 MASS-RR=2.0
+    TRAY-REPORT TRAY-OPTION=ALL-TRAYS
 ```
 
 ### CHEMISTRY

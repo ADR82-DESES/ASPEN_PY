@@ -68,7 +68,9 @@ def test_history_diagnostics_are_clean_requires_converged_status() -> None:
 
 def test_aspen_batch_result_rejects_bkp_when_history_has_translation_errors(tmp_path: Path) -> None:
     bkp_path = tmp_path / "case.bkp"
+    history_path = tmp_path / "case.his"
     bkp_path.write_text("backup", encoding="utf-8")
+    history_path.write_text("input translation failed", encoding="utf-8")
     result = AspenBatchResult(
         engine_path="aspen.exe",
         command=["aspen.exe", "case", "case"],
@@ -80,7 +82,10 @@ def test_aspen_batch_result_rejects_bkp_when_history_has_translation_errors(tmp_
         elapsed_seconds=1.0,
         stdout_path=str(tmp_path / "case.stdout.txt"),
         stderr_path=str(tmp_path / "case.stderr.txt"),
-        artifacts={".bkp": {"path": str(bkp_path), "exists": True}},
+        artifacts={
+            ".bkp": {"path": str(bkp_path), "exists": True},
+            ".his": {"path": str(history_path), "exists": True},
+        },
         history_diagnostics={
             "status": "failed",
             "input_translation_failed": True,
@@ -90,6 +95,8 @@ def test_aspen_batch_result_rejects_bkp_when_history_has_translation_errors(tmp_
     )
 
     assert result.archive_path == str(bkp_path)
+    assert result.history_path == str(history_path)
+    assert result.to_diagnostics()["history_path"] == str(history_path)
     assert result.succeeded is False
 
 

@@ -45,6 +45,7 @@ from .process_results_analysis import (
     load_result_artifact_tables,
     resolve_result_artifact_paths,
 )
+from .process_intake import ProcessIntakeArtifacts, build_process_intake_artifacts
 from .process_library import (
     BkpExtractionResult,
     ProcessDefinition,
@@ -117,6 +118,8 @@ __all__ = [
     "build_codex_results_markdown",
     "load_result_artifact_tables",
     "resolve_result_artifact_paths",
+    "ProcessIntakeArtifacts",
+    "build_process_intake_artifacts",
     "BkpExtractionResult",
     "ProcessDefinition",
     "ProcessIssue",

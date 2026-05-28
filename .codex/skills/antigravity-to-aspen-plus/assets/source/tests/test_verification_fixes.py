@@ -5,7 +5,7 @@ import os
 
 def test_methanol_plant_validation():
     """Regression test: Ensure MethanolPlant.inp passes validation."""
-    inp_path = os.path.join("Methanol Plant", "MethanolPlant.inp")
+    inp_path = os.path.join("archive", "aspen_artifacts", "Methanol Plant", "MethanolPlant.inp")
     if not os.path.exists(inp_path):
         pytest.skip(f"MethanolPlant.inp not found at {inp_path}")
 

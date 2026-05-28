@@ -9,6 +9,7 @@ from .schema import (
     Block,
     Component,
     Chemistry,
+    FlowsheetConnection,
     Properties,
     Reaction,
     ReactionParameters,
@@ -94,13 +95,7 @@ ALL_SECTION_ORDER = [
     "REACTIONS",
 ]
 
-UNSUPPORTED_BLOCK_TYPE_ERRORS = {
-    "RADFRAC": (
-        "Block type 'RADFRAC' is not currently supported by generate_inp.",
-        "Use a supported separator such as SEP/FLASH2 for buildable-first runs, "
-        "or implement a dedicated RADFRAC INP emitter before using this block type.",
-    ),
-}
+UNSUPPORTED_BLOCK_TYPE_ERRORS: Dict[str, Tuple[str, str]] = {}
 
 
 def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: Optional[str] = None) -> str:
@@ -158,8 +153,16 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
         reaction_set.id: reaction_set
         for reaction_set in (spec_obj.reaction_sets or [])
     }
+    flowsheet_by_block = {conn.block.upper(): conn for conn in spec_obj.flowsheet}
     for block in spec_obj.blocks:
-        sections.append(_generate_block(block, reaction_set_lookup, reaction_lookup))
+        sections.append(
+            _generate_block(
+                block,
+                reaction_set_lookup,
+                reaction_lookup,
+                flowsheet_by_block.get(block.name.upper()),
+            )
+        )
 
     # 10. CHEMISTRY (Optional)
     #
@@ -217,6 +220,24 @@ def _validate_generator_compatibility(spec_obj: PlantSpecification) -> None:
                 "location": f"blocks[{index}].type",
                 "message": message,
                 "suggestion": suggestion,
+            }
+        )
+
+    for index, entry in enumerate(spec_obj.properties.binary_parameters or []):
+        if entry.source_type != "explicit":
+            continue
+        errors.append(
+            {
+                "severity": "error",
+                "location": f"properties.binary_parameters[{index}].source_type",
+                "message": (
+                    "Explicit numeric NRTL binary-parameter INP emission is not yet enabled because "
+                    "the direct Aspen V14 property-parameter syntax has not been verified in this generator."
+                ),
+                "suggestion": (
+                    "Use source_type 'aspen_databank' with verified Aspen property databanks, or add a "
+                    "dedicated tested emitter for explicit NRTL parameters before using source_type 'explicit'."
+                ),
             }
         )
 
@@ -333,10 +354,14 @@ def _format_continuation_section(header: str, items: List[str], items_per_line: 
 
 def _generate_databanks(props: Properties) -> List[str]:
     # Default databanks for Aspen V14 if not specified
-    db_list = props.databanks if props.databanks else [
+    db_list = list(props.databanks or [
         'APV140 PURE32', 'APV140 AQUEOUS', 'APV140 SOLIDS',
         'APV140 INORGANIC'
-    ]
+    ])
+
+    for db in _binary_parameter_databanks(props):
+        if not any(existing.strip().upper() == db.strip().upper() for existing in db_list):
+            db_list.append(db)
 
     # Ensure NOASPENPCD is at the end if not present
     if not any("NOASPENPCD" in db.upper() for db in db_list):
@@ -351,6 +376,18 @@ def _generate_databanks(props: Properties) -> List[str]:
     prop_lines = _format_continuation_section("PROP-SOURCES", prop_sources)
 
     return ["\n".join(databank_lines), "\n".join(prop_lines)]
+
+
+def _binary_parameter_databanks(props: Properties) -> List[str]:
+    databanks: List[str] = []
+    for entry in props.binary_parameters or []:
+        if entry.source_type != "aspen_databank":
+            continue
+        for databank in entry.databanks or []:
+            cleaned = databank.strip()
+            if cleaned and not any(existing.upper() == cleaned.upper() for existing in databanks):
+                databanks.append(cleaned)
+    return databanks
 
 
 def _generate_flowsheeting_options(options: Optional[Any]) -> str:
@@ -472,10 +509,15 @@ def _generate_block(
     block: Block,
     reaction_sets: Optional[Dict[str, ReactionSet]] = None,
     reaction_lookup: Optional[Dict[int, Reaction]] = None,
+    flowsheet_connection: Optional[FlowsheetConnection] = None,
 ) -> str:
     block_type = block.type.upper()
 
     lines = [f"BLOCK {block.name} {block_type}"]
+
+    if block_type == "VALVE":
+        lines.extend(_generate_valve_block(block))
+        return "\n".join(lines)
 
     if block_type == "FSPLIT":
         lines.extend(_generate_fsplit_block(block))
@@ -487,6 +529,10 @@ def _generate_block(
 
     if block_type == "RPLUG":
         lines.extend(_generate_rplug_block(block))
+        return "\n".join(lines)
+
+    if block_type == "RADFRAC":
+        lines.extend(_generate_radfrac_block(block, flowsheet_connection))
         return "\n".join(lines)
 
     if block.parameters:
@@ -527,6 +573,69 @@ def _generate_block(
         lines.append(f"    REACTIONS {block.reactions}")
 
     return "\n".join(lines)
+
+
+def _generate_valve_block(block: Block) -> List[str]:
+    parameters = {str(k).upper(): v for k, v in (block.parameters or {}).items()}
+    return _generate_param_lines({"P-OUT": parameters["P-OUT"]})
+
+
+def _generate_radfrac_block(
+    block: Block,
+    flowsheet_connection: Optional[FlowsheetConnection],
+) -> List[str]:
+    if block.radfrac is None:
+        raise ValueError(f"RADFRAC block '{block.name}' requires radfrac settings")
+    if flowsheet_connection is None:
+        raise ValueError(f"RADFRAC block '{block.name}' requires a flowsheet connection")
+    if len(flowsheet_connection.inputs) != 1 or len(flowsheet_connection.outputs) not in {2, 3}:
+        raise ValueError(
+            f"RADFRAC block '{block.name}' requires one feed and two or three product streams"
+        )
+
+    radfrac = block.radfrac
+    feed_stream = flowsheet_connection.inputs[0]
+    if len(flowsheet_connection.outputs) == 3:
+        vapor_vent_stream, distillate_stream, bottoms_stream = flowsheet_connection.outputs
+        product_line = (
+            f"    PRODUCTS {vapor_vent_stream} 1 V / "
+            f"{distillate_stream} 1 L / {bottoms_stream} {radfrac.n_stages} L"
+        )
+    else:
+        distillate_stream, bottoms_stream = flowsheet_connection.outputs
+        product_line = f"    PRODUCTS {distillate_stream} 1 L / {bottoms_stream} {radfrac.n_stages} L"
+    total_pressure_drop = radfrac.pressure_drop_per_stage * (radfrac.n_stages - 1)
+
+    lines = [
+        "    PARAM "
+        f"NSTAGE={radfrac.n_stages} "
+        "ALGORITHM=STANDARD "
+        f"MAXOL={radfrac.max_outer_iterations} "
+        "DAMPING=NONE",
+        f"    COL-CONFIG CONDENSER={radfrac.condenser}",
+        f"    FEEDS {feed_stream} {radfrac.feed_stage}",
+        product_line,
+        f"    P-SPEC 1 {_format_value(radfrac.top_pressure)}",
+    ]
+
+    col_specs: Dict[str, Any] = {"DP-COL": total_pressure_drop}
+    basis_prefix = "MASS" if radfrac.rate_basis == "MASS" else "MOLE"
+    if radfrac.bottoms_rate is not None:
+        col_specs[f"{basis_prefix}-B"] = radfrac.bottoms_rate
+    elif radfrac.distillate_rate is not None:
+        col_specs[f"{basis_prefix}-D"] = radfrac.distillate_rate
+    col_specs[f"{basis_prefix}-RR"] = radfrac.reflux_ratio
+
+    lines.append(
+        "    COL-SPECS "
+        + " ".join(f"{key}={_format_value(value)}" for key, value in col_specs.items())
+    )
+    lines.append("    TRAY-REPORT TRAY-OPTION=ALL-TRAYS")
+
+    if block.reactions:
+        lines.append(f"    REACTIONS {block.reactions}")
+
+    return lines
 
 
 def _generate_rplug_block(block: Block) -> List[str]:

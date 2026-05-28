@@ -8,19 +8,21 @@ The supported workflow is:
 process.yaml -> generate_inp -> Aspen batch .his/.bkp gate -> InitFromArchive2 -> CSV/JSON extraction -> notebook diagnostics
 ```
 
-The main user surface is `notebooks/process_library_runner.ipynb`.
+The main user surface is the process-agnostic `notebooks/process_library_runner.ipynb`.
+The methanol case is a separate worked example at `notebooks/methanol_example_runner.ipynb`.
 
 ## Quick Start
 
 1. Launch Aspen Plus from AppsAnywhere/Porticada or your local Aspen installation.
-2. Create the project environment:
+2. Confirm the supported Pixi environment manager is available, then create the project environment:
 
 ```powershell
+pixi --version
 pixi install
 pixi run install-kernel
 ```
 
-3. Open the notebook:
+3. Open the generic process notebook:
 
 ```powershell
 pixi run process-library-notebook
@@ -28,14 +30,22 @@ pixi run process-library-notebook
 
 4. Restart the notebook kernel and run cells top-to-bottom.
 
-The canonical 10k TPD methanol screening case lives at `process_library/methanol/process.yaml`.
+For a new process, fill the process-intake cell to write `source_manifest.json`, `process_research_brief.md`, and `codex_process_yaml_prompt.md`; then use Codex to create or revise `process_library/<process_name>/process.yaml`.
+
+For the worked methanol example and tuning campaign:
+
+```powershell
+pixi run methanol-example-notebook
+```
+
+The canonical 10k TPD methanol screening case lives at `process_library/methanol/process.yaml`, but it is an example/regression fixture rather than the default assumption for every process.
 
 ## Repository Layout
 
 ```text
 aspen_automation/       Supported Python package
 process_library/        Canonical process specs
-notebooks/              Notebook-first live workflow
+notebooks/              Generic live workflow plus methanol example notebook
 tests/                  Unit, contract, and integration tests
 docs/                   Maintained documentation
 templates/              Legacy-compatible YAML/INP templates
@@ -45,15 +55,23 @@ archive/                Preserved legacy probes, artifacts, and historical docs
 .codex/                 Codex skills and portable Aspen workflow bundle
 ```
 
-Root `main.py`, `run_methanol_plant.py`, and `run_minimal.py` are compatibility wrappers. They point to the archived legacy scripts and the supported notebook workflow; they do not launch live Aspen runs by surprise.
+Root `main.py`, `run_methanol_plant.py`, and `run_minimal.py` are compatibility wrappers. They point to the archived legacy scripts and the supported generic notebook workflow; they do not launch live Aspen runs by surprise.
 
 ## Validation
 
 Run the supported non-integration suite:
 
 ```powershell
-pixi run pytest tests -q --ignore=tests/integration --basetemp=.codex_pytest_tmp_aspen_all
+pixi run test
 ```
+
+For a focused validation/orchestration check:
+
+```powershell
+pixi run test-focused
+```
+
+Direct `python -m pytest ...` runs are useful only as emergency diagnostics when Pixi is unavailable; the supported project path is the Python 3.12 Pixi workspace in `pixi.toml`.
 
 Live Aspen validation is split into:
 

@@ -29,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 METHANOL_TEMPLATE_PATH = ROOT / "templates" / "methanol_plant_atr.yaml"
 PROCESS_LIBRARY_ROOT = ROOT / "process_library"
 NOTEBOOK_PATH = ROOT / "notebooks" / "process_library_runner.ipynb"
+METHANOL_NOTEBOOK_PATH = ROOT / "notebooks" / "methanol_example_runner.ipynb"
 
 
 def _make_test_workspace(prefix: str) -> Path:
@@ -603,7 +604,11 @@ def test_process_library_notebook_has_required_sections() -> None:
     joined_sources = "\n".join("".join(cell.get("source", [])) for cell in cells)
 
     assert "Environment setup and imports" in joined_sources
-    assert "Repository path resolution" in joined_sources
+    assert "Process evidence intake for Codex-authored YAML" in joined_sources
+    assert "build_process_intake_artifacts" in joined_sources
+    assert "source_manifest.json" in joined_sources
+    assert "process_research_brief.md" in joined_sources
+    assert "codex_process_yaml_prompt.md" in joined_sources
     assert "Process library path configuration" in joined_sources
     assert "YAML schema / expected fields overview" in joined_sources
     assert "Discovery of all available process folders" in joined_sources
@@ -611,11 +616,9 @@ def test_process_library_notebook_has_required_sections() -> None:
     assert "YAML coherence analysis per discovered process" in joined_sources
     assert "Suggested YAML improvements per discovered process" in joined_sources
     assert "Gate 1: Aspen batch translator" in joined_sources
-    assert "Gate 2: Kinetic BKP load, COM extraction, and reports" in joined_sources
+    assert "Gate 2: BKP COM load, extraction, and reports" in joined_sources
     assert "Gate 2 diagnostics and evidence bundle" in joined_sources
     assert "Codex session analysis per discovered process" in joined_sources
-    assert "Kinetic remediation and tuning worksheet" in joined_sources
-    assert "Live methanol production tuning campaign" in joined_sources
     assert "Output summary and validation" in joined_sources
     assert "analyze_process_spec_coherence" in joined_sources
     assert "apply_process_spec_improvements" in joined_sources
@@ -625,13 +628,10 @@ def test_process_library_notebook_has_required_sections() -> None:
     assert "build_codex_improvement_markdown" in joined_sources
     assert "build_codex_results_markdown" in joined_sources
     assert "load_result_artifact_tables" in joined_sources
-    assert "B-SYN selectivity diagnostics" in joined_sources
-    assert "recycle composition diagnostics" in joined_sources
-    assert "PURGE_SWEEP_FRACTIONS" in joined_sources
-    assert "ATR_TUNING_FACTORS" in joined_sources
-    assert "run_methanol_tuning_campaign" in joined_sources
-    assert "tuning_campaign_summary.csv" in joined_sources
-    assert "best_process.yaml" in joined_sources
+    assert "B-SYN selectivity diagnostics" not in joined_sources
+    assert "PURGE_SWEEP_FRACTIONS" not in joined_sources
+    assert "run_methanol_tuning_campaign" not in joined_sources
+    assert "MEOH-PRO" not in joined_sources
     assert "run_aspen_batch(" in joined_sources
     assert "run_process_batch_first(" in joined_sources
     assert joined_sources.index("run_aspen_batch(") < joined_sources.index("run_process_batch_first(")
@@ -641,5 +641,21 @@ def test_process_library_notebook_has_required_sections() -> None:
     assert "simulation_diagnostics.json" in joined_sources
     assert "live_aspen_summary.json" in joined_sources
     assert "ENFORCE_ACCEPTANCE_TARGETS = False" in joined_sources
-    assert "input(" in joined_sources
     assert "process_library" in joined_sources
+
+
+def test_methanol_example_notebook_keeps_tuning_sections() -> None:
+    notebook = json.loads(METHANOL_NOTEBOOK_PATH.read_text(encoding="utf-8"))
+    joined_sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
+
+    assert "Methanol Example Runner: Kinetic Batch-First Aspen Workflow" in joined_sources
+    assert 'ONLY_PROCESSES: set[str] | None = {"methanol"}' in joined_sources
+    assert "Kinetic remediation and tuning worksheet" in joined_sources
+    assert "Live methanol production tuning campaign" in joined_sources
+    assert "B-SYN selectivity diagnostics" in joined_sources
+    assert "recycle composition diagnostics" in joined_sources
+    assert "PURGE_SWEEP_FRACTIONS" in joined_sources
+    assert "ATR_TUNING_FACTORS" in joined_sources
+    assert "run_methanol_tuning_campaign" in joined_sources
+    assert "tuning_campaign_summary.csv" in joined_sources
+    assert "best_process.yaml" in joined_sources

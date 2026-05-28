@@ -452,7 +452,8 @@ def test_com_auto_inp_failure_preserves_empty_tree_and_initfromfile_diagnostics(
             run_simulation_session(spec, build_mode="com-auto", output_dir=output_dir)
 
     diagnostics = exc_info.value.diagnostics
-    assert "legacy Aspen INP import path" in diagnostics["legacy_inp_import_warning"]
+    assert "deprecated diagnostic path" in diagnostics["legacy_inp_import_warning"]
+    assert diagnostics["deprecated_build_mode"] == "com-auto"
     assert diagnostics["InitFromFile2_error"] == "Unable to open file"
     assert diagnostics["aspen_preflight"]["v14_verified"] is True
     assert diagnostics["generated_inp_path"].endswith("temp_simulation.inp")

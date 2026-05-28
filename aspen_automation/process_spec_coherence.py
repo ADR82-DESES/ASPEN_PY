@@ -11,6 +11,7 @@ import yaml
 
 from .serialization import spec_to_plain_dict
 from .schema import PlantSpecification
+from .property_diagnostics import assess_nrtl_binary_parameters
 
 
 PURITY_EXPRESSION_RE = re.compile(
@@ -92,6 +93,28 @@ def _find_final_block_for_stream(spec: PlantSpecification, stream_name: str) -> 
             if block is not None:
                 return index, block
     return None
+
+
+def _has_direct_upstream_rigorous_separator(spec: PlantSpecification, stream_name: str) -> bool:
+    """Return True when a product-polishing block is fed directly by a rigorous separator."""
+    final_block = _find_final_block_for_stream(spec, stream_name)
+    if final_block is None:
+        return False
+
+    final_index, _ = final_block
+    final_connection = spec.flowsheet[final_index]
+    output_to_block = {
+        output.upper(): block
+        for connection in spec.flowsheet
+        for block in spec.blocks
+        if block.name == connection.block
+        for output in connection.outputs
+    }
+    for input_stream in final_connection.inputs:
+        upstream_block = output_to_block.get(input_stream.upper())
+        if upstream_block is not None and upstream_block.type.upper() in RIGOROUS_SEPARATION_TYPES:
+            return True
+    return False
 
 
 def _has_issue(
@@ -191,7 +214,12 @@ def analyze_process_spec_coherence(spec: PlantSpecification | dict[str, Any]) ->
         block_info = output_to_block.get(target_stream)
         if block_info is not None:
             _, final_block_type = block_info
-            if target_min >= 0.99 and final_block_type in SIMPLE_HIGH_PURITY_SEPARATION_TYPES:
+            has_upstream_rigorous_separator = _has_direct_upstream_rigorous_separator(spec_obj, target_stream)
+            if (
+                target_min >= 0.99
+                and final_block_type in SIMPLE_HIGH_PURITY_SEPARATION_TYPES
+                and not has_upstream_rigorous_separator
+            ):
                 issues.append(
                     _make_issue(
                         "warning",
@@ -224,6 +252,33 @@ def analyze_process_spec_coherence(spec: PlantSpecification | dict[str, Any]) ->
                     "Use an activity-coefficient method such as NRTL or UNIQUAC for the purification section.",
                 )
             )
+
+        if (
+            target_min >= 0.99
+            and {"CH3OH", "H2O"}.issubset(component_ids)
+            and method == "NRTL"
+        ):
+            nrtl_status = assess_nrtl_binary_parameters(spec_obj)
+            if nrtl_status.get("status") == "missing":
+                missing_pairs = [
+                    "-".join(pair)
+                    for pair in nrtl_status.get("missing_pairs", [])
+                    if isinstance(pair, list)
+                ]
+                issues.append(
+                    _make_issue(
+                        "warning",
+                        "properties.binary_parameters",
+                        (
+                            "NRTL is selected for high-purity methanol/water service, but required "
+                            f"binary-parameter provenance is missing for {', '.join(missing_pairs) or 'CH3OH-H2O'}."
+                        ),
+                        (
+                            "Add source-tagged NRTL binary_parameters for the methanol-water pair, "
+                            "using verified Aspen databanks or explicit literature parameters."
+                        ),
+                    )
+                )
 
     for index, block in enumerate(spec_obj.blocks):
         block_type = block.type.upper()
@@ -286,6 +341,27 @@ def suggest_process_spec_improvements(
                 }
             )
 
+        if _has_issue(report, severity="warning", location="properties.binary_parameters"):
+            suggestions.append(
+                {
+                    "id": "add_nrtl_methanol_water_binary_parameter_source",
+                    "title": "Add NRTL methanol-water parameter source",
+                    "auto_applicable": False,
+                    "reason": (
+                        "NRTL is selected for a high-purity methanol/water target, but the YAML does not "
+                        "document a verified binary-parameter source for the required pair."
+                    ),
+                    "expected_effect": (
+                        "Allows the batch diagnostics to distinguish source-backed NRTL behavior from "
+                        "Aspen's zero-parameter fallback."
+                    ),
+                    "changes": [
+                        "Add `properties.binary_parameters` for components `[CH3OH, H2O]`.",
+                        "Use source-tagged Aspen V14 VLE/LLE property databanks or explicit verified values.",
+                    ],
+                }
+            )
+
         final_block_info = _find_final_block_for_stream(spec_obj, target_stream)
         if (
             target_min >= 0.99
@@ -303,13 +379,13 @@ def suggest_process_spec_improvements(
                         f"`{final_block.type}`, which is a coarse screening model for the high-purity target."
                     ),
                     "expected_effect": (
-                        "Would improve purification rigor after the generator supports column stages, feeds, "
-                        "condenser/reboiler settings, and product specifications."
+                        "Would improve purification rigor by replacing the coarse SEP with a supported "
+                        "RADFRAC column and explicit pressure profile."
                     ),
                     "changes": [
                         (
-                            f"Do not auto-change `blocks[{final_block.name}].type` to `RADFRAC` until "
-                            "generate_inp has a dedicated RADFRAC emitter."
+                            f"Add a complete `blocks[{final_block.name}].radfrac` payload before changing "
+                            f"`blocks[{final_block.name}].type` to `RADFRAC`."
                         )
                     ],
                 }

@@ -1,45 +1,60 @@
 # Process Library Notebook Workflow
 
-This repository now supports a notebook-driven process library built on top of the existing Aspen automation pipeline.
+This repository has two notebook surfaces:
+
+- `notebooks/process_library_runner.ipynb`: process-agnostic intake, YAML validation, Gate 1 batch translation, Gate 2 BKP COM load/extraction, diagnostics, and CSV analysis.
+- `notebooks/methanol_example_runner.ipynb`: methanol-only example, kinetic diagnostics, remediation, tuning campaign, and 10k TPD screening lessons.
 
 ## Folder Structure
 
 ```text
 process_library/
-  methanol/
+  <process_name>/
     process.yaml
     assets/
+      source_manifest.json
+      process_research_brief.md
+      codex_process_yaml_prompt.md
 
 process_runs/
-  <process_name>/
-    run_<timestamp>/
-      <process_name>_generated.inp
-      <process_name>_output.apw
-      results/
-      reports/
-      session/
+  batch_first_capsule/
+    <process_name>/
+      run_<timestamp>/
+        results/
+        reports/
+        session/
 
 notebooks/
   process_library_runner.ipynb
+  methanol_example_runner.ipynb
 ```
 
-- `process_library/` is the source-of-truth library for process definitions.
+- `process_library/` is the source of truth for process definitions.
 - Each direct subfolder under `process_library/` is one process.
 - Each process folder should contain a canonical `process.yaml`.
 - `process_runs/` is generated output and is ignored by git.
 
-## How To Add A New Chemical Process
+## Generic Process Workflow
 
-1. Create a new folder under `process_library/`, for example `process_library/ammonia/`.
-2. Add `process.yaml` in that folder.
-3. Optionally add supporting files under `assets/` if the process needs local references.
-4. Run `notebooks/process_library_runner.ipynb`.
+Use `process_library_runner.ipynb` for any user-defined chemical process:
 
-The notebook discovers process folders automatically, validates the YAML, runs a pre-run coherence review, and only executes processes whose specifications pass that gate.
+0. In PowerShell, confirm Pixi is available and install the workspace:
+
+```powershell
+pixi --version
+pixi install
+```
+
+1. Fill `PROCESS_NAME`, `USER_PROCESS_BRIEF`, `SOURCE_PDFS`, `SOURCE_URLS`, `WEB_SEARCH_QUERIES`, and `REFERENCE_NOTES`.
+2. Set `WRITE_PROCESS_INTAKE_ARTIFACTS=True` to write the Codex handoff files under `process_library/<process_name>/assets/`.
+3. Ask Codex to use `codex_process_yaml_prompt.md` plus the source artifacts to create or revise `process_library/<process_name>/process.yaml`.
+4. Re-run the notebook to discover the process, validate YAML, run coherence review, and execute Gate 1/Gate 2 when Aspen is available.
+
+The notebook records web-search queries and source URLs, but does not perform hidden web browsing or call an LLM from the kernel.
 
 ## YAML Format
 
-`process.yaml` should use the same plant specification schema already used by the existing methanol template. The required top-level sections are:
+`process.yaml` uses the existing plant specification schema. Required top-level sections:
 
 - `metadata`
 - `components`
@@ -48,73 +63,43 @@ The notebook discovers process folders automatically, validates the YAML, runs a
 - `streams`
 - `blocks`
 
-Optional sections already supported by the current generator can also be used:
+Optional supported sections:
 
 - `flowsheeting_options`
 - `chemistry`
 - `reaction_sets`
+- `kinetic_models`
+- `process_defaults`
 - `targets`
 
-The sample file `process_library/methanol/process.yaml` is the reference starting point for new processes.
+The methanol file at `process_library/methanol/process.yaml` is the reference example and regression fixture. Do not copy methanol-specific equipment, reactions, or KPI assumptions into unrelated processes by default.
 
-## How The Notebook Runs
+## Batch-First Gates
 
-The notebook:
+The generic notebook:
 
-1. Resolves the repository root.
-2. Points to `process_library/` as the process source.
-3. Scans all direct process folders.
-4. Validates each YAML file using the existing spec validator.
-5. Runs a per-process Codex-style coherence review against the YAML to catch semantic issues before execution.
-6. When coherence fails, proposes concrete YAML improvements, asks whether they should be applied to the original `process.yaml`, writes a timestamped backup, and reruns validation/coherence.
-7. Reuses the current Aspen workflow only for processes that pass coherence:
-   - generate an INP file,
-   - run the session,
-   - save an APW output,
-   - extract results,
-   - write CSV/JSON summaries,
-   - generate reports.
-8. Writes each process run into `process_runs/<process_name>/run_<timestamp>/`.
-9. Adds a per-process post-run Codex analysis section that reads `streams.csv`, `blocks.csv`, `material_balance.csv`, and `energy_balance.csv` directly from the generated run artifacts.
+1. Runs Aspen pre-flight checks.
+2. Discovers process folders.
+3. Validates each `process.yaml`.
+4. Runs schema/coherence review.
+5. Generates INP and runs Gate 1 batch translation.
+6. Treats `.his` status as the source of truth; `.bkp` existence alone is not success.
+7. Runs Gate 2 BKP COM load/extraction with `run_process_batch_first`.
+8. Writes `context_probe.json`, diagnostics, result CSVs, reports, and `live_aspen_summary.json`.
+9. Builds process-agnostic Codex analysis from result CSV artifacts.
 
-Errors in one process are reported in the notebook summary and do not stop later processes from being discovered or attempted.
+## Methanol Example
 
-## Pixi Environment
+Use `methanol_example_runner.ipynb` only for the bundled methanol case. It keeps the kinetic remediation, synthesis-loop diagnostics, purge/ATR tuning worksheet, and live tuning campaign separate from the generic user workflow.
 
-This repo now includes [pixi.toml](../pixi.toml) so the notebook can run in a reproducible Windows environment that matches the Aspen workflow dependencies.
+Open it with:
 
-Create the environment:
-
-```bash
-pixi install
+```powershell
+pixi run methanol-example-notebook
 ```
 
-Launch JupyterLab:
+Run the normal non-integration test suite with:
 
-```bash
-pixi run lab
+```powershell
+pixi run test
 ```
-
-Open the process library notebook directly:
-
-```bash
-pixi run process-library-notebook
-```
-
-If you want the kernel to appear explicitly in Jupyter, install it once:
-
-```bash
-pixi run install-kernel
-```
-
-If you open the notebook in VS Code instead of JupyterLab:
-
-1. Use `Python: Select Interpreter`.
-2. Choose `.\.pixi\envs\default\python.exe`.
-3. Open the notebook kernel picker and select `Python (aspen-py-pixi)`.
-
-The repository includes a workspace setting that points VS Code at the Pixi interpreter by default. If it still does not appear, reload the VS Code window after selecting the interpreter.
-
-## Current Limitation
-
-The process YAML stays intentionally close to the existing methanol template schema. Runtime metadata such as output paths and generated filenames are derived from the process folder name and notebook configuration rather than being authored inside YAML.

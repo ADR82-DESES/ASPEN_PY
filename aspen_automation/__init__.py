@@ -40,11 +40,16 @@ from .process_spec_coherence import (
     suggest_process_spec_improvements,
     write_process_spec_file,
 )
+from .property_diagnostics import (
+    assess_nrtl_binary_parameters,
+    extract_model_quality_warnings,
+)
 from .process_results_analysis import (
     build_codex_results_markdown,
     load_result_artifact_tables,
     resolve_result_artifact_paths,
 )
+from .process_intake import ProcessIntakeArtifacts, build_process_intake_artifacts
 from .process_library import (
     BkpExtractionResult,
     ProcessDefinition,
@@ -114,9 +119,13 @@ __all__ = [
     "build_codex_spec_markdown",
     "suggest_process_spec_improvements",
     "write_process_spec_file",
+    "assess_nrtl_binary_parameters",
+    "extract_model_quality_warnings",
     "build_codex_results_markdown",
     "load_result_artifact_tables",
     "resolve_result_artifact_paths",
+    "ProcessIntakeArtifacts",
+    "build_process_intake_artifacts",
     "BkpExtractionResult",
     "ProcessDefinition",
     "ProcessIssue",

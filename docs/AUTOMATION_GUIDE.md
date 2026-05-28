@@ -1,5 +1,10 @@
 # Aspen Plus Automation Guide
 
+> Historical note: this document preserves early COM automation findings. The
+> supported workflow for current process-library runs is batch-first:
+> `process.yaml -> generate_inp -> Aspen batch .his/.bkp gate -> InitFromArchive2 -> extraction`.
+> Use `run_process_batch_first(...)` or the process-library notebook for normal work.
+
 ## Current Status
 
 The Python scripts are successfully connecting to Aspen Plus via COM, but encountering issues when trying to manipulate the flowsheet programmatically. The error "property or method may be executed" suggests COM security restrictions.

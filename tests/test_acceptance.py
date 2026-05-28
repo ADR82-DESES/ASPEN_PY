@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+import pytest
+
 from aspen_automation import validate_acceptance
 
 
@@ -166,3 +168,135 @@ def test_purity_legacy_min_key_supported() -> None:
 
     assert acceptance["passed"] is True
     assert _check_by_name(acceptance, "Methanol Purity")["passed"] is True
+
+
+def test_product_pressure_condition_passes_at_low_pressure_target() -> None:
+    spec = _base_spec()
+    spec["metadata"] = {"units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}}
+    spec["targets"]["product_conditions"] = [
+        {"stream": "MEOH-PRO", "pressure": 1.5, "pressure_tolerance": 0.05}
+    ]
+    results = _base_results()
+    results["streams"] = [{"stream_name": "MEOH-PRO", "pressure": 1.52}]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Product Condition: MEOH-PRO pressure")
+    assert check["passed"] is True
+    assert acceptance["passed"] is True
+
+
+def test_product_pressure_condition_fails_at_80_bar() -> None:
+    spec = _base_spec()
+    spec["metadata"] = {"units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}}
+    spec["targets"]["product_conditions"] = [
+        {"stream": "MEOH-PRO", "pressure": 1.5, "pressure_tolerance": 0.05}
+    ]
+    results = _base_results()
+    results["streams"] = [{"stream_name": "MEOH-PRO", "pressure": 80.0}]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Product Condition: MEOH-PRO pressure")
+    assert check["passed"] is False
+    assert acceptance["passed"] is False
+
+
+def test_product_pressure_condition_fails_when_stream_missing() -> None:
+    spec = _base_spec()
+    spec["targets"]["product_conditions"] = [
+        {"stream": "MEOH-PRO", "pressure": 1.5, "pressure_tolerance": 0.05}
+    ]
+    results = _base_results()
+    results["streams"] = [{"stream_name": "WASTE-H2O", "pressure": 2.08}]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Product Condition: MEOH-PRO pressure")
+    assert check["passed"] is False
+    assert check["actual"] == "n/a"
+
+
+def test_component_loss_limit_passes_and_reports_lights_recovery() -> None:
+    spec = _base_spec()
+    spec["targets"]["component_loss_limits"] = [
+        {
+            "stream": "VENT-GAS",
+            "component": "CH3OH",
+            "max_kg_hr": 26200.0,
+            "baseline_kg_hr": 261131.0,
+            "basis": "mass",
+        }
+    ]
+    results = _base_results()
+    results["streams"] = [
+        {"stream_name": "VENT-GAS", "mass_flow": 75000.0, "CH3OH_mass_frac": 0.30}
+    ]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Component Loss: VENT-GAS CH3OH")
+    assert check["passed"] is True
+    assert check["actual_kg_hr"] == 22500.0
+    assert acceptance["lights_recovery"]["vent_methanol_loss_tpd"] == 540.0
+    assert acceptance["lights_recovery"]["lights_methanol_recovery_fraction"] > 0.91
+    assert acceptance["passed"] is True
+
+
+def test_component_loss_limit_reports_combined_vent_lights_recovery() -> None:
+    spec = _base_spec()
+    spec["targets"]["component_loss_limits"] = [
+        {
+            "stream": "VENT-TOT",
+            "component": "CH3OH",
+            "max_kg_hr": 26200.0,
+            "baseline_kg_hr": 261131.0,
+        }
+    ]
+    results = _base_results()
+    results["streams"] = [
+        {"stream_name": "VENT-TOT", "mass_flow": 64060.0, "CH3OH_mass_frac": 0.38}
+    ]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Component Loss: VENT-TOT CH3OH")
+    assert check["passed"] is True
+    assert check["actual_kg_hr"] == pytest.approx(24342.8)
+    assert acceptance["lights_recovery"]["vent_stream"] == "VENT-TOT"
+    assert acceptance["lights_recovery"]["vent_methanol_loss_tpd"] == pytest.approx(584.2272)
+    assert acceptance["passed"] is True
+
+
+def test_component_loss_limit_fails_when_vent_methanol_is_too_high() -> None:
+    spec = _base_spec()
+    spec["targets"]["component_loss_limits"] = [
+        {"stream": "VENT-GAS", "component": "CH3OH", "max_tpd": 627.0}
+    ]
+    results = _base_results()
+    results["streams"] = [
+        {"stream_name": "VENT-GAS", "mass_flow": 75000.0, "CH3OH_mass_frac": 0.40}
+    ]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Component Loss: VENT-GAS CH3OH")
+    assert check["passed"] is False
+    assert check["actual_tpd"] == 720.0
+    assert acceptance["passed"] is False
+
+
+def test_component_loss_limit_fails_when_stream_is_missing() -> None:
+    spec = _base_spec()
+    spec["targets"]["component_loss_limits"] = [
+        {"stream": "VENT-GAS", "component": "CH3OH", "max_kg_hr": 26200.0}
+    ]
+    results = _base_results()
+    results["streams"] = [{"stream_name": "MEOH-PRO", "mass_flow": 1.0, "CH3OH_mass_frac": 1.0}]
+
+    acceptance = validate_acceptance(results, spec)
+
+    check = _check_by_name(acceptance, "Component Loss: VENT-GAS CH3OH")
+    assert check["passed"] is False
+    assert check["actual"] == "n/a"
+    assert acceptance["passed"] is False

@@ -24,6 +24,10 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "integration: tests that require live Aspen Plus, Windows COM, or local registry access",
+]
 norecursedirs = [
     ".codex_pytest_tmp*",
     ".git",

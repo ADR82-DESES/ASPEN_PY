@@ -1,0 +1,327 @@
+metadata:
+  title: "Methanol Plant 10k TPD"
+  description: "10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR)"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kg/hr"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+  - id: "H2O"
+    name: "WATER"
+  - id: "O2"
+    name: "OXYGEN"
+  - id: "CO"
+    name: "CARBON-MONOXIDE"
+  - id: "CO2"
+    name: "CARBON-DIOXIDE"
+  - id: "H2"
+    name: "HYDROGEN"
+  - id: "CH3OH"
+    name: "METHANOL"
+  - id: "N2"
+    name: "NITROGEN"
+
+properties:
+  method: "RK-SOAVE"
+
+flowsheet:
+  - block: "MIX-FEED"
+    inputs: ["NG-FEED", "STEAM", "O2-FEED"]
+    outputs: ["ATR-IN"]
+  - block: "B-ATR"
+    inputs: ["ATR-IN"]
+    outputs: ["HOT-SYN"]
+  - block: "B-COOL"
+    inputs: ["HOT-SYN"]
+    outputs: ["COLD-SYN"]
+  - block: "B-FLASH"
+    inputs: ["COLD-SYN"]
+    outputs: ["DRY-GAS", "WATER-DR"]
+  - block: "B-COMP"
+    inputs: ["DRY-GAS"]
+    outputs: ["HP-GAS"]
+  - block: "MIX-LOOP"
+    inputs: ["HP-GAS", "RECYCLE"]
+    outputs: ["R-IN"]
+  - block: "B-SYN"
+    inputs: ["R-IN"]
+    outputs: ["R-OUT"]
+  - block: "B-SEP"
+    inputs: ["R-OUT"]
+    outputs: ["GAS-PURG", "CRUDE-ME"]
+  - block: "SPLIT"
+    inputs: ["GAS-PURG"]
+    outputs: ["PURGE", "RECYCLE"]
+  - block: "B-DIST"
+    inputs: ["CRUDE-ME"]
+    outputs: ["MEOH-PRO", "WASTE-H2O"]
+
+streams:
+  - name: "NG-FEED"
+    temperature: 40
+    pressure: 30
+    mass_flow: 220000
+    composition:
+      CH4: 1.0
+  - name: "STEAM"
+    temperature: 250
+    pressure: 35
+    mass_flow: 148500
+    composition:
+      H2O: 1.0
+  - name: "O2-FEED"
+    temperature: 150
+    pressure: 30
+    mass_flow: 264000
+    composition:
+      O2: 0.995
+      N2: 0.005
+  - name: "ATR-IN"
+    temperature: 150
+    pressure: 30
+    mass_flow: 632500
+    composition:
+      CH4: 0.455
+      H2O: 0.273
+      O2: 0.271
+      N2: 0.001
+  - name: "HOT-SYN"
+    temperature: 1000
+    pressure: 30
+    mass_flow: 632500
+    composition:
+      H2: 0.48
+      CO: 0.18
+      CO2: 0.09
+      H2O: 0.2
+      CH4: 0.05
+  - name: "COLD-SYN"
+    temperature: 40
+    pressure: 30
+    mass_flow: 632500
+    composition:
+      H2: 0.48
+      CO: 0.18
+      CO2: 0.09
+      H2O: 0.2
+      CH4: 0.05
+  - name: "DRY-GAS"
+    temperature: 40
+    pressure: 30
+    mass_flow: 520000
+    composition:
+      H2: 0.62
+      CO: 0.2
+      CO2: 0.1
+      CH4: 0.06
+      H2O: 0.02
+  - name: "WATER-DR"
+    temperature: 40
+    pressure: 30
+    mass_flow: 112500
+    composition:
+      H2O: 0.985
+      CH3OH: 0.005
+      CO2: 0.005
+      CH4: 0.005
+  - name: "HP-GAS"
+    temperature: 120
+    pressure: 80
+    mass_flow: 520000
+    composition:
+      H2: 0.62
+      CO: 0.2
+      CO2: 0.1
+      CH4: 0.06
+      H2O: 0.02
+  - name: "RECYCLE"
+    temperature: 40
+    pressure: 80
+    mass_flow: 1558000
+    composition:
+      H2: 0.66
+      CO: 0.14
+      CO2: 0.12
+      CH4: 0.06
+      H2O: 0.02
+  - name: "R-IN"
+    temperature: 220
+    pressure: 80
+    mass_flow: 2078000
+    composition:
+      H2: 0.65
+      CO: 0.155
+      CO2: 0.115
+      CH4: 0.06
+      H2O: 0.02
+  - name: "R-OUT"
+    temperature: 250
+    pressure: 80
+    mass_flow: 2090000
+    composition:
+      H2: 0.58
+      CO: 0.1
+      CO2: 0.11
+      CH4: 0.07
+      H2O: 0.08
+      CH3OH: 0.06
+  - name: "GAS-PURG"
+    temperature: 40
+    pressure: 80
+    mass_flow: 1640000
+    composition:
+      H2: 0.66
+      CO: 0.14
+      CO2: 0.12
+      CH4: 0.06
+      H2O: 0.02
+  - name: "CRUDE-ME"
+    temperature: 40
+    pressure: 80
+    mass_flow: 460000
+    composition:
+      CH3OH: 0.905
+      H2O: 0.085
+      CO2: 0.005
+      CO: 0.003
+      H2: 0.002
+  - name: "PURGE"
+    temperature: 40
+    pressure: 80
+    mass_flow: 82000
+    composition:
+      H2: 0.66
+      CO: 0.14
+      CO2: 0.12
+      CH4: 0.06
+      H2O: 0.02
+  - name: "MEOH-PRO"
+    temperature: 40
+    pressure: 1.5
+    mass_flow: 416666.7
+    composition:
+      CH3OH: 0.9985
+      H2O: 0.001
+      CO2: 0.0003
+      CO: 0.0001
+      CH4: 0.0001
+  - name: "WASTE-H2O"
+    temperature: 45
+    pressure: 1.2
+    mass_flow: 43333.3
+    composition:
+      H2O: 0.96
+      CH3OH: 0.03
+      CO2: 0.005
+      CO: 0.003
+      H2: 0.002
+
+blocks:
+  - name: "MIX-FEED"
+    type: "MIXER"
+  - name: "B-ATR"
+    type: "RGIBBS"
+    parameters:
+      TEMP: 1000
+      PRES: 30
+  - name: "B-COOL"
+    type: "HEATER"
+    parameters:
+      TEMP: 40
+      PRES: 0
+  - name: "B-FLASH"
+    type: "FLASH2"
+    parameters:
+      TEMP: 40
+      PRES: 0
+  - name: "B-COMP"
+    type: "COMPR"
+    parameters:
+      PRES: 80
+      TYPE: "ISENTROPIC"
+      EFF: 0.85
+  - name: "MIX-LOOP"
+    type: "MIXER"
+  - name: "B-SYN"
+    type: "REQUIL"
+    parameters:
+      TEMP: 250
+      PRES: 80
+    reactions: "RXN-SET1"
+  - name: "B-SEP"
+    type: "FLASH2"
+    parameters:
+      TEMP: 40
+      PRES: 0
+  - name: "SPLIT"
+    type: "FSPLIT"
+    split_fractions:
+      - stream: "RECYCLE"
+        fraction: 0.95
+      - stream: "PURGE"
+        fraction: 0.05
+  - name: "B-DIST"
+    type: "SEP"
+    sep_fractions:
+      - stream: "MEOH-PRO"
+        substream: "MIXED"
+        component: "CH3OH"
+        fraction: 0.99
+      - stream: "MEOH-PRO"
+        substream: "MIXED"
+        component: "H2O"
+        fraction: 0.001
+
+chemistry:
+  - id: "GLOBAL"
+    reactions:
+      - id: 1
+        stoichiometry:
+          - component: "CO"
+            coefficient: -1
+          - component: "H2"
+            coefficient: -2
+          - component: "CH3OH"
+            coefficient: 1
+        parameters:
+          reaction_type: "EQUIL"
+          phase: "V"
+          equilibrium_form: "LNK-1/T"
+          equilibrium_basis: "FUGACITY"
+          equilibrium_constants: [12.280, -4048.0, 0.0, 0.0]
+      - id: 2
+        stoichiometry:
+          - component: "CO2"
+            coefficient: -1
+          - component: "H2"
+            coefficient: -3
+          - component: "CH3OH"
+            coefficient: 1
+          - component: "H2O"
+            coefficient: 1
+        parameters:
+          reaction_type: "EQUIL"
+          phase: "V"
+          equilibrium_form: "LNK-1/T"
+          equilibrium_basis: "FUGACITY"
+          equilibrium_constants: [10.590, -4800.0, 0.0, 0.0]
+
+reaction_sets:
+  - id: "RXN-SET1"
+    block_type: "REQUIL"
+    reaction_ids: [1, 2]
+
+process_defaults:
+  purity_expression: "CH3OH wt% in MEOH-PRO"
+  product_stream: "MEOH-PRO"
+  convergence_block: "B-ATR"
+
+targets:
+  production_rate_tpd: 10000
+  tolerance: 0.02
+  purity:
+    expression: "CH3OH wt% in MEOH-PRO"
+    min_value: 0.9985

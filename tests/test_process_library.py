@@ -11,6 +11,8 @@ import pandas as pd
 
 from aspen_automation.process_library import (
     BkpExtractionResult,
+    _build_batch_first_diagnostics,
+    _build_simulation_diagnostics,
     discover_processes,
     load_process_spec,
     run_process,
@@ -29,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 METHANOL_TEMPLATE_PATH = ROOT / "templates" / "methanol_plant_atr.yaml"
 PROCESS_LIBRARY_ROOT = ROOT / "process_library"
 NOTEBOOK_PATH = ROOT / "notebooks" / "process_library_runner.ipynb"
+METHANOL_NOTEBOOK_PATH = ROOT / "notebooks" / "methanol_example_runner.ipynb"
 
 
 def _make_test_workspace(prefix: str) -> Path:
@@ -47,16 +50,142 @@ def test_process_library_methanol_spec_validates() -> None:
     assert report["valid"], report["errors"]
 
 
-def test_process_library_methanol_spec_has_buildable_screening_warnings() -> None:
+def test_process_library_methanol_spec_uses_rigorous_final_column_without_purification_warning() -> None:
     spec = load_process_spec(PROCESS_LIBRARY_ROOT / "methanol")
     coherence = analyze_process_spec_coherence(spec)
     assert coherence["passed"] is True
     messages = [issue["message"] for issue in coherence["issues"] if issue["severity"] == "warning"]
-    assert any("High-purity target" in message for message in messages)
-    assert any("Property method" in message for message in messages)
+    assert not any("High-purity target" in message for message in messages)
+    assert not any("Property method" in message for message in messages)
+    assert not any("binary-parameter provenance is missing" in message for message in messages)
     syn_block = next(block for block in spec["blocks"] if block["name"] == "B-SYN")
+    degas_block = next(block for block in spec["blocks"] if block["name"] == "B-DEGAS")
+    dist_block = next(block for block in spec["blocks"] if block["name"] == "B-DIST")
     assert syn_block["type"] == "RPLUG"
+    assert syn_block["parameters"]["LENGTH"] == 21.3
+    assert degas_block["type"] == "FLASH2"
+    assert degas_block["parameters"]["TEMP"] == 80.0
+    assert dist_block["type"] == "RADFRAC"
+    assert dist_block["radfrac"]["bottoms_rate"] == 82000.0
+    assert next(block for block in spec["blocks"] if block["name"] == "B-LCOOL")["type"] == "HEATER"
+    assert next(block for block in spec["blocks"] if block["name"] == "B-LFLA")["type"] == "FLASH2"
+    assert next(block for block in spec["blocks"] if block["name"] == "MIX-COL")["type"] == "MIXER"
+    assert next(block for block in spec["blocks"] if block["name"] == "B-PDEG")["type"] == "FLASH2"
+    assert next(block for block in spec["blocks"] if block["name"] == "MIX-VENT")["type"] == "MIXER"
+    degas_connection = next(item for item in spec["flowsheet"] if item["block"] == "B-DEGAS")
+    assert degas_connection["outputs"] == ["LIGHTS", "CLIQ-RAW"]
+    recovery_flash = next(item for item in spec["flowsheet"] if item["block"] == "B-LFLA")
+    assert recovery_flash["outputs"] == ["VENT-GAS", "REC-MEOH"]
+    mix_connection = next(item for item in spec["flowsheet"] if item["block"] == "MIX-COL")
+    assert mix_connection["inputs"] == ["CLIQ-RAW", "REC-MEOH"]
+    dist_connection = next(item for item in spec["flowsheet"] if item["block"] == "B-DIST")
+    assert dist_connection["inputs"] == ["CRUDE-LQ"]
+    assert dist_connection["outputs"] == ["MEOH-RAW", "WASTE-H2O"]
+    product_degas_connection = next(item for item in spec["flowsheet"] if item["block"] == "B-PDEG")
+    assert product_degas_connection["outputs"] == ["PRO-VENT", "MEOH-PRO"]
+    vent_mix_connection = next(item for item in spec["flowsheet"] if item["block"] == "MIX-VENT")
+    assert vent_mix_connection["inputs"] == ["VENT-GAS", "PRO-VENT"]
+    assert vent_mix_connection["outputs"] == ["VENT-TOT"]
+    assert spec["targets"]["product_conditions"][0]["pressure"] == 1.5
+    assert spec["targets"]["component_loss_limits"][0]["stream"] == "VENT-TOT"
+    assert spec["targets"]["component_loss_limits"][0]["component"] == "CH3OH"
     assert not any("equilibrium reactor model" in message for message in messages)
+
+
+def test_batch_first_diagnostics_promote_nrtl_model_quality_warning() -> None:
+    spec = load_process_spec(PROCESS_LIBRARY_ROOT / "methanol")
+    batch_result = AspenBatchResult(
+        engine_path=None,
+        command=["aspen"],
+        batch_dir=".",
+        input_path="run.inp",
+        run_id="run",
+        returncode=0,
+        timed_out=False,
+        elapsed_seconds=1.0,
+        stdout_path="stdout.txt",
+        stderr_path="stderr.txt",
+        artifacts={
+            ".bkp": {"exists": True, "path": "run.bkp"},
+            ".his": {"exists": True, "path": "run.his"},
+        },
+        history_diagnostics={
+            "status": "converged",
+            "input_translation_failed": False,
+            "summary_counts": {},
+            "messages": [
+                {
+                    "severity": "warning",
+                    "message": "NRTL BINARY PARAMETERS FOR ALL COMPONENT PAIRS ARE ZERO.",
+                }
+            ],
+        },
+    )
+
+    diagnostics = _build_batch_first_diagnostics(batch_result, Path("run.inp"), spec)
+
+    assert diagnostics["nrtl_binary_parameters_status"] == "warning_from_aspen"
+    assert diagnostics["model_quality_warnings"] == [
+        "NRTL BINARY PARAMETERS FOR ALL COMPONENT PAIRS ARE ZERO."
+    ]
+
+
+def test_simulation_diagnostics_block_post_com_nrtl_warning_when_acceptance_enforced() -> None:
+    spec = load_process_spec(PROCESS_LIBRARY_ROOT / "methanol")
+    session_result = SessionResult(convergence_status="converged", simulation_time_seconds=1.0)
+    session_result.diagnostics.update({"build_valid": True, "flowsheet_verification": {"build_valid": True}})
+    results = {
+        "streams": pd.DataFrame(
+            [
+                {"stream_name": "VENT-GAS", "mass_flow": 75000.0, "CH3OH_mass_frac": 0.30},
+                {"stream_name": "MEOH-PRO", "mass_flow": 412100.0, "pressure": 1.5, "CH3OH_mass_frac": 0.9995},
+            ]
+        ),
+        "blocks": pd.DataFrame([{"block_name": "B-DIST", "block_type": "RADFRAC", "duty_kw": 1.0}]),
+        "material_balance": pd.DataFrame([{"component": "CH3OH", "feed": 1.0, "product": 1.0}]),
+        "energy_balance": pd.DataFrame([{"block_name": "B-DIST", "duty_kw": 1.0}]),
+        "kpis": {
+            "convergence_status": "converged",
+            "production_rate_tpd": 10000.0,
+            "purity_fraction": 0.9995,
+        },
+        "diagnostics": {"convergence_status": "converged"},
+    }
+    acceptance = {
+        "passed": True,
+        "checks": [{"name": "Convergence", "passed": True}],
+        "component_loss_checks": [],
+        "lights_recovery": {},
+    }
+    build_diagnostics = {
+        "history_diagnostics": {"status": "converged", "messages": []},
+        "batch_history_diagnostics": {"status": "converged", "messages": []},
+        "post_com_history_diagnostics": {
+            "status": "converged",
+            "summary_counts": {"warnings": {"physical_property": 1}},
+            "messages": [
+                {
+                    "severity": "warning",
+                    "message": "NRTL BINARY PARAMETERS FOR ALL COMPONENT PAIRS ARE ZERO.",
+                }
+            ],
+        },
+    }
+
+    diagnostics = _build_simulation_diagnostics(
+        spec,
+        session_result,
+        results,
+        acceptance,
+        enforce_acceptance_targets=True,
+        require_balance_tables=True,
+        build_diagnostics=build_diagnostics,
+    )
+
+    assert diagnostics["passed"] is False
+    assert diagnostics["status"] == "model_quality_failed"
+    assert diagnostics["nrtl_binary_parameters_status"] == "warning_from_post_com"
+    assert diagnostics["post_com_history_diagnostics"]["status"] == "converged"
 
 
 def test_scan_process_library_discovers_valid_and_invalid_processes(tmp_path: Path) -> None:
@@ -603,7 +732,11 @@ def test_process_library_notebook_has_required_sections() -> None:
     joined_sources = "\n".join("".join(cell.get("source", [])) for cell in cells)
 
     assert "Environment setup and imports" in joined_sources
-    assert "Repository path resolution" in joined_sources
+    assert "Process evidence intake for Codex-authored YAML" in joined_sources
+    assert "build_process_intake_artifacts" in joined_sources
+    assert "source_manifest.json" in joined_sources
+    assert "process_research_brief.md" in joined_sources
+    assert "codex_process_yaml_prompt.md" in joined_sources
     assert "Process library path configuration" in joined_sources
     assert "YAML schema / expected fields overview" in joined_sources
     assert "Discovery of all available process folders" in joined_sources
@@ -611,11 +744,9 @@ def test_process_library_notebook_has_required_sections() -> None:
     assert "YAML coherence analysis per discovered process" in joined_sources
     assert "Suggested YAML improvements per discovered process" in joined_sources
     assert "Gate 1: Aspen batch translator" in joined_sources
-    assert "Gate 2: Kinetic BKP load, COM extraction, and reports" in joined_sources
+    assert "Gate 2: BKP COM load, extraction, and reports" in joined_sources
     assert "Gate 2 diagnostics and evidence bundle" in joined_sources
     assert "Codex session analysis per discovered process" in joined_sources
-    assert "Kinetic remediation and tuning worksheet" in joined_sources
-    assert "Live methanol production tuning campaign" in joined_sources
     assert "Output summary and validation" in joined_sources
     assert "analyze_process_spec_coherence" in joined_sources
     assert "apply_process_spec_improvements" in joined_sources
@@ -625,13 +756,10 @@ def test_process_library_notebook_has_required_sections() -> None:
     assert "build_codex_improvement_markdown" in joined_sources
     assert "build_codex_results_markdown" in joined_sources
     assert "load_result_artifact_tables" in joined_sources
-    assert "B-SYN selectivity diagnostics" in joined_sources
-    assert "recycle composition diagnostics" in joined_sources
-    assert "PURGE_SWEEP_FRACTIONS" in joined_sources
-    assert "ATR_TUNING_FACTORS" in joined_sources
-    assert "run_methanol_tuning_campaign" in joined_sources
-    assert "tuning_campaign_summary.csv" in joined_sources
-    assert "best_process.yaml" in joined_sources
+    assert "B-SYN selectivity diagnostics" not in joined_sources
+    assert "PURGE_SWEEP_FRACTIONS" not in joined_sources
+    assert "run_methanol_tuning_campaign" not in joined_sources
+    assert "MEOH-PRO" not in joined_sources
     assert "run_aspen_batch(" in joined_sources
     assert "run_process_batch_first(" in joined_sources
     assert joined_sources.index("run_aspen_batch(") < joined_sources.index("run_process_batch_first(")
@@ -641,5 +769,21 @@ def test_process_library_notebook_has_required_sections() -> None:
     assert "simulation_diagnostics.json" in joined_sources
     assert "live_aspen_summary.json" in joined_sources
     assert "ENFORCE_ACCEPTANCE_TARGETS = False" in joined_sources
-    assert "input(" in joined_sources
     assert "process_library" in joined_sources
+
+
+def test_methanol_example_notebook_keeps_tuning_sections() -> None:
+    notebook = json.loads(METHANOL_NOTEBOOK_PATH.read_text(encoding="utf-8"))
+    joined_sources = "\n".join("".join(cell.get("source", [])) for cell in notebook["cells"])
+
+    assert "Methanol Example Runner: Kinetic Batch-First Aspen Workflow" in joined_sources
+    assert 'ONLY_PROCESSES: set[str] | None = {"methanol"}' in joined_sources
+    assert "Kinetic remediation and tuning worksheet" in joined_sources
+    assert "Live methanol production tuning campaign" in joined_sources
+    assert "B-SYN selectivity diagnostics" in joined_sources
+    assert "recycle composition diagnostics" in joined_sources
+    assert "PURGE_SWEEP_FRACTIONS" in joined_sources
+    assert "ATR_TUNING_FACTORS" in joined_sources
+    assert "run_methanol_tuning_campaign" in joined_sources
+    assert "tuning_campaign_summary.csv" in joined_sources
+    assert "best_process.yaml" in joined_sources

@@ -21,7 +21,11 @@ notebook = ">=7.0"
 lab = "jupyter lab"
 notebook = "jupyter notebook"
 process-library-notebook = "jupyter lab notebooks/process_library_runner.ipynb"
+methanol-example-notebook = "jupyter lab notebooks/methanol_example_runner.ipynb"
 install-kernel = "python -m ipykernel install --user --name aspen-py-pixi --display-name \"Python (aspen-py-pixi)\""
+test = "pytest tests -q --ignore=tests/integration --basetemp=.codex_pytest_tmp_aspen_all"
+test-focused = "pytest tests/test_validator.py tests/test_schema.py tests/test_process_library.py tests/test_batch_engine.py tests/test_notebook_purpose_contract.py -q --basetemp=.codex_pytest_tmp_aspen_focused"
+test-live = "pytest tests/integration -q --basetemp=.codex_pytest_tmp_aspen_live"
 
 [pypi-dependencies]
 mcp = ">=1.27.0, <2"

@@ -26,6 +26,70 @@ def _spec_to_dict(spec: SpecInput) -> Dict[str, Any]:
     return spec_to_plain_dict(spec)
 
 
+def _stream_lookup(results: Dict[str, Any]) -> Dict[str, Mapping[str, Any]]:
+    streams = results.get("streams") if isinstance(results, dict) else None
+    if streams is None:
+        return {}
+
+    rows: List[Mapping[str, Any]] = []
+    to_dict = getattr(streams, "to_dict", None)
+    if callable(to_dict):
+        try:
+            records = to_dict(orient="records")
+            if isinstance(records, list):
+                rows = [row for row in records if isinstance(row, Mapping)]
+        except TypeError:
+            rows = []
+    elif isinstance(streams, list):
+        rows = [row for row in streams if isinstance(row, Mapping)]
+    elif isinstance(streams, Mapping):
+        rows = [streams]
+
+    lookup: Dict[str, Mapping[str, Any]] = {}
+    for row in rows:
+        name = row.get("stream_name", row.get("name"))
+        if name is None:
+            continue
+        lookup[str(name).upper()] = row
+    return lookup
+
+
+def _row_value(row: Mapping[str, Any], *names: str) -> Optional[float]:
+    normalized = {str(key).lower(): value for key, value in row.items()}
+    for name in names:
+        value = normalized.get(name.lower())
+        converted = _coerce_float(value)
+        if converted is not None:
+            return converted
+    return None
+
+
+def _component_mass_flow_kg_hr(row: Mapping[str, Any], component: str) -> Optional[float]:
+    component_key = component.strip().upper()
+    direct = _row_value(
+        row,
+        f"{component_key}_mass_flow_kg_hr",
+        f"{component_key}_mass_flow",
+        f"{component_key}_kg_hr",
+    )
+    if direct is not None:
+        return direct
+
+    mass_flow = _row_value(row, "mass_flow", "mass_flow_kg_hr")
+    mass_fraction = _row_value(row, f"{component_key}_mass_frac", f"{component_key}_mass_fraction")
+    if mass_flow is None or mass_fraction is None:
+        return None
+    return mass_flow * mass_fraction
+
+
+def _kg_hr_to_tpd(value: float) -> float:
+    return value * 24.0 / 1000.0
+
+
+def _tpd_to_kg_hr(value: float) -> float:
+    return value * 1000.0 / 24.0
+
+
 def validate_acceptance(results: Dict[str, Any], spec: SpecInput) -> Dict[str, Any]:
     """
     Validate simulation results against acceptance criteria from spec targets.
@@ -119,7 +183,140 @@ def validate_acceptance(results: Dict[str, Any], spec: SpecInput) -> Dict[str, A
                 }
             )
 
-    return {"passed": all(check["passed"] for check in checks), "checks": checks}
+    # Check 4: explicit product stream conditions, such as low-pressure methanol product.
+    product_conditions = targets.get("product_conditions", [])
+    if isinstance(product_conditions, list) and product_conditions:
+        stream_rows = _stream_lookup(results)
+        pressure_unit = str(
+            spec_dict.get("metadata", {}).get("units", {}).get("pressure", "pressure units")
+        )
+        temperature_unit = str(
+            spec_dict.get("metadata", {}).get("units", {}).get("temperature", "temperature units")
+        )
+        for index, condition in enumerate(product_conditions):
+            if not isinstance(condition, Mapping):
+                continue
+            stream_name = str(condition.get("stream", "")).strip()
+            row = stream_rows.get(stream_name.upper()) if stream_name else None
+            pressure_target = _coerce_float(condition.get("pressure"))
+            pressure_tolerance = _coerce_float(condition.get("pressure_tolerance"))
+            pressure_tolerance = 0.05 if pressure_tolerance is None else pressure_tolerance
+            temperature_target = _coerce_float(condition.get("temperature"))
+            temperature_tolerance = _coerce_float(condition.get("temperature_tolerance"))
+            temperature_tolerance = 1.0 if temperature_tolerance is None else temperature_tolerance
+
+            if pressure_target is not None:
+                actual_pressure = _row_value(row, "pressure", "pressure_bar", "pres") if row else None
+                pressure_ok = (
+                    actual_pressure is not None
+                    and abs(actual_pressure - pressure_target) <= pressure_tolerance
+                )
+                checks.append(
+                    {
+                        "name": f"Product Condition: {stream_name} pressure",
+                        "passed": pressure_ok,
+                        "actual": "n/a" if actual_pressure is None else f"{actual_pressure:.4g} {pressure_unit}",
+                        "expected": f"{pressure_target:.4g} {pressure_unit} +/- {pressure_tolerance:.4g}",
+                        "message": (
+                            "Within tolerance"
+                            if pressure_ok
+                            else f"Missing or outside pressure condition for {stream_name}"
+                        ),
+                    }
+                )
+
+            if temperature_target is not None:
+                actual_temperature = _row_value(row, "temperature", "temperature_c", "temp") if row else None
+                temperature_ok = (
+                    actual_temperature is not None
+                    and abs(actual_temperature - temperature_target) <= temperature_tolerance
+                )
+                checks.append(
+                    {
+                        "name": f"Product Condition: {stream_name} temperature",
+                        "passed": temperature_ok,
+                        "actual": "n/a" if actual_temperature is None else f"{actual_temperature:.4g} {temperature_unit}",
+                        "expected": f"{temperature_target:.4g} {temperature_unit} +/- {temperature_tolerance:.4g}",
+                        "message": (
+                            "Within tolerance"
+                            if temperature_ok
+                            else f"Missing or outside temperature condition for {stream_name}"
+                        ),
+                    }
+                )
+
+    component_loss_checks: List[Dict[str, Any]] = []
+    lights_recovery: Dict[str, Any] = {}
+    component_loss_limits = targets.get("component_loss_limits", [])
+    if isinstance(component_loss_limits, list) and component_loss_limits:
+        stream_rows = _stream_lookup(results)
+        for limit in component_loss_limits:
+            if not isinstance(limit, Mapping):
+                continue
+            stream_name = str(limit.get("stream", "")).strip()
+            component = str(limit.get("component", "")).strip()
+            if not stream_name or not component:
+                continue
+            row = stream_rows.get(stream_name.upper())
+            actual_kg_hr = _component_mass_flow_kg_hr(row, component) if row else None
+            max_kg_hr = _coerce_float(limit.get("max_kg_hr"))
+            max_tpd = _coerce_float(limit.get("max_tpd"))
+            if max_kg_hr is None and max_tpd is not None:
+                max_kg_hr = _tpd_to_kg_hr(max_tpd)
+            if max_kg_hr is None:
+                continue
+
+            actual_tpd = None if actual_kg_hr is None else _kg_hr_to_tpd(actual_kg_hr)
+            max_tpd_value = _kg_hr_to_tpd(max_kg_hr)
+            loss_ok = actual_kg_hr is not None and actual_kg_hr <= max_kg_hr
+            check = {
+                "name": f"Component Loss: {stream_name} {component}",
+                "passed": loss_ok,
+                "actual": "n/a" if actual_kg_hr is None else f"{actual_kg_hr:.4g} kg/hr ({actual_tpd:.4g} TPD)",
+                "expected": f"<={max_kg_hr:.4g} kg/hr ({max_tpd_value:.4g} TPD)",
+                "message": "Within loss limit" if loss_ok else f"Missing or above component loss limit for {stream_name}/{component}",
+                "stream": stream_name,
+                "component": component,
+                "actual_kg_hr": actual_kg_hr,
+                "actual_tpd": actual_tpd,
+                "limit_kg_hr": max_kg_hr,
+                "limit_tpd": max_tpd_value,
+            }
+
+            baseline_kg_hr = _coerce_float(limit.get("baseline_kg_hr"))
+            baseline_tpd = _coerce_float(limit.get("baseline_tpd"))
+            if baseline_kg_hr is None and baseline_tpd is not None:
+                baseline_kg_hr = _tpd_to_kg_hr(baseline_tpd)
+            if baseline_kg_hr is not None and actual_kg_hr is not None:
+                recovered_kg_hr = baseline_kg_hr - actual_kg_hr
+                recovery_fraction = recovered_kg_hr / baseline_kg_hr if baseline_kg_hr > 0 else None
+                check["baseline_kg_hr"] = baseline_kg_hr
+                check["baseline_tpd"] = _kg_hr_to_tpd(baseline_kg_hr)
+                check["recovered_kg_hr"] = recovered_kg_hr
+                check["recovery_fraction"] = recovery_fraction
+
+                if stream_name.upper() in {"VENT-GAS", "VENT-TOT"} and component.upper() == "CH3OH":
+                    lights_recovery = {
+                        "vent_stream": stream_name,
+                        "vent_methanol_loss_kg_hr": actual_kg_hr,
+                        "vent_methanol_loss_tpd": actual_tpd,
+                        "baseline_lights_methanol_loss_kg_hr": baseline_kg_hr,
+                        "baseline_lights_methanol_loss_tpd": _kg_hr_to_tpd(baseline_kg_hr),
+                        "lights_methanol_recovered_kg_hr": recovered_kg_hr,
+                        "lights_methanol_recovery_fraction": recovery_fraction,
+                        "limit_kg_hr": max_kg_hr,
+                        "limit_tpd": max_tpd_value,
+                    }
+
+            component_loss_checks.append(check)
+            checks.append(check)
+
+    return {
+        "passed": all(check["passed"] for check in checks),
+        "checks": checks,
+        "component_loss_checks": component_loss_checks,
+        "lights_recovery": lights_recovery,
+    }
 
 
 def print_acceptance_report(acceptance: Dict[str, Any], spec_path: str = "") -> None:

@@ -10,7 +10,7 @@ from typing import Any
 import pandas as pd
 
 from .acceptance import validate_acceptance
-from .batch_engine import AspenBatchResult, run_aspen_batch
+from .batch_engine import AspenBatchResult, parse_aspen_history, run_aspen_batch
 from .capsule_context import collect_capsule_context
 from .exceptions import AspenNotRunningError, BuildError, ExtractionError, ValidationError
 from .extractor import extract_results
@@ -21,6 +21,11 @@ from .process_spec_coherence import (
     apply_process_spec_improvements,
     dump_process_spec_yaml,
     suggest_process_spec_improvements,
+)
+from .property_diagnostics import (
+    assess_nrtl_binary_parameters,
+    extract_model_quality_warnings,
+    history_has_nrtl_zero_binary_warning,
 )
 from .reporter import generate_reports
 from .serialization import spec_to_plain_dict
@@ -301,6 +306,122 @@ def _required_kpi_names(spec: dict[str, Any]) -> list[str]:
     return required
 
 
+def _prefixed_model_quality_warnings(label: str, history: dict[str, Any]) -> list[str]:
+    warnings = extract_model_quality_warnings(history)
+    if label == "batch":
+        return warnings
+    return [f"{label}: {warning}" for warning in warnings]
+
+
+def _combined_model_quality_warnings(
+    batch_history: dict[str, Any],
+    post_com_history: dict[str, Any] | None = None,
+) -> list[str]:
+    combined: list[str] = []
+    for warning in _prefixed_model_quality_warnings("batch", batch_history):
+        if warning not in combined:
+            combined.append(warning)
+    if isinstance(post_com_history, dict) and post_com_history:
+        for warning in _prefixed_model_quality_warnings("post_com", post_com_history):
+            if warning not in combined:
+                combined.append(warning)
+    return combined
+
+
+def _combined_nrtl_binary_parameters(
+    spec: dict[str, Any],
+    batch_history: dict[str, Any],
+    post_com_history: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    batch_status = assess_nrtl_binary_parameters(spec, batch_history)
+    post_history_file = post_com_history.get("history_file", {}) if isinstance(post_com_history, dict) else {}
+    post_available = bool(
+        isinstance(post_com_history, dict)
+        and post_com_history
+        and (
+            (isinstance(post_history_file, dict) and post_history_file.get("exists"))
+            or str(post_com_history.get("status", "")).strip().lower() not in {"", "missing"}
+        )
+    )
+    post_status = (
+        assess_nrtl_binary_parameters(spec, post_com_history)
+        if post_available
+        else None
+    )
+
+    warning_sources: list[str] = []
+    if history_has_nrtl_zero_binary_warning(batch_history):
+        warning_sources.append("batch")
+    if post_available and history_has_nrtl_zero_binary_warning(post_com_history):
+        warning_sources.append("post_com")
+
+    combined = dict(batch_status)
+    combined["batch_status"] = batch_status
+    if post_status is not None:
+        combined["post_com_status"] = post_status
+    combined["history_sources_checked"] = ["batch"] + (["post_com"] if post_status is not None else [])
+    combined["zero_parameter_warning_sources"] = warning_sources
+    combined["zero_parameter_warning_present"] = bool(warning_sources)
+
+    if "post_com" in warning_sources:
+        combined["status"] = "warning_from_post_com"
+    elif "batch" in warning_sources:
+        combined["status"] = "warning_from_aspen"
+    elif post_status is not None and post_status.get("status") == "missing":
+        combined["status"] = batch_status.get("status")
+    elif batch_status.get("status") == "accepted_by_aspen" and post_status is not None:
+        combined["status"] = post_status.get("status")
+    else:
+        combined["status"] = batch_status.get("status")
+
+    return combined
+
+
+def _refresh_history_quality_diagnostics(
+    diagnostics: dict[str, Any],
+    spec: dict[str, Any],
+    *,
+    post_com_history_diagnostics: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    batch_history = diagnostics.get("batch_history_diagnostics")
+    if not isinstance(batch_history, dict):
+        batch_history = diagnostics.get("history_diagnostics", {})
+    batch_history = batch_history if isinstance(batch_history, dict) else {}
+    post_history = post_com_history_diagnostics
+    if post_history is None:
+        existing_post = diagnostics.get("post_com_history_diagnostics")
+        post_history = existing_post if isinstance(existing_post, dict) else None
+
+    combined_warnings = _combined_model_quality_warnings(batch_history, post_history)
+    nrtl_binary_parameters = _combined_nrtl_binary_parameters(spec, batch_history, post_history)
+
+    diagnostics["batch_history_diagnostics"] = batch_history
+    if post_history is not None:
+        diagnostics["post_com_history_diagnostics"] = post_history
+    diagnostics["combined_model_quality_warnings"] = combined_warnings
+    diagnostics["model_quality_warnings"] = combined_warnings
+    diagnostics["nrtl_binary_parameters_status"] = nrtl_binary_parameters.get("status")
+    diagnostics["nrtl_binary_parameters"] = nrtl_binary_parameters
+
+    nested = diagnostics.get("diagnostics")
+    if isinstance(nested, dict):
+        nested["batch_history_diagnostics"] = batch_history
+        if post_history is not None:
+            nested["post_com_history_diagnostics"] = post_history
+        nested["combined_model_quality_warnings"] = combined_warnings
+        nested["model_quality_warnings"] = combined_warnings
+        nested["nrtl_binary_parameters"] = nrtl_binary_parameters
+
+    return diagnostics
+
+
+def _parse_post_com_history(layout: ProcessLayout, source_inp_path: str | Path | None) -> dict[str, Any]:
+    return parse_aspen_history(
+        layout.output_apw_path.with_suffix(".his"),
+        source_inp_path=source_inp_path,
+    )
+
+
 def _numeric_row_count(table: Any, *, exclude_columns: set[str]) -> int:
     if not isinstance(table, pd.DataFrame) or table.empty:
         return 0
@@ -332,6 +453,7 @@ def _build_simulation_diagnostics(
     *,
     enforce_acceptance_targets: bool = True,
     require_balance_tables: bool = False,
+    build_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     session_status = str(getattr(session_result, "convergence_status", "unknown") or "unknown").strip().lower()
     session_diagnostics = dict(getattr(session_result, "diagnostics", {}))
@@ -343,6 +465,28 @@ def _build_simulation_diagnostics(
     extraction_diagnostics = results.get("diagnostics", {})
     extraction_diagnostics = extraction_diagnostics if isinstance(extraction_diagnostics, dict) else {}
     extraction_status = str(extraction_diagnostics.get("convergence_status", "unknown") or "unknown").strip().lower()
+    stream_extraction = extraction_diagnostics.get("stream_extraction", {})
+    stream_extraction = stream_extraction if isinstance(stream_extraction, dict) else {}
+    terminal_mass_closure = extraction_diagnostics.get("terminal_mass_closure", {})
+    terminal_mass_closure = terminal_mass_closure if isinstance(terminal_mass_closure, dict) else {}
+    build_diagnostics = build_diagnostics if isinstance(build_diagnostics, dict) else {}
+    history_diagnostics = build_diagnostics.get("batch_history_diagnostics", build_diagnostics.get("history_diagnostics", {}))
+    history_diagnostics = history_diagnostics if isinstance(history_diagnostics, dict) else {}
+    post_com_history_diagnostics = build_diagnostics.get("post_com_history_diagnostics")
+    post_com_history_diagnostics = (
+        post_com_history_diagnostics if isinstance(post_com_history_diagnostics, dict) else None
+    )
+    model_quality_warnings = list(build_diagnostics.get("combined_model_quality_warnings") or [])
+    if not model_quality_warnings:
+        model_quality_warnings = _combined_model_quality_warnings(history_diagnostics, post_com_history_diagnostics)
+    nrtl_binary_parameters = build_diagnostics.get("nrtl_binary_parameters")
+    if not isinstance(nrtl_binary_parameters, dict):
+        nrtl_binary_parameters = _combined_nrtl_binary_parameters(spec, history_diagnostics, post_com_history_diagnostics)
+    nrtl_binary_status = str(nrtl_binary_parameters.get("status", "") or "")
+    model_quality_blocking = bool(
+        enforce_acceptance_targets
+        and nrtl_binary_status in {"warning_from_aspen", "warning_from_post_com"}
+    )
 
     stream_numeric_rows = _numeric_row_count(results.get("streams"), exclude_columns={"stream_name"})
     block_numeric_rows = _numeric_row_count(results.get("blocks"), exclude_columns={"block_name", "block_type"})
@@ -379,6 +523,42 @@ def _build_simulation_diagnostics(
         issues.append("No numeric energy balance outputs were extracted from Aspen.")
     for kpi_name in missing_required_kpis:
         issues.append(f"Required KPI '{kpi_name}' is missing from extracted results.")
+    if model_quality_blocking:
+        issues.append(
+            "Aspen reported zero NRTL binary parameters in a required history file "
+            f"(status: {nrtl_binary_status})."
+        )
+
+    remaining_blank_terminal_streams = sorted(
+        {
+            str(stream_name)
+            for stream_name in (
+                list(terminal_mass_closure.get("missing_feed_streams", []))
+                + list(terminal_mass_closure.get("missing_product_streams", []))
+            )
+        }
+    )
+    if remaining_blank_terminal_streams:
+        issues.append(
+            "Some terminal stream outputs remained blank after extraction/inference: "
+            + ", ".join(remaining_blank_terminal_streams)
+            + "."
+        )
+
+    blank_radfrac_product_streams = [
+        item
+        for item in stream_extraction.get("blank_radfrac_product_streams", [])
+        if isinstance(item, dict)
+    ]
+    if blank_radfrac_product_streams:
+        issues.append(
+            "RADFRAC terminal products require direct Aspen extraction; blank product streams remain: "
+            + ", ".join(
+                f"{item.get('block_name', 'RADFRAC')}->{item.get('stream_name', 'unknown')}"
+                for item in blank_radfrac_product_streams
+            )
+            + "."
+        )
 
     if (
         session_status == "converged"
@@ -390,8 +570,10 @@ def _build_simulation_diagnostics(
 
     if stream_numeric_rows == 0 and block_numeric_rows == 0:
         results_status = "unreadable"
-    elif stream_numeric_rows == 0 or block_numeric_rows == 0 or missing_required_kpis or missing_balance_tables:
+    elif stream_numeric_rows == 0 or block_numeric_rows == 0 or missing_required_kpis or missing_balance_tables or blank_radfrac_product_streams:
         results_status = "incomplete"
+    elif model_quality_blocking:
+        results_status = "readable_model_quality_failed"
     elif enforce_acceptance_targets and not acceptance.get("passed", False):
         results_status = "readable_acceptance_failed"
     else:
@@ -405,8 +587,10 @@ def _build_simulation_diagnostics(
         status = "results_unreadable" if stream_numeric_rows == 0 and block_numeric_rows == 0 else "results_incomplete"
     elif stream_numeric_rows == 0 and block_numeric_rows == 0:
         status = "results_unreadable"
-    elif stream_numeric_rows == 0 or block_numeric_rows == 0 or missing_required_kpis or missing_balance_tables:
+    elif stream_numeric_rows == 0 or block_numeric_rows == 0 or missing_required_kpis or missing_balance_tables or blank_radfrac_product_streams:
         status = "results_incomplete"
+    elif model_quality_blocking:
+        status = "model_quality_failed"
     elif enforce_acceptance_targets and not acceptance.get("passed", False):
         status = "acceptance_failed"
     else:
@@ -422,6 +606,8 @@ def _build_simulation_diagnostics(
         summary = "Aspen produced partial outputs, but the run is missing required result coverage or KPIs."
     elif status == "acceptance_failed":
         summary = "Simulation ran and extracted successfully, but it did not meet the declared acceptance criteria."
+    elif status == "model_quality_failed":
+        summary = "Simulation ran and extracted successfully, but Aspen reported a blocking model-quality warning."
     elif not enforce_acceptance_targets:
         summary = "Simulation outputs are readable; process acceptance targets were recorded but not enforced."
     else:
@@ -450,6 +636,16 @@ def _build_simulation_diagnostics(
         "flowsheet_verification": flowsheet_verification,
         "session_diagnostics": session_diagnostics,
         "extraction_diagnostics": extraction_diagnostics,
+        "stream_extraction": stream_extraction,
+        "terminal_mass_closure": terminal_mass_closure,
+        "batch_history_diagnostics": history_diagnostics,
+        "post_com_history_diagnostics": post_com_history_diagnostics,
+        "model_quality_warnings": model_quality_warnings,
+        "combined_model_quality_warnings": model_quality_warnings,
+        "nrtl_binary_parameters_status": nrtl_binary_parameters.get("status"),
+        "nrtl_binary_parameters": nrtl_binary_parameters,
+        "component_loss_checks": acceptance.get("component_loss_checks", []),
+        "lights_recovery": acceptance.get("lights_recovery", {}),
         "issues": issues,
     }
 
@@ -647,9 +843,15 @@ def _batch_history_issues(batch_result: AspenBatchResult) -> list[str]:
     return issues
 
 
-def _build_batch_first_diagnostics(batch_result: AspenBatchResult, generated_inp_path: Path) -> dict[str, Any]:
+def _build_batch_first_diagnostics(
+    batch_result: AspenBatchResult,
+    generated_inp_path: Path,
+    spec: dict[str, Any],
+) -> dict[str, Any]:
     status = "build_verified" if batch_result.succeeded else "batch_failed"
-    return {
+    model_quality_warnings = extract_model_quality_warnings(batch_result.history_diagnostics)
+    nrtl_binary_parameters = assess_nrtl_binary_parameters(spec, batch_result.history_diagnostics)
+    diagnostics = {
         "passed": batch_result.succeeded,
         "status": status,
         "build_valid": batch_result.succeeded,
@@ -658,14 +860,21 @@ def _build_batch_first_diagnostics(batch_result: AspenBatchResult, generated_inp
         "generated_inp_path": str(generated_inp_path),
         "batch_archive_path": batch_result.archive_path,
         "history_diagnostics": batch_result.history_diagnostics,
+        "batch_history_diagnostics": batch_result.history_diagnostics,
+        "model_quality_warnings": model_quality_warnings,
+        "nrtl_binary_parameters_status": nrtl_binary_parameters.get("status"),
+        "nrtl_binary_parameters": nrtl_binary_parameters,
         "batch_engine": batch_result.to_diagnostics(),
         "flowsheet_verification": {"build_valid": batch_result.succeeded},
         "diagnostics": {
             "batch_engine": batch_result.to_diagnostics(),
             "generated_inp_path": str(generated_inp_path),
+            "model_quality_warnings": model_quality_warnings,
+            "nrtl_binary_parameters": nrtl_binary_parameters,
         },
         "issues": _batch_history_issues(batch_result),
     }
+    return _refresh_history_quality_diagnostics(diagnostics, spec)
 
 
 def load_bkp_and_extract_results(
@@ -676,6 +885,7 @@ def load_bkp_and_extract_results(
     visible: bool = False,
     timeout_seconds: int = 1800,
     context_probe_path: str | Path | None = None,
+    save_output_archive: bool = True,
 ) -> BkpExtractionResult:
     archive_path = _resolve_path(bkp_path)
     if not archive_path.is_file():
@@ -730,14 +940,20 @@ def load_bkp_and_extract_results(
         results: dict[str, Any] = {}
         if status == "converged":
             results = extract_results(aspen, spec)
-            try:
-                aspen.SaveAs(str(layout.output_apw_path))
-                session_result.diagnostics["output_archive_path"] = str(layout.output_apw_path)
-                session_result.diagnostics["output_archive_save_status"] = "saved"
-            except Exception as exc:
+            session_result.diagnostics["output_archive_path"] = str(layout.output_apw_path)
+            if save_output_archive:
+                try:
+                    aspen.SaveAs(str(layout.output_apw_path))
+                    session_result.diagnostics["output_archive_save_status"] = "saved"
+                except Exception as exc:
+                    session_result.diagnostics["output_archive_save_status"] = "skipped"
+                    session_result.diagnostics["output_archive_save_error"] = str(exc)
+            else:
                 session_result.diagnostics["output_archive_path"] = str(layout.output_apw_path)
                 session_result.diagnostics["output_archive_save_status"] = "skipped"
-                session_result.diagnostics["output_archive_save_error"] = str(exc)
+                session_result.diagnostics["output_archive_save_reason"] = (
+                    "batch_archive_is_authoritative_for_enforced_acceptance_gate"
+                )
 
         return BkpExtractionResult(
             session_result=session_result,
@@ -836,7 +1052,7 @@ def run_process_batch_first(
             timeout_seconds=batch_timeout_seconds,
             engine_path=engine_path,
         )
-        build_diagnostics = _build_batch_first_diagnostics(batch_result, layout.generated_inp_path)
+        build_diagnostics = _build_batch_first_diagnostics(batch_result, layout.generated_inp_path, plain_spec)
         _write_json(layout.results_dir / "build_diagnostics.json", build_diagnostics)
 
         if not batch_result.succeeded:
@@ -853,6 +1069,11 @@ def run_process_batch_first(
                 "flowsheet_verification": {"build_valid": False},
                 "session_diagnostics": build_diagnostics.get("diagnostics", {}),
                 "extraction_diagnostics": {},
+                "model_quality_warnings": build_diagnostics.get("model_quality_warnings", []),
+                "combined_model_quality_warnings": build_diagnostics.get("combined_model_quality_warnings", []),
+                "batch_history_diagnostics": build_diagnostics.get("batch_history_diagnostics", {}),
+                "nrtl_binary_parameters_status": build_diagnostics.get("nrtl_binary_parameters_status"),
+                "nrtl_binary_parameters": build_diagnostics.get("nrtl_binary_parameters", {}),
                 "issues": build_diagnostics.get("issues", []),
             }
             _write_json(layout.results_dir / "simulation_diagnostics.json", simulation_diagnostics)
@@ -880,6 +1101,7 @@ def run_process_batch_first(
             visible=visible,
             timeout_seconds=timeout_seconds,
             context_probe_path=layout.results_dir / "context_probe.json",
+            save_output_archive=not enforce_acceptance_targets,
         )
         session_result = extraction.session_result
         build_diagnostics["build_mechanism_used"] = "aspen_batch+InitFromArchive2"
@@ -887,6 +1109,12 @@ def run_process_batch_first(
         build_diagnostics["context_probe_path"] = str(layout.results_dir / "context_probe.json")
         build_diagnostics["diagnostics"]["archive_load_mechanism"] = "InitFromArchive2"
         build_diagnostics["diagnostics"]["context_probe_path"] = str(layout.results_dir / "context_probe.json")
+        post_com_history = _parse_post_com_history(layout, layout.generated_inp_path)
+        _refresh_history_quality_diagnostics(
+            build_diagnostics,
+            plain_spec,
+            post_com_history_diagnostics=post_com_history,
+        )
         _write_json(layout.results_dir / "build_diagnostics.json", build_diagnostics)
 
         status = str(session_result.convergence_status).strip().lower()
@@ -902,6 +1130,12 @@ def run_process_batch_first(
                 "simulation_time_seconds": session_result.simulation_time_seconds,
                 "session_diagnostics": dict(session_result.diagnostics),
                 "flowsheet_verification": build_diagnostics.get("flowsheet_verification", {}),
+                "model_quality_warnings": build_diagnostics.get("model_quality_warnings", []),
+                "combined_model_quality_warnings": build_diagnostics.get("combined_model_quality_warnings", []),
+                "batch_history_diagnostics": build_diagnostics.get("batch_history_diagnostics", {}),
+                "post_com_history_diagnostics": build_diagnostics.get("post_com_history_diagnostics"),
+                "nrtl_binary_parameters_status": build_diagnostics.get("nrtl_binary_parameters_status"),
+                "nrtl_binary_parameters": build_diagnostics.get("nrtl_binary_parameters", {}),
                 "issues": [f"Session convergence status was '{session_result.convergence_status}'."],
             }
             _write_json(layout.results_dir / "simulation_diagnostics.json", simulation_diagnostics)
@@ -936,7 +1170,19 @@ def run_process_batch_first(
             acceptance,
             enforce_acceptance_targets=enforce_acceptance_targets,
             require_balance_tables=True,
+            build_diagnostics=build_diagnostics,
         )
+        if isinstance(results.get("diagnostics"), dict):
+            results["diagnostics"]["model_quality_warnings"] = simulation_diagnostics.get("model_quality_warnings", [])
+            results["diagnostics"]["combined_model_quality_warnings"] = simulation_diagnostics.get(
+                "combined_model_quality_warnings", []
+            )
+            results["diagnostics"]["nrtl_binary_parameters_status"] = simulation_diagnostics.get(
+                "nrtl_binary_parameters_status"
+            )
+            results["diagnostics"]["nrtl_binary_parameters"] = simulation_diagnostics.get("nrtl_binary_parameters", {})
+            results["diagnostics"]["component_loss_checks"] = simulation_diagnostics.get("component_loss_checks", [])
+            results["diagnostics"]["lights_recovery"] = simulation_diagnostics.get("lights_recovery", {})
         yaml_update_artifacts = _build_yaml_update_artifacts(
             layout,
             plain_spec,
@@ -1251,11 +1497,35 @@ def run_process(
             )
 
         aspen.SaveAs(str(layout.output_apw_path))
+        post_com_history = _parse_post_com_history(layout, layout.generated_inp_path)
+        _refresh_history_quality_diagnostics(
+            build_diagnostics,
+            plain_spec,
+            post_com_history_diagnostics=post_com_history,
+        )
+        _write_json(layout.results_dir / "build_diagnostics.json", build_diagnostics)
 
         results = extract_results(aspen, spec)
         acceptance = validate_acceptance(results, spec)
         results["acceptance"] = acceptance
-        simulation_diagnostics = _build_simulation_diagnostics(plain_spec, session_result, results, acceptance)
+        simulation_diagnostics = _build_simulation_diagnostics(
+            plain_spec,
+            session_result,
+            results,
+            acceptance,
+            build_diagnostics=build_diagnostics,
+        )
+        if isinstance(results.get("diagnostics"), dict):
+            results["diagnostics"]["model_quality_warnings"] = simulation_diagnostics.get("model_quality_warnings", [])
+            results["diagnostics"]["combined_model_quality_warnings"] = simulation_diagnostics.get(
+                "combined_model_quality_warnings", []
+            )
+            results["diagnostics"]["nrtl_binary_parameters_status"] = simulation_diagnostics.get(
+                "nrtl_binary_parameters_status"
+            )
+            results["diagnostics"]["nrtl_binary_parameters"] = simulation_diagnostics.get("nrtl_binary_parameters", {})
+            results["diagnostics"]["component_loss_checks"] = simulation_diagnostics.get("component_loss_checks", [])
+            results["diagnostics"]["lights_recovery"] = simulation_diagnostics.get("lights_recovery", {})
         yaml_update_artifacts = _build_yaml_update_artifacts(
             layout,
             plain_spec,

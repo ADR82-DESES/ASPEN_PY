@@ -8,8 +8,28 @@ VALID_PRESSURE_UNITS = ["bar", "psi", "atm", "kPa", "MPa"]
 VALID_TEMPERATURE_UNITS = ["C", "F", "K", "R"]
 VALID_FLOW_UNITS = ["kg/hr", "kmol/hr", "lb/hr", "lbmol/hr"]
 VALID_PROPERTY_METHODS = ["RK-SOAVE", "IDEAL", "NRTL", "UNIQUAC", "PENG-ROB", "SRK"]
-VALID_BLOCK_TYPES = ["MIXER", "RGIBBS", "HEATER", "FLASH2", "COMPR", "REQUIL", "RPLUG", "FSPLIT", "SEP", "RADFRAC"]
+VALID_BLOCK_TYPES = [
+    "MIXER",
+    "RGIBBS",
+    "HEATER",
+    "FLASH2",
+    "COMPR",
+    "REQUIL",
+    "RPLUG",
+    "FSPLIT",
+    "SEP",
+    "RADFRAC",
+    "VALVE",
+]
 VALID_RATE_BASES = ["MOLEFRAC", "MASSFRAC", "MOLARITY", "MOLALITY", "MASSCONC", "PARTIALPRES"]
+VALID_BINARY_PARAMETER_SOURCE_TYPES = ["aspen_databank", "explicit"]
+VALID_RADFRAC_CONDENSERS = ["TOTAL", "PARTIAL-V"]
+VALID_RADFRAC_REBOILERS = ["KETTLE"]
+VALID_RADFRAC_RATE_BASES = ["MASS", "MOLE"]
+VALID_NRTL_BINARY_PARAMETER_FIELDS = [
+    "aij", "aji", "bij", "bji", "cij", "dij",
+    "eij", "eji", "fij", "fji", "t_lower", "t_upper",
+]
 COMPOSITION_TOLERANCE = 0.001
 
 def create_error(message: str, location: str, suggestion: Optional[str] = None, severity: str = "error") -> Dict[str, Any]:
@@ -41,7 +61,7 @@ def validate_types(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
 
             # Numeric fields
             for field in ["temperature", "pressure", "mass_flow", "mole_flow"]:
-                if field in stream and not isinstance(stream[field], (int, float)):
+                if field in stream and stream[field] is not None and not isinstance(stream[field], (int, float)):
                     errors.append(create_error(f"Field '{field}' must be a number", f"{loc}.{field}", f"Change value '{stream[field]}' to a number", severity="error"))
 
             # String fields
@@ -191,6 +211,354 @@ def validate_compositions(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
                      errors.append(create_error(f"Composition sums to {comp_sum}, expected 1.0", loc, "Normalize composition fractions to sum to 1.0"))
     return errors
 
+def validate_binary_parameters(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Validate source-tagged binary property parameter declarations."""
+    errors = []
+    properties = spec.get("properties")
+    if not isinstance(properties, dict):
+        return errors
+
+    binary_parameters = properties.get("binary_parameters")
+    if binary_parameters is None:
+        return errors
+
+    if not isinstance(binary_parameters, list):
+        return [
+            create_error(
+                "Field 'binary_parameters' must be a list",
+                "properties.binary_parameters",
+                "Define binary parameters as a list of component-pair records",
+            )
+        ]
+
+    allowed_fields = set(VALID_NRTL_BINARY_PARAMETER_FIELDS)
+    allowed_source_types = set(VALID_BINARY_PARAMETER_SOURCE_TYPES)
+    defined_components = {
+        comp.get("id")
+        for comp in spec.get("components", [])
+        if isinstance(comp, dict) and isinstance(comp.get("id"), str)
+    }
+    defined_components_upper = {comp.upper() for comp in defined_components}
+
+    for index, entry in enumerate(binary_parameters):
+        loc = f"properties.binary_parameters[{index}]"
+        if not isinstance(entry, dict):
+            errors.append(create_error("Binary parameter entry must be a dictionary", loc))
+            continue
+
+        components = entry.get("components")
+        if not isinstance(components, list) or len(components) != 2:
+            errors.append(
+                create_error(
+                    "Binary parameter entry must define exactly two components",
+                    f"{loc}.components",
+                    "Use components: [COMP1, COMP2]",
+                )
+            )
+        else:
+            cleaned = []
+            for component in components:
+                if not isinstance(component, str) or not component.strip():
+                    errors.append(
+                        create_error(
+                            "Binary parameter component identifiers must be non-empty strings",
+                            f"{loc}.components",
+                        )
+                    )
+                    continue
+                cleaned.append(component.strip().upper())
+            if len(cleaned) == 2 and cleaned[0] == cleaned[1]:
+                errors.append(create_error("Binary parameter pair must contain two distinct components", f"{loc}.components"))
+            for component in cleaned:
+                if defined_components_upper and component not in defined_components_upper:
+                    errors.append(
+                        create_error(
+                            f"Undefined component '{component}' in binary parameter pair",
+                            f"{loc}.components",
+                            f"Define component '{component}' in components or correct the pair",
+                        )
+                    )
+
+        provenance = entry.get("provenance")
+        if not isinstance(provenance, dict) or not str(provenance.get("source", "")).strip():
+            errors.append(
+                create_error(
+                    "Binary parameter entries require provenance.source",
+                    f"{loc}.provenance",
+                    "Add a source citation, databank reference, or local verification note",
+                )
+            )
+
+        source_type = str(entry.get("source_type", "aspen_databank")).strip()
+        if source_type not in allowed_source_types:
+            errors.append(
+                create_error(
+                    f"Unsupported binary parameter source_type '{source_type}'",
+                    f"{loc}.source_type",
+                    f"Use one of: {', '.join(VALID_BINARY_PARAMETER_SOURCE_TYPES)}",
+                )
+            )
+
+        if source_type == "aspen_databank":
+            databanks = entry.get("databanks")
+            if not isinstance(databanks, list) or not any(str(db).strip() for db in databanks):
+                errors.append(
+                    create_error(
+                        "Databank-backed binary parameters require at least one databank",
+                        f"{loc}.databanks",
+                        "List the Aspen databank(s) that provide the interaction parameters",
+                    )
+                )
+
+        values = entry.get("values")
+        if values is not None:
+            if not isinstance(values, dict):
+                errors.append(create_error("Binary parameter values must be a dictionary", f"{loc}.values"))
+            else:
+                unsupported = sorted(set(values) - allowed_fields)
+                if unsupported:
+                    errors.append(
+                        create_error(
+                            f"Unsupported NRTL binary parameter field(s): {', '.join(unsupported)}",
+                            f"{loc}.values",
+                            f"Use only: {', '.join(VALID_NRTL_BINARY_PARAMETER_FIELDS)}",
+                        )
+                    )
+                for field, value in values.items():
+                    if field in allowed_fields and not isinstance(value, (int, float)):
+                        errors.append(
+                            create_error(
+                                f"Binary parameter value '{field}' must be numeric",
+                                f"{loc}.values.{field}",
+                            )
+                        )
+        elif source_type == "explicit":
+            errors.append(
+                create_error(
+                    "Explicit binary parameters require numeric values",
+                    f"{loc}.values",
+                    "Provide verified NRTL parameter values or use source_type: aspen_databank",
+                )
+            )
+
+    return errors
+
+def _normalized_block_type(block: Dict[str, Any]) -> str:
+    return str(block.get("type", "")).strip().upper()
+
+def _numeric_value(value: Any) -> Optional[float]:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        converted = float(value)
+        if math.isfinite(converted):
+            return converted
+    return None
+
+def validate_distillation_blocks(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Validate supported RADFRAC and pressure-letdown block declarations."""
+    errors: List[Dict[str, Any]] = []
+    blocks = spec.get("blocks")
+    flowsheet = spec.get("flowsheet")
+    if not isinstance(blocks, list):
+        return errors
+
+    connections_by_block: Dict[str, Dict[str, Any]] = {}
+    if isinstance(flowsheet, list):
+        for connection in flowsheet:
+            if isinstance(connection, dict) and isinstance(connection.get("block"), str):
+                connections_by_block[connection["block"].upper()] = connection
+
+    for index, block in enumerate(blocks):
+        if not isinstance(block, dict):
+            continue
+        block_type = _normalized_block_type(block)
+        loc = f"blocks[{index}].{block.get('name', 'unnamed')}"
+
+        if block_type == "VALVE":
+            parameters = block.get("parameters")
+            if not isinstance(parameters, dict):
+                errors.append(create_error("VALVE blocks require parameters", f"{loc}.parameters", "Add parameters: {'P-OUT': <bar>}"))
+                continue
+            outlet_pressure = _numeric_value(parameters.get("P-OUT"))
+            if outlet_pressure is None or outlet_pressure <= 0:
+                errors.append(create_error("VALVE blocks require positive parameters.P-OUT", f"{loc}.parameters.P-OUT", "Set P-OUT to the target outlet pressure in the spec pressure units"))
+
+        if block_type != "RADFRAC":
+            if "radfrac" in block and block.get("radfrac") is not None:
+                errors.append(create_error("Only RADFRAC blocks may define radfrac settings", f"{loc}.radfrac"))
+            continue
+
+        radfrac = block.get("radfrac")
+        if not isinstance(radfrac, dict):
+            errors.append(create_error("RADFRAC blocks require a radfrac settings section", f"{loc}.radfrac", "Add column stages, pressure profile, condenser, reboiler, and rate specs"))
+            continue
+
+        connection = connections_by_block.get(str(block.get("name", "")).upper())
+        if not isinstance(connection, dict):
+            errors.append(create_error("RADFRAC block is not referenced in the flowsheet", loc, "Add a flowsheet entry for this block"))
+        else:
+            inputs = connection.get("inputs")
+            outputs = connection.get("outputs")
+            if not isinstance(inputs, list) or len(inputs) != 1:
+                errors.append(create_error("RADFRAC requires exactly one feed stream in this generator", f"flowsheet[{block.get('name')}].inputs"))
+            if not isinstance(outputs, list) or len(outputs) not in {2, 3}:
+                errors.append(create_error("RADFRAC requires two liquid products or vapor vent plus two liquid products in this generator", f"flowsheet[{block.get('name')}].outputs"))
+
+        n_stages = _numeric_value(radfrac.get("n_stages"))
+        feed_stage = _numeric_value(radfrac.get("feed_stage"))
+        top_pressure = _numeric_value(radfrac.get("top_pressure"))
+        pressure_drop = _numeric_value(radfrac.get("pressure_drop_per_stage"))
+        reflux_ratio = _numeric_value(radfrac.get("reflux_ratio"))
+        max_outer = _numeric_value(radfrac.get("max_outer_iterations"))
+        bottoms_rate = _numeric_value(radfrac.get("bottoms_rate"))
+        distillate_rate = _numeric_value(radfrac.get("distillate_rate"))
+
+        if n_stages is None or n_stages < 3 or not n_stages.is_integer():
+            errors.append(create_error("RADFRAC n_stages must be an integer >= 3", f"{loc}.radfrac.n_stages"))
+        if feed_stage is None or not feed_stage.is_integer() or (n_stages is not None and not (1 <= feed_stage <= n_stages)):
+            errors.append(create_error("RADFRAC feed_stage must be an integer between 1 and n_stages", f"{loc}.radfrac.feed_stage"))
+        if top_pressure is None or top_pressure <= 0:
+            errors.append(create_error("RADFRAC top_pressure must be positive", f"{loc}.radfrac.top_pressure"))
+        if pressure_drop is None or pressure_drop < 0:
+            errors.append(create_error("RADFRAC pressure_drop_per_stage must be nonnegative", f"{loc}.radfrac.pressure_drop_per_stage"))
+        if reflux_ratio is None or reflux_ratio <= 0:
+            errors.append(create_error("RADFRAC reflux_ratio must be positive", f"{loc}.radfrac.reflux_ratio"))
+        if max_outer is None or max_outer < 1 or not max_outer.is_integer():
+            errors.append(create_error("RADFRAC max_outer_iterations must be a positive integer", f"{loc}.radfrac.max_outer_iterations"))
+        if (bottoms_rate is None) == (distillate_rate is None):
+            errors.append(create_error("RADFRAC requires exactly one of bottoms_rate or distillate_rate", f"{loc}.radfrac"))
+        if bottoms_rate is not None and bottoms_rate <= 0:
+            errors.append(create_error("RADFRAC bottoms_rate must be positive", f"{loc}.radfrac.bottoms_rate"))
+        if distillate_rate is not None and distillate_rate <= 0:
+            errors.append(create_error("RADFRAC distillate_rate must be positive", f"{loc}.radfrac.distillate_rate"))
+
+        condenser = str(radfrac.get("condenser", "")).strip().upper()
+        reboiler = str(radfrac.get("reboiler", "")).strip().upper()
+        rate_basis = str(radfrac.get("rate_basis", "")).strip().upper()
+        if condenser not in VALID_RADFRAC_CONDENSERS:
+            errors.append(create_error(f"Unsupported RADFRAC condenser '{radfrac.get('condenser')}'", f"{loc}.radfrac.condenser", f"Use one of: {', '.join(VALID_RADFRAC_CONDENSERS)}"))
+        if reboiler not in VALID_RADFRAC_REBOILERS:
+            errors.append(create_error(f"Unsupported RADFRAC reboiler '{radfrac.get('reboiler')}'", f"{loc}.radfrac.reboiler", f"Use one of: {', '.join(VALID_RADFRAC_REBOILERS)}"))
+        if rate_basis not in VALID_RADFRAC_RATE_BASES:
+            errors.append(create_error(f"Unsupported RADFRAC rate_basis '{radfrac.get('rate_basis')}'", f"{loc}.radfrac.rate_basis", f"Use one of: {', '.join(VALID_RADFRAC_RATE_BASES)}"))
+
+        if n_stages is not None and top_pressure is not None and pressure_drop is not None:
+            bottom_pressure = top_pressure + pressure_drop * (n_stages - 1)
+            if bottom_pressure + 1e-12 < top_pressure:
+                errors.append(create_error("RADFRAC bottom pressure must be greater than or equal to top pressure", f"{loc}.radfrac.pressure_drop_per_stage"))
+
+    return errors
+
+def validate_product_conditions(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
+    errors: List[Dict[str, Any]] = []
+    targets = spec.get("targets")
+    if not isinstance(targets, dict):
+        return errors
+    product_conditions = targets.get("product_conditions")
+    if product_conditions is None:
+        return errors
+    if not isinstance(product_conditions, list):
+        return [create_error("targets.product_conditions must be a list", "targets.product_conditions")]
+    defined_streams = {
+        stream.get("name")
+        for stream in spec.get("streams", [])
+        if isinstance(stream, dict) and isinstance(stream.get("name"), str)
+    }
+    defined_streams_upper = {stream.upper() for stream in defined_streams}
+    for index, condition in enumerate(product_conditions):
+        loc = f"targets.product_conditions[{index}]"
+        if not isinstance(condition, dict):
+            errors.append(create_error("Product condition entry must be a dictionary", loc))
+            continue
+        stream = str(condition.get("stream", "")).strip()
+        if not stream:
+            errors.append(create_error("Product condition requires stream", f"{loc}.stream"))
+        elif defined_streams_upper and stream.upper() not in defined_streams_upper:
+            errors.append(create_error(f"Product condition references undefined stream '{stream}'", f"{loc}.stream"))
+        pressure = condition.get("pressure")
+        if pressure is not None:
+            pressure_value = _numeric_value(pressure)
+            tolerance_value = _numeric_value(condition.get("pressure_tolerance", 0.05))
+            if pressure_value is None or pressure_value <= 0:
+                errors.append(create_error("Product condition pressure must be positive", f"{loc}.pressure"))
+            if tolerance_value is None or tolerance_value < 0:
+                errors.append(create_error("Product condition pressure_tolerance must be nonnegative", f"{loc}.pressure_tolerance"))
+        temperature = condition.get("temperature")
+        if temperature is not None:
+            if _numeric_value(temperature) is None:
+                errors.append(create_error("Product condition temperature must be numeric", f"{loc}.temperature"))
+            tolerance_value = _numeric_value(condition.get("temperature_tolerance", 1.0))
+            if tolerance_value is None or tolerance_value < 0:
+                errors.append(create_error("Product condition temperature_tolerance must be nonnegative", f"{loc}.temperature_tolerance"))
+    return errors
+
+def validate_component_loss_limits(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
+    errors: List[Dict[str, Any]] = []
+    targets = spec.get("targets")
+    if not isinstance(targets, dict):
+        return errors
+    limits = targets.get("component_loss_limits")
+    if limits is None:
+        return errors
+    if not isinstance(limits, list):
+        return [create_error("targets.component_loss_limits must be a list", "targets.component_loss_limits")]
+
+    defined_streams = {
+        stream.get("name")
+        for stream in spec.get("streams", [])
+        if isinstance(stream, dict) and isinstance(stream.get("name"), str)
+    }
+    defined_streams_upper = {stream.upper() for stream in defined_streams}
+    defined_components = {
+        component.get("id")
+        for component in spec.get("components", [])
+        if isinstance(component, dict) and isinstance(component.get("id"), str)
+    }
+    defined_components_upper = {component.upper() for component in defined_components}
+
+    for index, limit in enumerate(limits):
+        loc = f"targets.component_loss_limits[{index}]"
+        if not isinstance(limit, dict):
+            errors.append(create_error("Component loss limit entry must be a dictionary", loc))
+            continue
+
+        stream = str(limit.get("stream", "")).strip()
+        component = str(limit.get("component", "")).strip()
+        if not stream:
+            errors.append(create_error("Component loss limit requires stream", f"{loc}.stream"))
+        elif defined_streams_upper and stream.upper() not in defined_streams_upper:
+            errors.append(create_error(f"Component loss limit references undefined stream '{stream}'", f"{loc}.stream"))
+
+        if not component:
+            errors.append(create_error("Component loss limit requires component", f"{loc}.component"))
+        elif defined_components_upper and component.upper() not in defined_components_upper:
+            errors.append(create_error(f"Component loss limit references undefined component '{component}'", f"{loc}.component"))
+
+        max_kg_hr = _numeric_value(limit.get("max_kg_hr"))
+        max_tpd = _numeric_value(limit.get("max_tpd"))
+        if (max_kg_hr is None) == (max_tpd is None):
+            errors.append(create_error("Component loss limit requires exactly one of max_kg_hr or max_tpd", loc))
+        if max_kg_hr is not None and max_kg_hr < 0:
+            errors.append(create_error("Component loss max_kg_hr must be nonnegative", f"{loc}.max_kg_hr"))
+        if max_tpd is not None and max_tpd < 0:
+            errors.append(create_error("Component loss max_tpd must be nonnegative", f"{loc}.max_tpd"))
+
+        baseline_kg_hr = _numeric_value(limit.get("baseline_kg_hr"))
+        baseline_tpd = _numeric_value(limit.get("baseline_tpd"))
+        if baseline_kg_hr is not None and baseline_kg_hr <= 0:
+            errors.append(create_error("Component loss baseline_kg_hr must be positive", f"{loc}.baseline_kg_hr"))
+        if baseline_tpd is not None and baseline_tpd <= 0:
+            errors.append(create_error("Component loss baseline_tpd must be positive", f"{loc}.baseline_tpd"))
+        if baseline_kg_hr is not None and baseline_tpd is not None:
+            errors.append(create_error("Component loss limit accepts only one baseline field", loc))
+
+        basis = str(limit.get("basis", "mass")).strip().lower()
+        if basis != "mass":
+            errors.append(create_error("Component loss limit currently supports only basis: mass", f"{loc}.basis"))
+
+    return errors
+
 def validate_stream_connectivity(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Validate that input streams used in flowsheet are defined feeds or produced internally."""
     errors = []
@@ -275,38 +643,15 @@ def validate_schema_structure(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
     return errors
 
 def validate_spec(spec: Dict[str, Any]) -> Dict[str, Any]:
+    """Compatibility wrapper for the canonical validator implementation.
+
+    Keep this import path working for older callers, but route all full-spec
+    validation through ``aspen_automation.validator.validate_spec`` so schema
+    and validator reports cannot diverge.
     """
-    Run full validation on the specification.
+    from .validator import validate_spec as _canonical_validate_spec
 
-    Returns:
-        dict: Validation report with 'valid' boolean and list of 'errors'
-    """
-    all_errors = []
-
-    # Run all validators
-    # Order matters slightly: structure -> types -> references -> logic
-
-    all_errors.extend(validate_schema_structure(spec))
-    if any(e["location"] == "root" for e in all_errors):
-         # If root is not a dict, stop immediately
-         return {"valid": False, "errors": all_errors}
-
-    all_errors.extend(validate_types(spec))
-    all_errors.extend(validate_required_fields(spec))
-
-    # Only proceed with reference/logic validation if structure/types are mostly sane
-    # But for comprehensive reporting, we can try to run them anyway, carefully
-
-    all_errors.extend(validate_units(spec))
-    all_errors.extend(validate_component_references(spec))
-    all_errors.extend(validate_block_references(spec))
-    all_errors.extend(validate_stream_connectivity(spec))
-    all_errors.extend(validate_compositions(spec))
-
-    return {
-        "valid": len(all_errors) == 0,
-        "errors": all_errors
-    }
+    return _canonical_validate_spec(spec)
 
 
 # --------------------------------------------------------------------------- #
@@ -331,10 +676,87 @@ class Component(BaseModel):
     name: str
     formula: Optional[str] = None
 
+class BinaryParameterProvenance(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    source: str
+    reference: Optional[str] = None
+    locator: Optional[str] = None
+    notes: Optional[str] = None
+    verified_by: Optional[str] = None
+    verified_on: Optional[str] = None
+
+    @field_validator("source")
+    @classmethod
+    def validate_source(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("provenance.source cannot be empty")
+        return cleaned
+
+class BinaryParameter(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    components: List[str]
+    model: str = "NRTL"
+    source_type: str = "aspen_databank"
+    parameter_set: Optional[str] = None
+    databanks: Optional[List[str]] = None
+    values: Optional[Dict[str, float]] = None
+    units: Optional[Dict[str, str]] = None
+    basis: Optional[str] = None
+    provenance: BinaryParameterProvenance
+
+    @field_validator("components")
+    @classmethod
+    def validate_components(cls, value: List[str]) -> List[str]:
+        if len(value) != 2:
+            raise ValueError("binary parameter components must contain exactly two entries")
+        cleaned = [component.strip().upper() for component in value]
+        if any(not component for component in cleaned):
+            raise ValueError("binary parameter components cannot be empty")
+        if cleaned[0] == cleaned[1]:
+            raise ValueError("binary parameter components must be distinct")
+        return cleaned
+
+    @field_validator("model")
+    @classmethod
+    def validate_model(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if cleaned != "NRTL":
+            raise ValueError("only NRTL binary parameters are currently supported")
+        return cleaned
+
+    @field_validator("source_type")
+    @classmethod
+    def validate_source_type(cls, value: str) -> str:
+        cleaned = value.strip()
+        if cleaned not in VALID_BINARY_PARAMETER_SOURCE_TYPES:
+            allowed = ", ".join(VALID_BINARY_PARAMETER_SOURCE_TYPES)
+            raise ValueError(f"source_type must be one of: {allowed}")
+        return cleaned
+
+    @field_validator("values")
+    @classmethod
+    def validate_values(cls, value: Optional[Dict[str, float]]) -> Optional[Dict[str, float]]:
+        if value is None:
+            return value
+        unsupported = sorted(set(value) - set(VALID_NRTL_BINARY_PARAMETER_FIELDS))
+        if unsupported:
+            raise ValueError(f"unsupported NRTL binary parameter field(s): {', '.join(unsupported)}")
+        return value
+
+    @model_validator(mode="after")
+    def validate_source_payload(self) -> "BinaryParameter":
+        if self.source_type == "aspen_databank" and not self.databanks:
+            raise ValueError("databank-backed binary parameters require databanks")
+        if self.source_type == "explicit" and not self.values:
+            raise ValueError("explicit binary parameters require values")
+        return self
+
 class Properties(BaseModel):
     model_config = ConfigDict(extra="forbid")
     method: str
     databanks: Optional[List[str]] = None
+    binary_parameters: Optional[List[BinaryParameter]] = None
 
 class FlowsheetConnection(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -373,6 +795,40 @@ class Block(BaseModel):
     reactions: Optional[str] = None
     split_fractions: Optional[List["SplitFraction"]] = None
     sep_fractions: Optional[List["SepFraction"]] = None
+    radfrac: Optional["RadFracSpec"] = None
+
+    @field_validator("type")
+    @classmethod
+    def validate_block_type(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if cleaned not in VALID_BLOCK_TYPES:
+            allowed = ", ".join(VALID_BLOCK_TYPES)
+            raise ValueError(f"block type must be one of: {allowed}")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_model_specific_payload(self) -> "Block":
+        block_type = self.type.upper()
+        if block_type == "RADFRAC":
+            if self.radfrac is None:
+                raise ValueError("RADFRAC blocks require radfrac settings")
+            if self.split_fractions or self.sep_fractions:
+                raise ValueError("RADFRAC blocks cannot define split_fractions or sep_fractions")
+        elif self.radfrac is not None:
+            raise ValueError("radfrac settings are only valid for RADFRAC blocks")
+
+        if block_type == "VALVE":
+            parameters = self.parameters or {}
+            outlet_pressure = parameters.get("P-OUT")
+            if outlet_pressure is None:
+                raise ValueError("VALVE blocks require parameters.P-OUT")
+            try:
+                pressure = float(outlet_pressure)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("VALVE parameters.P-OUT must be numeric") from exc
+            if pressure <= 0:
+                raise ValueError("VALVE parameters.P-OUT must be positive")
+        return self
 
 class ChemistryStoichiometry(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -471,16 +927,158 @@ class SepFraction(BaseModel):
     component: str
     fraction: float
 
+class RadFracSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    n_stages: int
+    feed_stage: int
+    condenser: str
+    reboiler: str
+    top_pressure: float
+    pressure_drop_per_stage: float
+    reflux_ratio: float
+    bottoms_rate: Optional[float] = None
+    distillate_rate: Optional[float] = None
+    rate_basis: str
+    max_outer_iterations: int
+
+    @field_validator("condenser")
+    @classmethod
+    def validate_condenser(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if cleaned not in VALID_RADFRAC_CONDENSERS:
+            allowed = ", ".join(VALID_RADFRAC_CONDENSERS)
+            raise ValueError(f"condenser must be one of: {allowed}")
+        return cleaned
+
+    @field_validator("reboiler")
+    @classmethod
+    def validate_reboiler(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if cleaned not in VALID_RADFRAC_REBOILERS:
+            allowed = ", ".join(VALID_RADFRAC_REBOILERS)
+            raise ValueError(f"reboiler must be one of: {allowed}")
+        return cleaned
+
+    @field_validator("rate_basis")
+    @classmethod
+    def validate_rate_basis(cls, value: str) -> str:
+        cleaned = value.strip().upper()
+        if cleaned not in VALID_RADFRAC_RATE_BASES:
+            allowed = ", ".join(VALID_RADFRAC_RATE_BASES)
+            raise ValueError(f"rate_basis must be one of: {allowed}")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_column_specs(self) -> "RadFracSpec":
+        if self.n_stages < 3:
+            raise ValueError("n_stages must be >= 3")
+        if not 1 <= self.feed_stage <= self.n_stages:
+            raise ValueError("feed_stage must be between 1 and n_stages")
+        if self.top_pressure <= 0:
+            raise ValueError("top_pressure must be positive")
+        if self.pressure_drop_per_stage < 0:
+            raise ValueError("pressure_drop_per_stage must be nonnegative")
+        if self.reflux_ratio <= 0:
+            raise ValueError("reflux_ratio must be positive")
+        if self.max_outer_iterations < 1:
+            raise ValueError("max_outer_iterations must be positive")
+        has_bottoms = self.bottoms_rate is not None
+        has_distillate = self.distillate_rate is not None
+        if has_bottoms == has_distillate:
+            raise ValueError("exactly one of bottoms_rate or distillate_rate must be provided")
+        if self.bottoms_rate is not None and self.bottoms_rate <= 0:
+            raise ValueError("bottoms_rate must be positive")
+        if self.distillate_rate is not None and self.distillate_rate <= 0:
+            raise ValueError("distillate_rate must be positive")
+        return self
+
 class PurityTarget(BaseModel):
     model_config = ConfigDict(extra="forbid")
     expression: str
     min_value: float
+
+class ProductConditionTarget(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    stream: str
+    pressure: Optional[float] = None
+    pressure_tolerance: float = 0.05
+    temperature: Optional[float] = None
+    temperature_tolerance: float = 1.0
+
+    @field_validator("stream")
+    @classmethod
+    def validate_stream(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("stream cannot be empty")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_conditions(self) -> "ProductConditionTarget":
+        if self.pressure is None and self.temperature is None:
+            raise ValueError("at least one of pressure or temperature must be provided")
+        if self.pressure is not None and self.pressure <= 0:
+            raise ValueError("pressure must be positive")
+        if self.pressure_tolerance < 0:
+            raise ValueError("pressure_tolerance must be nonnegative")
+        if self.temperature_tolerance < 0:
+            raise ValueError("temperature_tolerance must be nonnegative")
+        return self
+
+class ComponentLossLimitTarget(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    stream: str
+    component: str
+    max_kg_hr: Optional[float] = None
+    max_tpd: Optional[float] = None
+    basis: str = "mass"
+    description: Optional[str] = None
+    baseline_kg_hr: Optional[float] = None
+    baseline_tpd: Optional[float] = None
+
+    @field_validator("stream", "component")
+    @classmethod
+    def validate_nonempty_identifier(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("value cannot be empty")
+        return cleaned
+
+    @field_validator("basis")
+    @classmethod
+    def validate_basis(cls, value: str) -> str:
+        cleaned = value.strip().lower()
+        if cleaned != "mass":
+            raise ValueError("only basis: mass is currently supported")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_limit(self) -> "ComponentLossLimitTarget":
+        has_kg_hr = self.max_kg_hr is not None
+        has_tpd = self.max_tpd is not None
+        if has_kg_hr == has_tpd:
+            raise ValueError("exactly one of max_kg_hr or max_tpd must be provided")
+        if self.max_kg_hr is not None and self.max_kg_hr < 0:
+            raise ValueError("max_kg_hr must be nonnegative")
+        if self.max_tpd is not None and self.max_tpd < 0:
+            raise ValueError("max_tpd must be nonnegative")
+        has_baseline_kg_hr = self.baseline_kg_hr is not None
+        has_baseline_tpd = self.baseline_tpd is not None
+        if has_baseline_kg_hr and has_baseline_tpd:
+            raise ValueError("only one baseline field may be provided")
+        if self.baseline_kg_hr is not None and self.baseline_kg_hr <= 0:
+            raise ValueError("baseline_kg_hr must be positive")
+        if self.baseline_tpd is not None and self.baseline_tpd <= 0:
+            raise ValueError("baseline_tpd must be positive")
+        return self
 
 class Targets(BaseModel):
     model_config = ConfigDict(extra="forbid")
     production_rate_tpd: float
     tolerance: float = 0.01
     purity: Optional[PurityTarget] = None
+    product_conditions: Optional[List[ProductConditionTarget]] = None
+    component_loss_limits: Optional[List[ComponentLossLimitTarget]] = None
 
 class FlowsheetingOptions(BaseModel):
     model_config = ConfigDict(extra="forbid")

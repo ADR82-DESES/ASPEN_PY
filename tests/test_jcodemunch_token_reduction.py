@@ -8,7 +8,10 @@ from datetime import timedelta
 from pathlib import Path
 from uuid import uuid4
 
-import tiktoken
+import pytest
+
+tiktoken = pytest.importorskip("tiktoken")
+mcp = pytest.importorskip("mcp")
 from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
