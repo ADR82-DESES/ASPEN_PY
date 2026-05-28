@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 
-LEGACY_PATH = Path("archive/root_probes/run_minimal_legacy.py")
+LEGACY_PATH = Path("legacy_old_files/archive/root_probes/run_minimal_legacy.py")
 NOTEBOOK_PATH = Path("notebooks/process_library_runner.ipynb")
 
 

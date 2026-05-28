@@ -32,8 +32,8 @@ process_library/**/process.bak*.yaml
 # Simulation / pipeline run outputs
 logs/
 *.log
-archive/runtime_outputs/
-archive/local_outputs/
+legacy_old_files/archive/runtime_outputs/
+legacy_old_files/archive/local_outputs/
 /promising_apis_log.txt
 
 # Pytest temporary output directories

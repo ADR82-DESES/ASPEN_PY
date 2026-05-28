@@ -9,7 +9,8 @@ Included:
 - `notebooks/methanol_example_runner.ipynb`: methanol-only diagnostics, remediation, and tuning workflow.
 - `process_library/methanol/process.yaml`: working methanol process-library example tuned to the validated 10k TPD screening case.
 - `templates/`: compatible YAML/INP templates retained for starting points and tests.
-- `tests/`: unit, contract, and integration tests from the source project.
+- `tests/`: unit, contract, integration, and fixture tests from the source project.
+- `legacy_old_files/`: unsupported manual probes and optional historical artifacts kept out of normal test collection.
 - Root compatibility wrappers: `main.py`, `run_methanol_plant.py`, and `run_minimal.py`.
 - `.gitignore`, `pyproject.toml`, and `pixi.toml`: ignore, dependency, and test environment references.
 

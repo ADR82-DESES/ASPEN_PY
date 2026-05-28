@@ -46,12 +46,12 @@ The canonical 10k TPD methanol screening case lives at `process_library/methanol
 aspen_automation/       Supported Python package
 process_library/        Canonical process specs
 notebooks/              Generic live workflow plus methanol example notebook
-tests/                  Unit, contract, and integration tests
-docs/                   Maintained documentation
+tests/                  Unit, contract, integration, and fixtures
+docs/                   Maintained user, developer, and reference documentation
 templates/              Legacy-compatible YAML/INP templates
-tools/                  Developer tooling
+tools/                  Developer and MCP tooling
 third_party/            Vendored/submodule code
-archive/                Preserved legacy probes, artifacts, and historical docs
+legacy_old_files/       Preserved unsupported probes, artifacts, and historical docs
 .codex/                 Codex skills and portable Aspen workflow bundle
 ```
 
@@ -88,4 +88,4 @@ The canonical methanol spec is tuned to the live-validated screening target:
 - CH3OH purity: about `99.99 wt%`
 - Product stream: `MEOH-PRO`
 
-Historical COM experiments, old generated Aspen files, and one-off probes were preserved under `archive/` for reference.
+Historical COM experiments, old generated Aspen files, manual probes, and old planning notes were preserved under `legacy_old_files/` for reference.
