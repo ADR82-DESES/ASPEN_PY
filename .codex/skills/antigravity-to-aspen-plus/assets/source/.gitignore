@@ -17,7 +17,6 @@ wheels/
 # Aspen Plus generated / runtime artifacts
 process_runs/
 process_runs_*/
-.jcodemunch-cache/
 /*.apw
 /*.bkp
 /*.def
@@ -48,7 +47,6 @@ test_results/
 # Local tooling and IDE config
 .claude/
 .vscode/
-.jcodemunch.jsonc
 Antonio_Codex_Skills/
 
 # Codex skill binaries / external skill packs (not project source)

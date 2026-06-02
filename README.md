@@ -49,8 +49,6 @@ notebooks/              Generic live workflow plus methanol example notebook
 tests/                  Unit, contract, integration, and fixtures
 docs/                   Maintained user, developer, and reference documentation
 templates/              Legacy-compatible YAML/INP templates
-tools/                  Developer and MCP tooling
-third_party/            Vendored/submodule code
 legacy_old_files/       Preserved unsupported probes, artifacts, and historical docs
 .codex/                 Codex skills and portable Aspen workflow bundle
 ```

@@ -24,7 +24,6 @@ markers = [
 norecursedirs = [
     ".codex_pytest_tmp*",
     ".git",
-    ".jcodemunch-cache",
     ".pixi",
     ".pixi-cache",
     ".pytest_cache",
