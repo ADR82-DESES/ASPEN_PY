@@ -11,7 +11,6 @@ Included:
 - `templates/`: compatible YAML/INP templates retained for starting points and tests.
 - `tests/`: unit, contract, integration, and fixture tests from the source project.
 - `legacy_old_files/`: unsupported manual probes and optional historical artifacts kept out of normal test collection.
-- Root compatibility wrappers: `main.py`, `run_methanol_plant.py`, and `run_minimal.py`.
 - `.gitignore`, `pyproject.toml`, and `pixi.toml`: ignore, dependency, and test environment references.
 
 Use `../scripts/bootstrap_aspen_automation.py` from the skill root to copy this source into a clean project. Existing files are skipped by default unless `--force` is supplied.

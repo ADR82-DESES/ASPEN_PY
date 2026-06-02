@@ -55,8 +55,6 @@ legacy_old_files/       Preserved unsupported probes, artifacts, and historical 
 .codex/                 Codex skills and portable Aspen workflow bundle
 ```
 
-Root `main.py`, `run_methanol_plant.py`, and `run_minimal.py` are compatibility wrappers. They point to the archived legacy scripts and the supported generic notebook workflow; they do not launch live Aspen runs by surprise.
-
 ## Validation
 
 Run the supported non-integration suite:

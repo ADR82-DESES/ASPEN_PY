@@ -32,7 +32,6 @@ This skill is self-contained. It includes a working source snapshot under `asset
 - `assets/source/process_library/methanol/process.yaml`: the working methanol process example, tuned to the validated 10k TPD screening case.
 - `assets/source/tests/`: unit, contract, and live integration test sources.
 - `assets/source/templates/`: compatible YAML/INP starting templates.
-- `assets/source/main.py`, `run_methanol_plant.py`, and `run_minimal.py`: compatibility wrappers that point users to the notebook workflow.
 - `assets/source/.gitignore`: ignore rules that keep runtime Aspen artifacts out of source control while preserving canonical `process_library/` specs.
 - `assets/source/pyproject.toml` and `assets/source/pixi.toml`: environment references.
 - `scripts/bootstrap_aspen_automation.py`: non-destructive copy script for fresh projects.
@@ -52,7 +51,6 @@ Required project shape:
 - `process_library/<name>/process.yaml`: canonical process spec.
 - `notebooks/process_library_runner.ipynb`: primary process-agnostic user workflow.
 - `notebooks/methanol_example_runner.ipynb`: methanol example/regression workflow only.
-- Root wrappers (`main.py`, `run_methanol_plant.py`, `run_minimal.py`) should be compatibility pointers only.
 - `aspen_automation/schema.py`: typed schema/validation for components, properties, streams, flowsheet, blocks, reaction sets, kinetic models, and defaults.
 - `aspen_automation/inp_generator.py`: Aspen batch-compatible INP emitter.
 - `aspen_automation/batch_engine.py`: runs Aspen batch and parses `.his`.
