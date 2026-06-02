@@ -1,0 +1,36 @@
+metadata:
+  title: "Invalid Block Ref"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components:
+  - id: "A"
+    name: "A"
+
+properties:
+  method: "IDEAL"
+
+streams:
+  - name: "S1"
+    temperature: 25
+    pressure: 1
+    mole_flow: 100
+    composition:
+      A: 1.0
+  - name: "S2"
+    temperature: 25
+    pressure: 1
+    mole_flow: 100
+    composition:
+      A: 1.0
+
+blocks:
+  - name: "B1"
+    type: "MIXER"
+
+flowsheet:
+  - block: "B_UNKNOWN" # Undefined block
+    inputs: ["S1"]
+    outputs: ["S2"]

@@ -1,59 +1,368 @@
 ---
 name: antigravity-to-aspen-plus
-description: Build and run Aspen Plus simulations in this repo from an Antigravity process specification. Use when Codex needs to turn a process description into the repo schema, verify Aspen Plus COM access, define components and thermodynamics, create streams, blocks, and flowsheet connections, run the case, and export results.
+description: >-
+  Build, run, tune, diagnose, and replicate Aspen Plus process simulations from
+  an Antigravity/process-library specification. Use when Codex needs to create or
+  port the schema-first Aspen automation stack: process.yaml specs, INP
+  generation, Aspen batch translation to BKP, COM BKP loading/extraction,
+  notebook-only execution, diagnostics, result CSV/JSON export, methanol
+  production tuning, equipment selection, INP translator troubleshooting, and
+  live Aspen troubleshooting.
 ---
 
-# Antigravity to Aspen Plus
+# Antigravity To Aspen Plus
 
-Use the repo's schema-first path. Prefer reusing the existing automation code over writing raw Aspen COM logic from scratch.
+Use the repo's schema-first, batch-first path. The normal workflow is:
 
-## Workflow
+`process.yaml -> generate_inp(...) -> run_aspen_batch(...) -> .his/.bkp gate -> InitFromArchive2 COM load -> extract_results(...) -> notebook diagnostics`
 
-1. Translate the Antigravity output into the repo spec shape used by `templates/*.yaml`: `metadata`, `components`, `properties.method`, `flowsheet`, `streams`, and `blocks`.
-2. Put thermodynamics in `properties.method`, streams in `streams`, unit ops in `blocks`, and wiring in `flowsheet`.
-3. Validate before opening Aspen. Reuse `load_spec(...)` and `validate_spec(...)`; fix undefined streams or blocks, duplicate names, and compositions that do not sum to 1.0.
-4. Build through `generate_inp(...)` plus `run_simulation_session(..., build_mode="auto")`. This is the stable path for opening Aspen, checking COM, importing the generated case, and running it.
-5. Save and export with `extract_results(...)` or the patterns in `run_methanol_plant.py`.
+Prefer this batch-first capsule path over raw COM block creation. The COM block builder is a legacy/debug fallback, not the primary way to build live cases.
 
-## Reuse These Files
+## Precedence
 
-- `run_methanol_plant.py`: end-to-end example from spec to Aspen run to CSV/JSON export.
-- `aspen_automation/session.py`: COM connection, `InitNew`, import/load fallback, `Reinit`, `Engine.Run2`, and convergence checks.
-- `aspen_automation/extractor.py`: stream, block, KPI, and report extraction.
-- `templates/methanol_plant_atr.yaml`: reference layout for components, thermo, streams, blocks, and connections.
+If this skill conflicts with generic Aspen Plus rules, follow this skill for workflow, file selection, and implementation patterns. Use generic Aspen COM guidance only when this skill is silent.
 
-## Aspen COM Rules
+## Replication Contract
 
-- Initialize Aspen before touching `aspen.Tree`. Use `InitNew()`, import a generated `.inp`, or load an archive.
-- Set `SuppressDialogs = 1`; keep `Visible = True` while debugging.
-- Use absolute file paths for Aspen COM file operations.
-- Write to `\Data\...\Input\...` nodes and read from `\Data\...\Output\...` nodes.
-- If streams or blocks are missing after import, treat that as a build/load problem first.
+This skill is self-contained. It includes a working source snapshot under `assets/source/`:
 
-## Minimal Pattern
+- `assets/source/aspen_automation/`: the batch-first Aspen automation package.
+- `assets/source/notebooks/process_library_runner.ipynb`: the process-agnostic notebook workflow for evidence intake, YAML handoff artifacts, Gate 1/Gate 2 execution, diagnostics, and CSV analysis.
+- `assets/source/notebooks/methanol_example_runner.ipynb`: the methanol-only example, kinetic remediation, tuning campaign, and 10k TPD screening worksheet.
+- `assets/source/process_library/methanol/process.yaml`: the working methanol process example, tuned to the validated 10k TPD screening case.
+- `assets/source/tests/`: unit, contract, and live integration test sources.
+- `assets/source/templates/`: compatible YAML/INP starting templates.
+- `assets/source/.gitignore`: ignore rules that keep runtime Aspen artifacts out of source control while preserving canonical `process_library/` specs.
+- `assets/source/pyproject.toml` and `assets/source/pixi.toml`: environment references.
+- `scripts/bootstrap_aspen_automation.py`: non-destructive copy script for fresh projects.
 
-```python
-from aspen_automation import extract_results, generate_inp, load_spec, run_simulation_session
+When this skill is copied into a new project, install the bundled source before attempting a live Aspen run:
 
-spec = load_spec("templates/my_case.yaml")
-generate_inp(spec, output_path="temp/my_case.inp")
-session = run_simulation_session(
-    spec,
-    build_mode="auto",
-    output_dir="temp/session",
-    keep_alive=True,
-    visible=True,
-)
-
-if str(session.convergence_status).lower() != "converged":
-    raise RuntimeError(session.convergence_status)
-
-results = extract_results(session.aspen, spec)
+```powershell
+python .codex\skills\antigravity-to-aspen-plus\scripts\bootstrap_aspen_automation.py --target .
 ```
 
+By default the bootstrap script merges directories and skips existing files with different contents. Use `--dry-run` to inspect planned copies and `--force` only when intentionally replacing project files.
+
+After bootstrapping, check whether the project has the required architecture. If files or APIs are missing because the target project is intentionally different, adapt from `assets/source/` rather than reconstructing from prose.
+
+Required project shape:
+
+- `process_library/<name>/process.yaml`: canonical process spec.
+- `notebooks/process_library_runner.ipynb`: primary process-agnostic user workflow.
+- `notebooks/methanol_example_runner.ipynb`: methanol example/regression workflow only.
+- `aspen_automation/schema.py`: typed schema/validation for components, properties, streams, flowsheet, blocks, reaction sets, kinetic models, and defaults.
+- `aspen_automation/inp_generator.py`: Aspen batch-compatible INP emitter.
+- `aspen_automation/batch_engine.py`: runs Aspen batch and parses `.his`.
+- `aspen_automation/process_library.py`: high-level runners, especially `run_process_batch_first(...)` and `load_bkp_and_extract_results(...)`.
+- `aspen_automation/session.py`: Aspen COM connection and `InitFromArchive2` support.
+- `aspen_automation/extractor.py`: stream/block/material/energy/KPI extraction.
+- `aspen_automation/capsule_context.py`: process ancestry, Aspen path, COM identity, AppsAnywhere/Cloudpaging markers, localization assembly visibility, and optional diagnostics.
+- `aspen_automation/process_results_analysis.py`: CSV-based analysis helpers.
+- `aspen_automation/process_intake.py`: deterministic source manifest, research brief, and Codex YAML prompt artifact generation.
+- Tests covering schema, INP generation, `.his` parsing, batch-first orchestration, notebook contract, context probing, and process-library behavior.
+
+If the target project does not have this stack, install or port the bundled source in this order:
+
+1. Schema and validation: `schema.py`, spec loading, and `validate_spec(...)`.
+2. INP generation: `generate_inp(...)` plus translator-focused unit tests.
+3. Batch engine: `run_aspen_batch(...)`, `.his` parsing, and `AspenBatchResult.succeeded`.
+4. COM session/load layer: Aspen dispatch, `InitFromArchive2`, visibility/dialog settings, and convergence checks.
+5. Extractor: streams, blocks, material balance, energy balance, KPIs, and report writing.
+6. Batch-first orchestration: `run_process_batch_first(...)` and `load_bkp_and_extract_results(...)`.
+7. Context evidence: `context_probe.json` collection with optional diagnostics marked `skipped` when unavailable.
+8. Process intake: `build_process_intake_artifacts(...)` and its notebook cell for source capture.
+9. Generic notebook: intake, Gate 1, Gate 2, diagnostics, summary, and CSV analysis cells.
+10. Methanol example notebook: methanol-specific diagnostics and tuning only.
+11. Tests and live gates.
+
+Portable user workflow:
+
+1. Launch Aspen Plus from AppsAnywhere/Porticada or the local Aspen installation.
+2. Open `notebooks/process_library_runner.ipynb`.
+3. For a new process, fill `PROCESS_NAME`, `USER_PROCESS_BRIEF`, `SOURCE_PDFS`, `SOURCE_URLS`, `WEB_SEARCH_QUERIES`, and `REFERENCE_NOTES`.
+4. Write `source_manifest.json`, `process_research_brief.md`, and `codex_process_yaml_prompt.md`; give the prompt artifact to Codex to create or revise `process.yaml`.
+5. Restart the kernel and run cells top-to-bottom for discovered processes.
+6. Inspect Gate 1 batch translation, Gate 2 BKP COM load/extraction, diagnostics, result CSVs, and `live_aspen_summary.json`.
+
+Use `notebooks/methanol_example_runner.ipynb` only for the bundled methanol example, kinetic diagnostics, and tuning campaign.
+
+## Process Spec Rules
+
+Translate Antigravity output into the process-library schema:
+
+- Use `metadata`, `components`, `properties.method`, `flowsheet`, `streams`, `blocks`, optional `chemistry`, optional `reaction_sets`, optional `kinetic_models`, and optional `process_defaults`.
+- Put thermodynamics only in `properties.method`.
+- Put stream definitions in `streams`.
+- Put unit operations in `blocks`.
+- Put connections in `flowsheet`.
+- Use `process_defaults.product_stream` for production KPIs; never infer production from the largest terminal stream.
+- Keep `process_library/<name>/process.yaml` canonical. Allow `spec_path` only as a debug override and fail if it conflicts with the canonical process path.
+
+Validate before Aspen:
+
+```python
+from aspen_automation import load_spec, validate_spec
+
+spec = load_spec("process_library/<process_name>/process.yaml")
+validate_spec(spec)
+```
+
+Fix undefined streams/blocks, duplicate names, unsupported block types, invalid reaction links, and compositions that do not sum to 1.0 before generating INP.
+
+## Batch-First Gates
+
+Gate 1 is the Aspen batch translator gate:
+
+- Generate INP with `generate_inp(...)`.
+- Run Aspen batch with `run_aspen_batch(...)`.
+- Treat `.bkp` existence as insufficient.
+- Success requires no timeout/error, archive path present, and `history_diagnostics.status == "converged"` or equivalently no terminal/severe/input-translation errors.
+- If `.his` reports failed input translation, stop and fix INP generation/spec syntax before touching COM.
+
+Gate 2 is the BKP COM load/extraction gate:
+
+- Load the batch-created `.bkp` with `InitFromArchive2`.
+- Extract streams, blocks, material balance, energy balance, KPIs, diagnostics, and reports.
+- Extract readable CSV/JSON results before saving a new `.apw`; treat `SaveAs` as best-effort because Aspen COM can solve cleanly and still drop during archive saving.
+- Do not call `run_simulation_session(..., build_mode="auto")`.
+- Do not re-enter the COM block builder.
+
+Gate 3 is process credibility:
+
+- Require convergence and readable result tables.
+- For methanol or kinetic processes, require nonzero expected product formation before nameplate targets.
+- Display acceptance targets by default, but do not enforce them until reactor/recycle/product KPIs are stable.
+
+## Primary APIs
+
+Use these imports for new work:
+
+```python
+from aspen_automation import (
+    build_codex_results_markdown,
+    build_process_intake_artifacts,
+    generate_inp,
+    load_result_artifact_tables,
+    load_spec,
+    run_aspen_batch,
+    run_process_batch_first,
+    validate_spec,
+)
+```
+
+Notebook/default live run:
+
+```python
+from pathlib import Path
+from aspen_automation import run_process_batch_first
+
+result = run_process_batch_first(
+    Path("process_library/<process_name>"),
+    Path("process_runs/batch_first_capsule"),
+    visible=True,
+    enforce_acceptance_targets=False,
+    timeout_seconds=1800,
+    batch_timeout_seconds=1800,
+    report_format="html",
+)
+
+if not result.succeeded:
+    raise RuntimeError(result.error or result.status)
+```
+
+Gate 1 only:
+
+```python
+from pathlib import Path
+from aspen_automation import generate_inp, load_spec, run_aspen_batch
+
+process_dir = Path("process_library/<process_name>")
+spec = load_spec(process_dir / "process.yaml")
+inp_path = Path("process_runs/gate1") / f"{process_dir.name}_generated.inp"
+generate_inp(spec, output_path=inp_path)
+batch = run_aspen_batch(inp_path, inp_path.parent / "batch", run_id=process_dir.name, timeout_seconds=1800)
+
+if not batch.succeeded:
+    raise RuntimeError(batch.history_diagnostics)
+```
+
+## Notebook Contract
+
+`notebooks/process_library_runner.ipynb` should be the process-agnostic user surface. It must contain:
+
+- Imports for `run_process_batch_first`, `generate_inp`, `load_spec`, `run_aspen_batch`, `load_result_artifact_tables`, and `build_codex_results_markdown`.
+- Process-intake configuration for `PROCESS_NAME`, `USER_PROCESS_BRIEF`, `SOURCE_PDFS`, `SOURCE_URLS`, `WEB_SEARCH_QUERIES`, and `REFERENCE_NOTES`.
+- A cell that writes `source_manifest.json`, `process_research_brief.md`, and `codex_process_yaml_prompt.md` with `build_process_intake_artifacts(...)`.
+- Default `enforce_acceptance_targets=False`.
+- A Gate 1 cell before full execution that generates INP, runs batch, displays `.his` status, archive path, stdout/stderr paths, and first blocking history messages.
+- A Gate 2 execution cell that calls `run_process_batch_first(...)`.
+- Diagnostics cells showing `context_probe.json`, `build_diagnostics.json`, `simulation_diagnostics.json`, `acceptance.json`, and `live_aspen_summary.json`.
+- CSV-based analysis using `load_result_artifact_tables(...)` and `build_codex_results_markdown(...)`.
+- No methanol-specific assumptions such as `B-SYN`, `MEOH-PRO`, purge/ATR sweeps, or `run_methanol_tuning_campaign`.
+
+`notebooks/methanol_example_runner.ipynb` should contain the methanol-specific material:
+
+- `ONLY_PROCESSES={"methanol"}`.
+- Kinetic synthesis-loop diagnostics, recycle composition diagnostics, purge/ATR tuning worksheet, and `run_methanol_tuning_campaign(...)`.
+- The validated 10k TPD screening recipe and methanol tuning traps.
+
+Do not make the user run terminal commands for the standard workflow.
+
+## Context Evidence
+
+For AppsAnywhere/Cloudpaging deployments, prove the worker is inside the virtualized Aspen context. The run should write `context_probe.json` containing:
+
+- Current process ancestry.
+- Resolved `aspen.exe` or Aspen Plus executable path.
+- Aspen COM identity/version details when available.
+- AppsAnywhere/Cloudpaging package markers.
+- Whether `AspenTech.AspenPlus.Localization` is visible from that worker context.
+- Optional Fusion/.NET and ProcMon diagnostics.
+
+Fusion and ProcMon are best-effort only. Missing elevation, unavailable tools, or disabled logging must be recorded as `skipped`, never treated as normal run failures.
+
+## INP Generation Rules
+
+The generated INP must be accepted by Aspen's real batch translator, not just by local tests.
+
+Important patterns:
+
+- Emit real Aspen-supported block types and parameter names.
+- Use `FLOWSHEET` for block connectivity. Do not emit the invalid legacy `FLOWSHEETING` paragraph that caused `UNKNOWN PKW` translator failures.
+- Keep stream flow and composition separate: `SUBSTREAM MIXED TEMP=... PRES=... MASS-FLOW=...` followed by `MOLE-FRAC COMP VALUE / ...`. Do not write component names as secondary keywords on the `MASS-FLOW` sentence.
+- Put block sizing and operating parameters on `PARAM` lines under each `BLOCK`; keep topology in the `FLOWSHEET` paragraph.
+- Keep RPLUG integer parameters like `NPOINT` as integers.
+- For kinetic RPLUG/POWERLAW models, attach reactions through `REACTIONS <set> POWERLAW` and the block `REACTIONS` parameter.
+- Do not duplicate kinetic reactions into unsupported standalone `CHEMISTRY` paragraphs if Aspen expects them in the reaction set.
+- Avoid Aspen batch-invalid reaction paragraphs: no malformed `STOIC` sentences with extra items, no unbalanced stoichiometry, and no invalid reaction-model names such as `REQUIL` when a `POWERLAW` reaction set is intended.
+- Do not include methanation in a methanol-selective synthesis reactor unless the user explicitly requests it.
+- For early infrastructure validation, use screening kinetics and label them as uncalibrated until plant/vendor catalyst data are available.
+
+## Equipment Selection Rules
+
+Choose equipment from the physical intent first, then map it to the supported schema/INP generator. Do not use a block merely because Aspen can translate it.
+
+For ATR-like methanol screening:
+
+- Use `MIXER` for feed and recycle mixing (`MIX-FEED`, `MIX-LOOP`).
+- Use `RGIBBS` for the high-temperature ATR/reforming equilibrium surrogate (`B-ATR`) only; do not use unconstrained Gibbs for selective methanol synthesis.
+- Use `HEATER` for cooling/heating duty targets (`B-COOL`).
+- Use `FLASH2` for vapor/liquid knockouts and crude reactor effluent separation (`B-FLASH`, `B-SEP`) when a screening separator is enough.
+- Use `COMPR` for pressure boost (`B-COMP`).
+- Use `RPLUG` with methanol-selective `POWERLAW` reactions for fixed-bed synthesis (`B-SYN`).
+- Use `FSPLIT` for purge/recycle splits and keep split fractions summing to 1.0.
+- Use `SEP` for the v1 coarse final purification block (`B-DIST`), and defer `RADFRAC` until the generator supports stages, feed locations, condenser/reboiler settings, and product specifications.
+
+For new processes, create the analogous unit-operation lineup before writing YAML. Validate every `flowsheet` block exists in `blocks`, every connected stream exists in `streams`, and every reaction-bearing block references a supported reaction set.
+
+## Methanol-Specific Lessons
+
+For ATR-like methanol process work:
+
+- `B-SYN` should be methanol-selective, typically RPLUG or another kinetic reactor, not unconstrained RGIBBS.
+- Track both total product TPD and component `CH3OH` TPD from `process_defaults.product_stream`, normally `MEOH-PRO`.
+- Report synthesis-loop diagnostics: CO conversion, CO2 conversion, H2 consumption, methanol formation, methane change, recycle/feed stoichiometric number, CH4 mole fraction, and CO2 mole fraction.
+- Tune in this order: prove methanol formation, tune reactor kinetic scale/sizing, tune purge/recycle losses, then tune ATR steam/O2 to move SN toward about 2.0, then improve purification.
+- Treat 10k TPD/nameplate targets as late-stage acceptance targets, not first live-run blockers.
+
+Validated 10k TPD screening recipe for the bundled methanol case:
+
+- Keep `B-SYN` as `RPLUG` with methanol-selective POWERLAW reactions only: CO hydrogenation, CO2 hydrogenation, and WGS/RWGS. Do not attach methanation.
+- Keep the live-validated screening kinetics unless recalibrating: pre-exponential factors `0.01`, `0.005`, and `0.002`; activation energies `0.0`; rate basis `MOLARITY`.
+- Keep purge/recycle at `PURGE=0.15` and `RECYCLE=0.85` for the validated target case.
+- Scale the true fresh feeds, not every intermediate stream: `NG-FEED=440000 kg/hr`, `STEAM=297000 kg/hr`, `O2-FEED=528000 kg/hr`.
+- Set `B-SYN` sizing to `LENGTH=19.613`, `DIAM=4.0`, `NPOINT=20`. `CAT-WT` is documented but inactive unless the INP generator emits it.
+- Keep `process_defaults.product_stream: MEOH-PRO` so production KPIs use the purified product stream, not the purge or largest terminal stream.
+- Live canonical validation produced about `10000.06 TPD` component CH3OH, `10001.28 TPD` total `MEOH-PRO`, `99.9878 wt%` CH3OH, and `R-OUT` CH3OH mole fraction about `0.05804`.
+- The validated loop SN was about `1.566`; this is acceptable for the screening model that met production/purity, but mark it as a future calibration/tuning item rather than pretending it is plant-optimized.
+
+Useful reactor-length bracket at 2x fresh-feed scale with `DIAM=4.0`:
+
+- `LENGTH=19.4`: about `9888 TPD` CH3OH.
+- `LENGTH=19.6`: about `9993 TPD` CH3OH.
+- `LENGTH=19.613`: about `10000 TPD` CH3OH.
+- `LENGTH=19.8`: about `10098 TPD` CH3OH.
+- `LENGTH=20.0`: about `10203 TPD` CH3OH.
+
+Avoid these tuning traps:
+
+- Do not solve low methanol by switching `B-SYN` back to `RGIBBS`; unconstrained Gibbs tends to select methanation or otherwise nonselective chemistry.
+- Do not increase POWERLAW pre-exponential factors blindly beyond the stable range; high factors such as large `x300/x1000` style cases can trigger RPLUG numerical failures.
+- Do not promote larger reactor geometries without a clean `.his`; cases such as very large `LENGTH/DIAM` can fail inside RPLUG despite producing a `.bkp`.
+- Do not require `.apw` save success for run success when CSV/JSON extraction is readable and diagnostics record `output_archive_save_status`.
+
+Reactor-only kinetic sanity diagnostic:
+
+```python
+from aspen_automation import (
+    build_reactor_only_kinetic_sweep_specs,
+    diagnose_kinetic_sweep_results,
+)
+```
+
+Use this before touching ATR or distillation when full-loop methanol is near zero. Sweep pre-exponential factors and zero activation energies while isolating `B-SYN`; if methanol appears, the issue is kinetic scale/units. If methanol stays absent, inspect the Aspen POWERLAW/RPLUG specification.
+
+Methanol production tuning campaign:
+
+```python
+from aspen_automation import run_methanol_tuning_campaign
+
+campaign = run_methanol_tuning_campaign(
+    "process_library/methanol",
+    "process_runs/batch_first_capsule",
+    visible=True,
+    max_cases=40,
+    promote=True,
+)
+```
+
+Use this after a readable Gate 2 run. It creates temporary variant specs, runs staged batch-first Aspen cases, writes `tuning_campaign_summary.csv`, `tuning_campaign_summary.json`, and `best_process.yaml`, and promotes the winner only when the stop rule is met.
+
+## Result Artifacts
+
+Each successful run should write:
+
+- `methanol_generated.inp` or equivalent generated INP.
+- Batch `.his`, `.bkp`, stdout, and stderr.
+- `results/context_probe.json`.
+- `results/build_diagnostics.json`.
+- `results/simulation_diagnostics.json`.
+- `results/acceptance.json`.
+- `results/kpis.json`.
+- `results/streams.csv`.
+- `results/blocks.csv`.
+- `results/material_balance.csv`.
+- `results/energy_balance.csv`.
+- `live_aspen_summary.json` in the run directory.
+- Optional HTML/Markdown report directory.
+- For tuning campaigns: `tuning_campaign_summary.csv`, `tuning_campaign_summary.json`, variant `process.yaml` files, and `best_process.yaml`.
+
+When escalating to IT, include `live_aspen_summary.json`, generated `.his`, `context_probe.json`, stdout/stderr, Event Viewer excerpts if available, OS/.NET version, exact missing assembly messages, and Fusion/.NET logs if available. Ask for AppsAnywhere "Pre-fetch all" and package repair for missing Aspen localization assemblies.
+
+## Test Contract
+
+Before claiming a port or major change works, run focused unit tests and the non-integration suite:
+
+```powershell
+pixi run test-focused
+pixi run test
+```
+
+Live tests should be split:
+
+1. Batch translator acceptance: generated INP emits clean `.bkp`.
+2. Capsule/BKP load: `.bkp` loads through COM and readable CSV/JSON results are produced.
+3. Process credibility: product stream and chemistry make physical sense.
+4. Nameplate acceptance: enforce production/purity/energy targets only after earlier gates are stable.
+
 ## Debug Paths
+
+Useful Aspen tree paths:
 
 - Stream input temperature: `\Data\Streams\STREAM\Input\TEMP\MIXED`
 - Stream output temperature: `\Data\Streams\STREAM\Output\TEMP_OUT\MIXED`
 - Stream output pressure: `\Data\Streams\STREAM\Output\PRES_OUT\MIXED`
 - Block duty: `\Data\Blocks\BLOCK\Output\QNET`
+
+When streams or blocks are missing after load, treat it as an INP translation/BKP load problem before editing result extraction.

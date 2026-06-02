@@ -1,0 +1,48 @@
+metadata:
+  title: "Simple Mixer Plant"
+  description: "A simple mixing process"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components:
+  - id: "H2O"
+    name: "WATER"
+  - id: "ET-OH"
+    name: "ETHANOL"
+
+properties:
+  method: "NRTL"
+
+blocks:
+  - name: "MIX-01"
+    type: "MIXER"
+
+streams:
+  - name: "WATER-IN"
+    temperature: 25
+    pressure: 1.01325
+    mole_flow: 100
+    composition:
+      H2O: 1.0
+
+  - name: "ETHANOL-IN"
+    temperature: 25
+    pressure: 1.01325
+    mole_flow: 50
+    composition:
+      ET-OH: 1.0
+
+  - name: "PRODUCT"
+    temperature: 25
+    pressure: 1.01325
+    mole_flow: 150 # Estimated
+    composition:
+      H2O: 0.5
+      ET-OH: 0.5
+
+flowsheet:
+  - block: "MIX-01"
+    inputs: ["WATER-IN", "ETHANOL-IN"]
+    outputs: ["PRODUCT"]

@@ -1,0 +1,42 @@
+metadata:
+  title: "Methanol Plant"
+  description: "Methanol production from synthesis gas"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+  unknown_metadata_field: "trigger_error"
+
+components:
+  - id: "CH4"
+    name: "METHANE"
+  - id: "H2O"
+    name: "WATER"
+
+properties:
+  method: "PENT-ROB"
+
+flowsheet:
+  - block: "BYPASS"
+    inputs: ["S1"]
+    outputs: ["S2"]
+
+streams:
+  - name: "S1"
+    temperature: 25.0
+    pressure: 1.0
+    mole_flow: 100.0
+    composition:
+      CH4: 1.0
+  - name: "S2"
+    temperature: 25.0
+    pressure: 1.0
+    mole_flow: 100.0
+    composition:
+      CH4: 1.0
+
+blocks:
+  - name: "BYPASS"
+    type: "Separator"
+
+unknown_root_field: "should_fail"

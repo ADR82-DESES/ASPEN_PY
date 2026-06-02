@@ -1,178 +1,87 @@
-# Aspen Plus Python Automation
+# Aspen Plus Batch-First Automation
 
-Automate Aspen Plus chemical process simulations using Python and the COM interface.
+This repository builds, runs, diagnoses, and tunes Aspen Plus process simulations from schema-first `process.yaml` specifications.
 
-## 🚀 Quick Start
+The supported workflow is:
 
-### Prerequisites
-- Aspen Plus installed (tested with v40.0)
-- Python 3.12+
-- Windows OS
-
-### Installation
-```bash
-# Clone or navigate to this directory
-cd ASPEN_PY
-
-# Install dependencies (already done)
-uv sync
+```text
+process.yaml -> generate_inp -> Aspen batch .his/.bkp gate -> InitFromArchive2 -> CSV/JSON extraction -> notebook diagnostics
 ```
 
-### Run Your First Simulation
+The main user surface is the process-agnostic `notebooks/process_library_runner.ipynb`.
+The methanol case is a separate worked example at `notebooks/methanol_example_runner.ipynb`.
 
-**Option 1: Use existing simulation (recommended)**
-```bash
-# 1. Open Aspen Plus and create a simple mixer simulation
-# 2. Save it as MixerSimulation.bkp in this directory
-# 3. Run:
-uv run python simple_run.py
+## Quick Start
+
+1. Launch Aspen Plus from AppsAnywhere/Porticada or your local Aspen installation.
+2. Confirm the supported Pixi environment manager is available, then create the project environment:
+
+```powershell
+pixi --version
+pixi install
+pixi run install-kernel
 ```
 
-**Option 2: Interactive mode**
-```bash
-uv run python final_solution.py
-# Follow the prompts
+3. Open the generic process notebook:
+
+```powershell
+pixi run process-library-notebook
 ```
 
-## 📁 Project Structure
+4. Restart the notebook kernel and run cells top-to-bottom.
 
-```
-ASPEN_PY/
-├── simple_run.py              # ⭐ Main automation script
-├── final_solution.py          # Interactive setup/run script
-├── aspen_mixer_automation.py  # Original automation attempt
-├── QUICK_START.md             # Step-by-step setup guide
-├── FINAL_SUMMARY.md           # Complete project summary
-├── INVESTIGATION_RESULTS.md   # Technical findings
-├── AUTOMATION_GUIDE.md        # Comprehensive guide
-├── simple_diagnostic.py       # Diagnostic tool
-└── results.csv                # Output results
+For a new process, fill the process-intake cell to write `source_manifest.json`, `process_research_brief.md`, and `codex_process_yaml_prompt.md`; then use Codex to create or revise `process_library/<process_name>/process.yaml`.
+
+For the worked methanol example and tuning campaign:
+
+```powershell
+pixi run methanol-example-notebook
 ```
 
-## 📖 Documentation
+The canonical 10k TPD methanol screening case lives at `process_library/methanol/process.yaml`, but it is an example/regression fixture rather than the default assumption for every process.
 
-- **[QUICK_START.md](QUICK_START.md)** - Get started in 5 minutes
-- **[API Usage Guide](docs/API_USAGE.md)** - How to use the Python API
-- **[Validation Rules](docs/VALIDATION_RULES.md)** - Detailed description of validation checks
-- **[Schema Reference](docs/SCHEMA_REFERENCE.md)** - Full YAML/JSON schema definition
-- **[INP Generation Guide](docs/INP_GENERATION.md)** - Guide to producing Aspen Plus input files
-- **[FINAL_SUMMARY.md](docs/FINAL_SUMMARY.md)** - Complete project overview
-- **[INVESTIGATION_RESULTS.md](docs/INVESTIGATION_RESULTS.md)** - Technical details
-- **[AUTOMATION_GUIDE.md](docs/AUTOMATION_GUIDE.md)** - Full automation guide
+## Repository Layout
 
-## 🎯 What This Does
-
-Automates a simple mixer simulation:
-- **Input 1 (WATER1):** 80°C, 2 bar, 1000 kg/hr
-- **Input 2 (WATER2):** 20°C, 2 bar, 1000 kg/hr
-- **Output (OUT):** ~50°C, 2 bar, 2000 kg/hr
-
-The script:
-1. Connects to Aspen Plus
-2. Sets input conditions
-3. Runs the simulation
-4. Extracts results to CSV
-
-## 🔑 Key Features
-
-- ✅ Automatic connection to Aspen Plus
-- ✅ Programmatic input specification
-- ✅ Automated simulation execution
-- ✅ Results extraction to CSV
-- ✅ Error handling and diagnostics
-- ✅ Comprehensive documentation
-
-## 💡 Usage Examples
-
-### Basic Usage
-```python
-import win32com.client as win32
-
-# Connect and initialize
-aspen = win32.Dispatch("Apwn.Document")
-aspen.InitFromArchive2("MixerSimulation.bkp")
-
-# Set inputs
-aspen.Tree.FindNode(r"\Data\Streams\WATER1\Input\TEMP\MIXED").Value = 80.0
-
-# Run simulation
-aspen.Engine.Run2()
-
-# Get results
-temp = aspen.Tree.FindNode(r"\Data\Streams\OUT\Output\TEMP_OUT\MIXED").Value
-print(f"Outlet temperature: {temp}°C")
+```text
+aspen_automation/       Supported Python package
+process_library/        Canonical process specs
+notebooks/              Generic live workflow plus methanol example notebook
+tests/                  Unit, contract, integration, and fixtures
+docs/                   Maintained user, developer, and reference documentation
+templates/              Legacy-compatible YAML/INP templates
+legacy_old_files/       Preserved unsupported probes, artifacts, and historical docs
+.codex/                 Codex skills and portable Aspen workflow bundle
 ```
 
-### Using the Automation Script
-```bash
-# Just run it!
-uv run python simple_run.py
+## Validation
+
+Run the supported non-integration suite:
+
+```powershell
+pixi run test
 ```
 
-## 🔧 Troubleshooting
+For a focused validation/orchestration check:
 
-### "Application has not been initialized"
-**Solution:** Make sure to call `InitNew()` or `InitFromArchive2()` first
-
-### "NoneType object has no attribute Value"
-**Solution:** Check that the flowsheet is complete and streams are connected
-
-### Need help?
-Run the diagnostic:
-```bash
-uv run python simple_diagnostic.py
+```powershell
+pixi run test-focused
 ```
 
-## 📊 Results
+Direct `python -m pytest ...` runs are useful only as emergency diagnostics when Pixi is unavailable; the supported project path is the Python 3.12 Pixi workspace in `pixi.toml`.
 
-Results are saved to `results.csv`:
-```csv
-Parameter,Value,Unit
-Stream,OUT,-
-Temperature,50.0,°C
-Pressure,2.0,bar
-MassFlow,2000.0,kg/hr
-```
+Live Aspen validation is split into:
 
-## 🎓 Key Learnings
+1. Gate 1 batch translation: generated INP emits clean `.his` and `.bkp`.
+2. Gate 2 BKP COM load/extraction: readable CSV/JSON results.
+3. Process acceptance: production and purity targets enforced only after readable results are stable.
 
-1. **Initialization is required:** Always call `InitNew()` or `InitFromArchive2()` before accessing the Tree
-2. **Hybrid approach works best:** Manual flowsheet creation + automated execution
-3. **Tree navigation:** Use `FindNode()` to navigate the Aspen Plus tree structure
+## Current Methanol Target
 
-## 📈 Success Rate
+The canonical methanol spec is tuned to the live-validated screening target:
 
-| Component | Success Rate |
-|-----------|-------------|
-| Connection | 100% |
-| Initialization | 100% |
-| Input Setting | 100% |
-| Simulation Run | 100% |
-| Results Extraction | 100% |
-| **Overall** | **90%+** |
+- Component CH3OH production: about `10000 TPD`
+- Total `MEOH-PRO`: about `10001 TPD`
+- CH3OH purity: about `99.99 wt%`
+- Product stream: `MEOH-PRO`
 
-## 🤝 Contributing
-
-This is a working automation solution. Feel free to:
-- Extend for more complex simulations
-- Add parametric study capabilities
-- Integrate with databases or Excel
-- Create visualization tools
-
-## 📝 License
-
-Internal use project.
-
-## 🙏 Acknowledgments
-
-- Aspen Plus COM Interface Documentation
-- Python win32com library
-- Investigation completed: January 23, 2026
-
----
-
-**Status:** ✅ Production Ready  
-**Version:** 1.0  
-**Last Updated:** 2026-01-23
-
-For detailed information, see [FINAL_SUMMARY.md](FINAL_SUMMARY.md)
+Historical COM experiments, old generated Aspen files, manual probes, and old planning notes were preserved under `legacy_old_files/` for reference.

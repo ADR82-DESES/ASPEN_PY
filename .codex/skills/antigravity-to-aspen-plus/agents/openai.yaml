@@ -1,4 +1,4 @@
 interface:
   display_name: "Antigravity to Aspen Plus"
-  short_description: "Build and run Aspen Plus from Antigravity"
-  default_prompt: "Use $antigravity-to-aspen-plus to build, run, and export an Aspen Plus simulation from an Antigravity process spec."
+  short_description: "Bootstrap generic Aspen workflows and methanol examples"
+  default_prompt: "Use $antigravity-to-aspen-plus to bootstrap the bundled Aspen automation source, then use the process-agnostic notebook for evidence intake, process.yaml specs, equipment selection, INP generation, batch .bkp translation, COM load/extraction, diagnostics, and result analysis. Use the separate methanol example notebook only for methanol tuning."

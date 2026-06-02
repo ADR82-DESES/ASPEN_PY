@@ -1,0 +1,18 @@
+metadata:
+  title: "Invalid Types"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components: []
+properties:
+  method: "IDEAL"
+blocks: []
+flowsheet: []
+
+streams:
+  - name: "S1"
+    temperature: "not number" # Invalid type
+    pressure: 1
+    mole_flow: 100

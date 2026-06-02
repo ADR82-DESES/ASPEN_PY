@@ -1,0 +1,24 @@
+metadata:
+  title: "Invalid Component Ref"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components:
+  - id: "H2O"
+    name: "WATER"
+
+properties:
+  method: "NRTL"
+
+blocks: []
+flowsheet: []
+
+streams:
+  - name: "S1"
+    temperature: 25
+    pressure: 1
+    mole_flow: 100
+    composition:
+      UNKNOWN_COMP: 1.0

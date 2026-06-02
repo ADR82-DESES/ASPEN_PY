@@ -1,0 +1,30 @@
+metadata:
+  title: "Invalid Stream Ref"
+  units:
+    pressure: "bar"
+    temperature: "C"
+    flow: "kmol/hr"
+
+components:
+  - id: "A"
+    name: "A"
+
+properties:
+  method: "IDEAL"
+
+streams:
+  - name: "S1"
+    temperature: 25
+    pressure: 1
+    mole_flow: 100
+    composition:
+      A: 1.0
+
+blocks:
+  - name: "B1"
+    type: "MIXER"
+
+flowsheet:
+  - block: "B1"
+    inputs: ["S1", "S_UNKNOWN"] # Undefined input stream
+    outputs: ["S2"] # Undefined output stream
