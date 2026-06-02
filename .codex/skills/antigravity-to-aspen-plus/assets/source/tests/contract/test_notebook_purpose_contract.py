@@ -74,6 +74,24 @@ def _fake_extracted_results(*, readable: bool = True) -> dict:
                     "CH3OH_mass_frac": 0.9986,
                     "CH3OH_mole_frac": 0.9986,
                 },
+                {
+                    "stream_name": "VENT-GAS",
+                    "temperature": 30.0,
+                    "pressure": 1.8,
+                    "mass_flow": 75000.0,
+                    "mole_flow": 4000.0,
+                    "CH3OH_mass_frac": 0.30,
+                    "CH3OH_mole_frac": 0.18,
+                },
+                {
+                    "stream_name": "VENT-TOT",
+                    "temperature": 54.0,
+                    "pressure": 1.5,
+                    "mass_flow": 64060.0,
+                    "mole_flow": 1986.0,
+                    "CH3OH_mass_frac": 0.38,
+                    "CH3OH_mole_frac": 0.384,
+                },
             ]
         ),
         "blocks": pd.DataFrame(
@@ -99,7 +117,7 @@ def _fake_extracted_results(*, readable: bool = True) -> dict:
             "convergence_status": "converged",
         },
         "diagnostics": {"convergence_status": "converged", "per_error": 0},
-        "metadata": {"stream_count": 2, "block_count": 2, "component_count": 8},
+        "metadata": {"stream_count": 3, "block_count": 2, "component_count": 8},
     }
 
 
@@ -170,7 +188,7 @@ def test_codex_authored_yaml_generates_valid_inp() -> None:
     assert "APV140 PURE32" in inp
     assert "COMPONENTS" in inp
     assert "CH4 METHANE" in inp
-    assert "PROPERTIES RK-SOAVE" in inp
+    assert "PROPERTIES NRTL" in inp
     assert "FLOWSHEET" in inp
     assert "STREAM NG-FEED" in inp
     assert "BLOCK MIX-FEED MIXER" in inp

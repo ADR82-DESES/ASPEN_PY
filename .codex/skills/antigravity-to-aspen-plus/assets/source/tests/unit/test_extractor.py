@@ -11,7 +11,12 @@ import pytest
 sys.modules["win32com"] = MagicMock()
 sys.modules["win32com.client"] = MagicMock()
 
-from aspen_automation.extractor import _identify_feed_product_streams, extract_results
+from aspen_automation.extractor import (
+    CAL_PER_SEC_TO_KW,
+    CAL_PER_SEC_TO_MW,
+    _identify_feed_product_streams,
+    extract_results,
+)
 
 
 def _node(value: Any) -> MagicMock:
@@ -242,8 +247,76 @@ def test_extract_blocks_basic() -> None:
     }
     assert expected_columns.issubset(set(blocks_df.columns))
     r1 = blocks_df.loc[blocks_df["block_name"] == "R1"].iloc[0]
-    assert r1["duty_kw"] == pytest.approx(2500.0)
-    assert r1["duty_mw"] == pytest.approx(2.5)
+    assert r1["duty_raw"] == pytest.approx(2500.0)
+    assert r1["duty_raw_unit"] == "CAL/SEC"
+    assert r1["duty_source"] == "QNET"
+    assert r1["duty_kw"] == pytest.approx(2500.0 * CAL_PER_SEC_TO_KW)
+    assert r1["duty_mw"] == pytest.approx(2500.0 * CAL_PER_SEC_TO_MW)
+    assert r1["net_work_raw"] == pytest.approx(200.0)
+    assert r1["net_work_kw"] == pytest.approx(200.0 * CAL_PER_SEC_TO_KW)
+
+
+def test_extract_radfrac_condenser_and_reboiler_duties_with_raw_provenance() -> None:
+    spec = _base_spec()
+    spec["blocks"].append({"name": "COL1", "type": "RADFRAC"})
+    spec["flowsheet"].append({"block": "COL1", "inputs": ["INT-1"], "outputs": ["MEOH-PRO", "WASTE"]})
+    spec["streams"].append({"name": "WASTE"})
+    stream_values = _base_stream_values()
+    stream_values["WASTE"] = {
+        "TEMP_OUT": 60.0,
+        "PRES_OUT": 2.08,
+        "MASSFLMX": 5000.0,
+        "MOLEFLMX": 30.0,
+        "MOLEFRAC": {"CH3OH": 0.01, "H2O": 0.99},
+        "MASSFRAC": {"CH3OH": 0.02, "H2O": 0.98},
+    }
+    block_values = _base_block_values()
+    block_values["COL1"] = {"TYPE": "RADFRAC", "QCOND": -1000.0, "QREB": 2500.0}
+    aspen = mock_aspen_factory(stream_values, block_values)
+
+    results = extract_results(aspen, spec)
+    col = results["blocks"].loc[results["blocks"]["block_name"] == "COL1"].iloc[0]
+
+    assert col["condenser_duty_raw"] == pytest.approx(-1000.0)
+    assert col["condenser_duty_raw_unit"] == "CAL/SEC"
+    assert col["condenser_duty_source"] == "QCOND"
+    assert col["condenser_duty_mw"] == pytest.approx(-1000.0 * CAL_PER_SEC_TO_MW)
+    assert col["reboiler_duty_raw"] == pytest.approx(2500.0)
+    assert col["reboiler_duty_source"] == "QREB"
+    assert col["duty_raw"] == pytest.approx(3500.0)
+    assert col["duty_source"] == "captured_sum_abs:QCOND+QREB"
+    assert results["kpis"]["energy_consumption_mw"] == pytest.approx(6500.0 * CAL_PER_SEC_TO_MW)
+
+
+def test_radfrac_captured_duties_override_placeholder_direct_duty() -> None:
+    spec = _base_spec()
+    spec["blocks"].append({"name": "COL1", "type": "RADFRAC"})
+    spec["flowsheet"].append({"block": "COL1", "inputs": ["INT-1"], "outputs": ["MEOH-PRO", "WASTE"]})
+    spec["streams"].append({"name": "WASTE"})
+    stream_values = _base_stream_values()
+    stream_values["WASTE"] = {
+        "TEMP_OUT": 60.0,
+        "PRES_OUT": 2.08,
+        "MASSFLMX": 5000.0,
+        "MOLEFLMX": 30.0,
+        "MOLEFRAC": {"CH3OH": 0.01, "H2O": 0.99},
+        "MASSFRAC": {"CH3OH": 0.02, "H2O": 0.98},
+    }
+    block_values = _base_block_values()
+    block_values["COL1"] = {
+        "TYPE": "RADFRAC",
+        "DUTY": 1.0,
+        "COND_DUTY": -1000.0,
+        "REB_DUTY": 2500.0,
+    }
+    aspen = mock_aspen_factory(stream_values, block_values)
+
+    results = extract_results(aspen, spec)
+    col = results["blocks"].loc[results["blocks"]["block_name"] == "COL1"].iloc[0]
+
+    assert col["duty_raw"] == pytest.approx(3500.0)
+    assert col["duty_source"] == "captured_sum_abs:COND_DUTY+REB_DUTY"
+    assert col["duty_mw"] == pytest.approx(3500.0 * CAL_PER_SEC_TO_MW)
 
 
 def test_material_balance_calculation() -> None:
@@ -268,10 +341,12 @@ def test_energy_balance_calculation() -> None:
     hx1 = energy_df.loc[energy_df["block_name"] == "HX1"].iloc[0]
     total = energy_df.loc[energy_df["block_name"] == "TOTAL"].iloc[0]
 
-    assert r1["duty_kw"] == pytest.approx(2500.0)
-    assert hx1["duty_kw"] == pytest.approx(-500.0)
-    assert total["duty_kw"] == pytest.approx(2000.0)
-    assert total["duty_mw"] == pytest.approx(2.0)
+    assert r1["duty_raw"] == pytest.approx(2500.0)
+    assert r1["duty_kw"] == pytest.approx(2500.0 * CAL_PER_SEC_TO_KW)
+    assert hx1["duty_kw"] == pytest.approx(-500.0 * CAL_PER_SEC_TO_KW)
+    assert total["duty_raw"] == pytest.approx(2000.0)
+    assert total["duty_kw"] == pytest.approx(2000.0 * CAL_PER_SEC_TO_KW)
+    assert total["duty_mw"] == pytest.approx(2000.0 * CAL_PER_SEC_TO_MW)
 
 
 def test_energy_balance_calculation_summary_view() -> None:
@@ -283,9 +358,49 @@ def test_energy_balance_calculation_summary_view() -> None:
     heat_out = energy_df.loc[energy_df["category"] == "Heat Output", "value_mw"].iloc[0]
     net_work = energy_df.loc[energy_df["category"] == "Net Work", "value_mw"].iloc[0]
 
-    assert heat_in == pytest.approx(2.5)
-    assert heat_out == pytest.approx(-0.5)
-    assert net_work == pytest.approx(0.15)
+    assert heat_in == pytest.approx(2500.0 * CAL_PER_SEC_TO_MW)
+    assert heat_out == pytest.approx(-500.0 * CAL_PER_SEC_TO_MW)
+    assert net_work == pytest.approx(150.0 * CAL_PER_SEC_TO_MW)
+
+
+def test_kpi_energy_consumption_uses_corrected_mw() -> None:
+    spec = _base_spec()
+    aspen = mock_aspen_factory(_base_stream_values(), _base_block_values())
+    kpis = extract_results(aspen, spec)["kpis"]
+
+    assert kpis["energy_consumption_mw"] == pytest.approx((2500.0 + 500.0) * CAL_PER_SEC_TO_MW)
+    assert kpis["energy_unit_basis"]["raw_unit"] == "CAL/SEC"
+
+
+def test_rplug_duty_uses_reactor_fallback_when_qnet_missing() -> None:
+    spec = {
+        "components": [{"id": "CH3OH", "name": "METHANOL"}],
+        "streams": [{"name": "R-IN"}, {"name": "R-OUT"}],
+        "blocks": [{"name": "B-SYN", "type": "RPLUG"}],
+        "flowsheet": [{"block": "B-SYN", "inputs": ["R-IN"], "outputs": ["R-OUT"]}],
+    }
+    stream_values = {
+        "R-IN": {
+            "MASSFLMX": 100.0,
+            "MOLEFLMX": 10.0,
+            "MOLEFRAC": {"CH3OH": 0.0},
+            "MASSFRAC": {"CH3OH": 0.0},
+        },
+        "R-OUT": {
+            "MASSFLMX": 100.0,
+            "MOLEFLMX": 10.0,
+            "MOLEFRAC": {"CH3OH": 1.0},
+            "MASSFRAC": {"CH3OH": 1.0},
+        },
+    }
+    aspen = mock_aspen_factory(stream_values, {"B-SYN": {"TYPE": "RPLUG", "QREAC": 19918000.0}})
+
+    blocks_df = extract_results(aspen, spec)["blocks"]
+    syn = blocks_df.loc[blocks_df["block_name"] == "B-SYN"].iloc[0]
+
+    assert syn["duty_source"] == "QREAC"
+    assert syn["duty_raw"] == pytest.approx(19918000.0)
+    assert syn["duty_mw"] == pytest.approx(19918000.0 * CAL_PER_SEC_TO_MW)
 
 
 def test_kpi_production_rate() -> None:
@@ -609,6 +724,107 @@ def test_process_defaults_product_stream_overrides_topology() -> None:
     # process_defaults.product_stream="MEOH-PRO" must override topology + mass_flow bias
     # MEOH-PRO mass_flow=100000 kg/hr → 2400 tpd
     assert kpis["production_rate_tpd"] == pytest.approx(100000.0 * 24.0 / 1000.0)
+
+
+def test_blank_separator_output_is_inferred_by_mass_closure() -> None:
+    spec = {
+        "components": [
+            {"id": "CH3OH", "name": "METHANOL"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "streams": [{"name": "CRUDE-ME"}, {"name": "MEOH-PRO"}, {"name": "WASTE-H2O"}],
+        "blocks": [{"name": "B-DIST", "type": "SEP"}],
+        "flowsheet": [{"block": "B-DIST", "inputs": ["CRUDE-ME"], "outputs": ["MEOH-PRO", "WASTE-H2O"]}],
+        "process_defaults": {"product_stream": "MEOH-PRO"},
+    }
+    stream_values = {
+        "CRUDE-ME": {
+            "MASSFLMX": 100.0,
+            "MOLEFLMX": 10.0,
+            "MOLEFRAC": {"CH3OH": 0.7, "H2O": 0.3},
+            "MASSFRAC": {"CH3OH": 0.7, "H2O": 0.3},
+        },
+        "MEOH-PRO": {
+            "MASSFLMX": 70.0,
+            "MOLEFLMX": 7.0,
+            "MOLEFRAC": {"CH3OH": 1.0, "H2O": 0.0},
+            "MASSFRAC": {"CH3OH": 1.0, "H2O": 0.0},
+        },
+        "WASTE-H2O": {},
+    }
+    aspen = mock_aspen_factory(stream_values, {"B-DIST": {"TYPE": "SEP"}})
+
+    results = extract_results(aspen, spec)
+    streams_df = results["streams"]
+    waste = streams_df.loc[streams_df["stream_name"] == "WASTE-H2O"].iloc[0]
+
+    assert waste["extraction_status"] == "inferred_by_block_closure"
+    assert waste["extraction_source"] == "B-DIST"
+    assert waste["mass_flow"] == pytest.approx(30.0)
+    assert waste["CH3OH_mass_frac"] == pytest.approx(0.0)
+    assert waste["H2O_mass_frac"] == pytest.approx(1.0)
+    assert pd.isna(waste["mole_flow"])
+    assert results["diagnostics"]["stream_extraction"]["inferred_streams"][0]["stream_name"] == "WASTE-H2O"
+    assert results["diagnostics"]["terminal_mass_closure"]["status"] == "closed"
+
+
+def test_blank_radfrac_terminal_product_is_not_inferred() -> None:
+    spec = {
+        "components": [
+            {"id": "CH3OH", "name": "METHANOL"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "streams": [{"name": "CRUDE-LP"}, {"name": "MEOH-PRO"}, {"name": "WASTE-H2O"}],
+        "blocks": [{"name": "B-DIST", "type": "RADFRAC"}],
+        "flowsheet": [{"block": "B-DIST", "inputs": ["CRUDE-LP"], "outputs": ["MEOH-PRO", "WASTE-H2O"]}],
+        "process_defaults": {"product_stream": "MEOH-PRO"},
+    }
+    stream_values = {
+        "CRUDE-LP": {
+            "MASSFLMX": 100.0,
+            "MOLEFLMX": 10.0,
+            "MOLEFRAC": {"CH3OH": 0.7, "H2O": 0.3},
+            "MASSFRAC": {"CH3OH": 0.7, "H2O": 0.3},
+        },
+        "MEOH-PRO": {
+            "MASSFLMX": 70.0,
+            "MOLEFLMX": 7.0,
+            "MOLEFRAC": {"CH3OH": 1.0, "H2O": 0.0},
+            "MASSFRAC": {"CH3OH": 1.0, "H2O": 0.0},
+        },
+        "WASTE-H2O": {},
+    }
+    aspen = mock_aspen_factory(stream_values, {"B-DIST": {"TYPE": "RADFRAC"}})
+
+    results = extract_results(aspen, spec)
+
+    stream_extraction = results["diagnostics"]["stream_extraction"]
+    assert stream_extraction["inferred_streams"] == []
+    assert "WASTE-H2O" in stream_extraction["blank_streams_after_inference"]
+    assert stream_extraction["blank_radfrac_product_streams"] == [
+        {"block_name": "B-DIST", "stream_name": "WASTE-H2O"}
+    ]
+    waste = results["streams"].loc[results["streams"]["stream_name"] == "WASTE-H2O"].iloc[0]
+    assert waste["extraction_status"] == "missing"
+
+
+def test_uninferable_blank_stream_is_reported_in_diagnostics() -> None:
+    spec = _base_spec(with_purity=False)
+    spec["streams"].append({"name": "WASTE-H2O"})
+    spec["flowsheet"] = [
+        {"block": "R1", "inputs": ["FEED-A"], "outputs": ["INT-1"]},
+        {"block": "HX1", "inputs": ["INT-1"], "outputs": ["MEOH-PRO", "WASTE-H2O"]},
+    ]
+    stream_values = _base_stream_values()
+    stream_values["WASTE-H2O"] = {}
+    aspen = mock_aspen_factory(stream_values, _base_block_values())
+
+    results = extract_results(aspen, spec)
+
+    stream_extraction = results["diagnostics"]["stream_extraction"]
+    assert stream_extraction["inferred_streams"] == []
+    assert "WASTE-H2O" in stream_extraction["blank_streams_after_inference"]
+    assert results["diagnostics"]["terminal_mass_closure"]["status"] == "incomplete"
 
 
 def test_process_defaults_convergence_block_used_when_per_error_absent() -> None:

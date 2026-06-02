@@ -96,6 +96,25 @@ def test_apply_process_spec_improvements_keeps_buildable_separator_baseline() ->
     assert updated_report["passed"] is True
 
 
+def test_nrtl_high_purity_methanol_water_warns_without_binary_parameter_source() -> None:
+    spec = load_spec(str(METHANOL_TEMPLATE_PATH))
+    spec_dict = spec_to_plain_dict(spec)
+    spec_dict["properties"]["method"] = "NRTL"
+    spec_dict["properties"]["databanks"] = [
+        "APV140 PURE32",
+        "APV140 AQUEOUS",
+        "APV140 SOLIDS",
+        "APV140 INORGANIC",
+    ]
+
+    report = analyze_process_spec_coherence(spec_dict)
+    suggestions = suggest_process_spec_improvements(spec_dict, report)
+
+    warnings = [issue for issue in report["issues"] if issue["severity"] == "warning"]
+    assert any(issue["location"] == "properties.binary_parameters" for issue in warnings)
+    assert "add_nrtl_methanol_water_binary_parameter_source" in {item["id"] for item in suggestions}
+
+
 def test_build_codex_improvement_markdown_describes_notebook_prompt() -> None:
     spec = load_spec(str(METHANOL_TEMPLATE_PATH))
     coherence_report = analyze_process_spec_coherence(spec)
@@ -151,14 +170,15 @@ def test_live_process_library_methanol_spec_passes_coherence_with_manual_review_
     suggestions = suggest_process_spec_improvements(spec, coherence_report)
 
     syn_block = next(block for block in spec["blocks"] if block["name"] == "B-SYN")
+    dist_block = next(block for block in spec["blocks"] if block["name"] == "B-DIST")
     assert syn_block["type"] == "RPLUG"
+    assert dist_block["type"] == "RADFRAC"
     assert coherence_report["passed"] is True
-    assert {suggestion["id"] for suggestion in suggestions} == {
-        "switch_property_method_to_nrtl",
-        "upgrade_final_separator_to_radfrac",
-    }
-    radfrac = next(suggestion for suggestion in suggestions if suggestion["id"] == "upgrade_final_separator_to_radfrac")
-    assert radfrac["auto_applicable"] is False
+    assert all(
+        "coarse screening model for final purification" not in issue["message"]
+        for issue in coherence_report["issues"]
+    )
+    assert {suggestion["id"] for suggestion in suggestions} == set()
 
 
 def test_write_process_spec_file_handles_methanol_improvements_with_nested_enums(tmp_path: Path) -> None:

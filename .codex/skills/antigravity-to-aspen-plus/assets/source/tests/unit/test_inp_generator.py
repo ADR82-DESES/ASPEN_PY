@@ -10,7 +10,15 @@ from aspen_automation.schema import PlantSpecification, VALID_BLOCK_TYPES
 from aspen_automation.parser import load_spec
 
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "..", "fixtures")
-REFERENCE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "legacy_old_files", "archive", "aspen_artifacts", "Methanol Plant")
+REFERENCE_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "legacy_old_files",
+    "archive",
+    "aspen_artifacts",
+    "Methanol Plant",
+)
 
 
 @pytest.fixture
@@ -595,8 +603,8 @@ def test_compressor_efficiency_uses_aspen_eff_keyword():
     assert not re.search(r"(?<!S)\bEFF=0\.85\b", inp)
 
 
-def test_generate_inp_rejects_unsupported_radfrac_until_emitter_exists():
-    spec = PlantSpecification(**{
+def test_generate_inp_rejects_radfrac_without_settings():
+    spec = {
         "metadata": {
             "title": "Unsupported Column",
             "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}
@@ -610,13 +618,216 @@ def test_generate_inp_rejects_unsupported_radfrac_until_emitter_exists():
             {"name": "BOT", "temperature": 25, "pressure": 1, "mass_flow": 50, "composition": {"A": 1.0}},
         ],
         "blocks": [{"name": "COL1", "type": "RADFRAC"}],
+    }
+
+    with pytest.raises(ValidationError) as exc_info:
+        generate_inp(spec)
+
+    assert "RADFRAC" in str(exc_info.value.report["errors"])
+
+
+def test_generate_inp_emits_valve_block():
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "Valve",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
+        },
+        "components": [{"id": "A", "name": "A"}],
+        "properties": {"method": "NRTL"},
+        "flowsheet": [{"block": "V1", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 25, "pressure": 10, "mass_flow": 100, "composition": {"A": 1.0}},
+            {"name": "PROD", "temperature": 25, "pressure": 1.8, "mass_flow": 100, "composition": {"A": 1.0}},
+        ],
+        "blocks": [{"name": "V1", "type": "VALVE", "parameters": {"P-OUT": 1.8}}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "BLOCK V1 VALVE\n    PARAM P-OUT=1.8" in inp
+
+
+def test_generate_inp_emits_radfrac_block():
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "Column",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
+        },
+        "components": [
+            {"id": "A", "name": "A"},
+            {"id": "B", "name": "B"},
+        ],
+        "properties": {"method": "NRTL"},
+        "flowsheet": [{"block": "COL1", "inputs": ["FEED"], "outputs": ["DIST", "BOT"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 25, "pressure": 1.8, "mass_flow": 100, "composition": {"A": 0.5, "B": 0.5}},
+            {"name": "DIST", "temperature": 25, "pressure": 1.5, "mass_flow": 50, "composition": {"A": 0.99, "B": 0.01}},
+            {"name": "BOT", "temperature": 25, "pressure": 2.08, "mass_flow": 50, "composition": {"A": 0.01, "B": 0.99}},
+        ],
+        "blocks": [
+            {
+                "name": "COL1",
+                "type": "RADFRAC",
+                "radfrac": {
+                    "n_stages": 30,
+                    "feed_stage": 16,
+                    "condenser": "TOTAL",
+                    "reboiler": "KETTLE",
+                    "top_pressure": 1.5,
+                    "pressure_drop_per_stage": 0.02,
+                    "reflux_ratio": 2.0,
+                    "bottoms_rate": 50.0,
+                    "rate_basis": "MASS",
+                    "max_outer_iterations": 50,
+                },
+            }
+        ],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "BLOCK COL1 RADFRAC" in inp
+    assert "PARAM NSTAGE=30 ALGORITHM=STANDARD MAXOL=50 DAMPING=NONE" in inp
+    assert "COL-CONFIG CONDENSER=TOTAL" in inp
+    assert "FEEDS FEED 16" in inp
+    assert "PRODUCTS DIST 1 L / BOT 30 L" in inp
+    assert "P-SPEC 1 1.5" in inp
+    assert "COL-SPECS DP-COL=0.58 MASS-B=50.0 MASS-RR=2.0" in inp
+    assert "TRAY-REPORT TRAY-OPTION=ALL-TRAYS" in inp
+
+
+def test_generate_inp_emits_canonical_methanol_lights_recovery_section():
+    spec = PlantSpecification(
+        **load_spec(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "process_library",
+                "methanol",
+                "process.yaml",
+            )
+        )
+    )
+
+    inp = generate_inp(spec)
+
+    assert "BLOCK B-LCOOL HEATER" in inp
+    assert "PARAM TEMP=50.0 PRES=1.8" in inp
+    assert "BLOCK B-LFLA FLASH2" in inp
+    assert "BLOCK MIX-COL MIXER" in inp
+    assert "BLOCK B-PDEG FLASH2" in inp
+    assert "BLOCK MIX-VENT MIXER" in inp
+    assert "BLOCK B-DEGAS IN=CRUDE-LP OUT=LIGHTS CLIQ-RAW" in inp
+    assert "BLOCK B-LCOOL IN=LIGHTS OUT=LGT-CLD" in inp
+    assert "BLOCK B-LFLA IN=LGT-CLD OUT=VENT-GAS REC-MEOH" in inp
+    assert "BLOCK MIX-COL IN=CLIQ-RAW REC-MEOH OUT=CRUDE-LQ" in inp
+    assert "BLOCK B-DIST IN=CRUDE-LQ OUT=MEOH-RAW WASTE-H2O" in inp
+    assert "BLOCK B-PDEG IN=MEOH-RAW OUT=PRO-VENT MEOH-PRO" in inp
+    assert "BLOCK MIX-VENT IN=VENT-GAS PRO-VENT OUT=VENT-TOT" in inp
+    assert "FEEDS CRUDE-LQ 16" in inp
+
+
+def test_generate_inp_includes_nrtl_binary_parameter_databanks():
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "NRTL Databank Source",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
+        },
+        "components": [
+            {"id": "CH3OH", "name": "METHANOL"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "properties": {
+            "method": "NRTL",
+            "databanks": ["APV140 PURE32"],
+            "binary_parameters": [
+                {
+                    "components": ["CH3OH", "H2O"],
+                    "model": "NRTL",
+                    "source_type": "aspen_databank",
+                    "databanks": ["APV140 VLE-IG", "APV140 VLE-LIT"],
+                    "basis": "Aspen Plus V14 NRTL property databank interaction parameters",
+                    "provenance": {"source": "Aspen Plus V14 property databanks"},
+                }
+            ],
+        },
+        "flowsheet": [{"block": "B1", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {
+                "name": "FEED",
+                "temperature": 25,
+                "pressure": 1,
+                "mass_flow": 100,
+                "composition": {"CH3OH": 0.5, "H2O": 0.5},
+            },
+            {
+                "name": "PROD",
+                "temperature": 25,
+                "pressure": 1,
+                "mass_flow": 100,
+                "composition": {"CH3OH": 0.5, "H2O": 0.5},
+            },
+        ],
+        "blocks": [{"name": "B1", "type": "MIXER"}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "PROPERTIES NRTL" in inp
+    assert "DATABANKS 'APV140 PURE32' / 'APV140 VLE-IG' / 'APV140 VLE-LIT' / &" in inp
+    assert "PROP-SOURCES 'APV140 PURE32' / 'APV140 VLE-IG' / 'APV140 VLE-LIT'" in inp
+
+
+def test_generate_inp_rejects_explicit_nrtl_binary_parameters_until_emitter_is_verified():
+    spec = PlantSpecification(**{
+        "metadata": {
+            "title": "Explicit NRTL",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
+        },
+        "components": [
+            {"id": "CH3OH", "name": "METHANOL"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "properties": {
+            "method": "NRTL",
+            "binary_parameters": [
+                {
+                    "components": ["CH3OH", "H2O"],
+                    "model": "NRTL",
+                    "source_type": "explicit",
+                    "values": {"aij": 1.0, "aji": 2.0, "cij": 0.3},
+                    "basis": "Aspen NRTL GAMKIJ 12-value form",
+                    "provenance": {"source": "test-only verified syntax placeholder"},
+                }
+            ],
+        },
+        "flowsheet": [{"block": "B1", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {
+                "name": "FEED",
+                "temperature": 25,
+                "pressure": 1,
+                "mass_flow": 100,
+                "composition": {"CH3OH": 0.5, "H2O": 0.5},
+            },
+            {
+                "name": "PROD",
+                "temperature": 25,
+                "pressure": 1,
+                "mass_flow": 100,
+                "composition": {"CH3OH": 0.5, "H2O": 0.5},
+            },
+        ],
+        "blocks": [{"name": "B1", "type": "MIXER"}],
     })
 
     with pytest.raises(ValidationError) as exc_info:
         generate_inp(spec)
 
-    assert "RADFRAC" in exc_info.value.report["errors"][0]["message"]
-    assert exc_info.value.report["errors"][0]["location"] == "blocks[0].type"
+    error = exc_info.value.report["errors"][0]
+    assert error["location"] == "properties.binary_parameters[0].source_type"
+    assert "Explicit numeric NRTL binary-parameter INP emission is not yet enabled" in error["message"]
 
 
 def test_edge_cases_optional_fields():

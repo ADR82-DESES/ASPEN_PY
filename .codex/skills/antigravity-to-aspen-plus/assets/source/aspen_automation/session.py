@@ -1568,7 +1568,7 @@ def _cleanup_session(aspen: Any, output_dir: str, inp_path: Optional[str] = None
                 if any(f.endswith(ext) for ext in extensions):
                     try:
                         os.remove(os.path.join(output_dir, f))
-                    except:
+                    except OSError:
                         pass
 
 def run_simulation_session(

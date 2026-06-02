@@ -69,6 +69,10 @@ def build_reactor_only_kinetic_sweep_specs(
                 pre_exponential_multiplier=float(multiplier),
                 activation_energy_override=activation_override,
             )
+            targets = dict(case_data.get("targets") or {})
+            targets.pop("product_conditions", None)
+            targets.pop("component_loss_limits", None)
+            case_data["targets"] = targets
 
             case_spec = PlantSpecification(**case_data)
             cases.append(

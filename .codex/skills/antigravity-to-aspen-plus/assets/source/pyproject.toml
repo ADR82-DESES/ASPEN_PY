@@ -11,16 +11,9 @@ dependencies = [
     "pydantic>=2.0",
 ]
 
-[dependency-groups]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "mcp>=1.27.0,<2.0.0",
-    "httpx>=0.27.0",
-    "pathspec>=1.0.4,<2.0.0",
-    "tiktoken>=0.12.0,<0.13.0",
-    "tree-sitter-language-pack>=1.5.0,<2.0.0",
-]
+# Development and test dependencies are managed by the supported Pixi workspace
+# (see pixi.toml: [dependencies] and [pypi-dependencies]). Pixi is the single
+# source of truth for the environment.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

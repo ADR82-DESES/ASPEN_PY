@@ -1,5 +1,10 @@
 from typing import Dict, Any, List
-from .schema import PlantSpecification
+from .schema import (
+    PlantSpecification,
+    VALID_RADFRAC_CONDENSERS,
+    VALID_RADFRAC_RATE_BASES,
+    VALID_RADFRAC_REBOILERS,
+)
 from pydantic import ValidationError as PydanticValidationError
 
 def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -98,6 +103,8 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
             add_error("error", f"flowsheet[{i}].block",
                       f"Block '{conn.block}' referenced but not defined",
                       f"Add block '{conn.block}' to blocks section")
+
+    connections_by_block = {conn.block: conn for conn in spec.flowsheet}
 
     # Rule 6: Unit Validation (case-insensitive)
     allowed_pressure = {"bar", "psi", "atm", "kpa", "mpa"}
@@ -254,6 +261,108 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                     add_error("error", f"blocks[{i}].sep_fractions[{j}].component",
                               f"Component '{sep.component}' referenced in SEP but not defined",
                               "Add component to components section or update sep_fractions")
+
+        block_type = block.type.upper()
+        if block_type == "VALVE":
+            parameters = block.parameters or {}
+            try:
+                p_out = float(parameters.get("P-OUT"))
+            except (TypeError, ValueError):
+                p_out = None
+            if p_out is None or p_out <= 0:
+                add_error(
+                    "error",
+                    f"blocks[{i}].parameters.P-OUT",
+                    "VALVE blocks require positive parameters.P-OUT",
+                    "Set P-OUT to the target outlet pressure in the spec pressure units",
+                )
+
+        if block_type == "RADFRAC":
+            radfrac = block.radfrac
+            conn = connections_by_block.get(block.name)
+            if conn is None:
+                add_error(
+                    "error",
+                    f"blocks[{i}]",
+                    f"RADFRAC block '{block.name}' is not referenced in flowsheet",
+                    "Add one flowsheet entry with one input and two outputs",
+                )
+            else:
+                if len(conn.inputs) != 1:
+                    add_error(
+                        "error",
+                        f"flowsheet.{block.name}.inputs",
+                        "RADFRAC requires exactly one feed stream in this generator",
+                        "Use a single material feed to the column",
+                    )
+                if len(conn.outputs) not in {2, 3}:
+                    add_error(
+                        "error",
+                        f"flowsheet.{block.name}.outputs",
+                        "RADFRAC requires two liquid products or a condenser vapor vent plus two liquid products in this generator",
+                        "Define distillate/bottoms, or vapor vent/distillate/bottoms products",
+                    )
+
+            if radfrac is None:
+                add_error(
+                    "error",
+                    f"blocks[{i}].radfrac",
+                    "RADFRAC blocks require complete radfrac settings",
+                    "Add n_stages, feed_stage, pressure profile, condenser, reboiler, reflux, and rate spec",
+                )
+            else:
+                if radfrac.n_stages < 3:
+                    add_error("error", f"blocks[{i}].radfrac.n_stages", "RADFRAC n_stages must be >= 3", "Use at least 3 stages")
+                if not 1 <= radfrac.feed_stage <= radfrac.n_stages:
+                    add_error(
+                        "error",
+                        f"blocks[{i}].radfrac.feed_stage",
+                        "RADFRAC feed_stage must be between 1 and n_stages",
+                        "Move the feed stage into the column stage range",
+                    )
+                if radfrac.top_pressure <= 0:
+                    add_error("error", f"blocks[{i}].radfrac.top_pressure", "RADFRAC top_pressure must be positive", "Set top pressure in spec pressure units")
+                if radfrac.pressure_drop_per_stage < 0:
+                    add_error(
+                        "error",
+                        f"blocks[{i}].radfrac.pressure_drop_per_stage",
+                        "RADFRAC pressure_drop_per_stage must be nonnegative",
+                        "Use zero or a positive stage pressure drop",
+                    )
+                if radfrac.condenser not in VALID_RADFRAC_CONDENSERS:
+                    add_error("error", f"blocks[{i}].radfrac.condenser", "Unsupported RADFRAC condenser", f"Use one of: {', '.join(VALID_RADFRAC_CONDENSERS)}")
+                if radfrac.reboiler not in VALID_RADFRAC_REBOILERS:
+                    add_error("error", f"blocks[{i}].radfrac.reboiler", "Unsupported RADFRAC reboiler", f"Use one of: {', '.join(VALID_RADFRAC_REBOILERS)}")
+                if radfrac.rate_basis not in VALID_RADFRAC_RATE_BASES:
+                    add_error("error", f"blocks[{i}].radfrac.rate_basis", "Unsupported RADFRAC rate_basis", f"Use one of: {', '.join(VALID_RADFRAC_RATE_BASES)}")
+
+    if spec.targets and spec.targets.product_conditions:
+        for i, condition in enumerate(spec.targets.product_conditions):
+            if condition.stream not in stream_names:
+                add_error(
+                    "error",
+                    f"targets.product_conditions[{i}].stream",
+                    f"Product condition references undefined stream '{condition.stream}'",
+                    "Reference an existing stream name",
+                )
+
+    if spec.targets and spec.targets.component_loss_limits:
+        component_names = {component.id for component in spec.components}
+        for i, limit in enumerate(spec.targets.component_loss_limits):
+            if limit.stream not in stream_names:
+                add_error(
+                    "error",
+                    f"targets.component_loss_limits[{i}].stream",
+                    f"Component loss limit references undefined stream '{limit.stream}'",
+                    "Reference an existing stream name",
+                )
+            if limit.component not in component_names:
+                add_error(
+                    "error",
+                    f"targets.component_loss_limits[{i}].component",
+                    f"Component loss limit references undefined component '{limit.component}'",
+                    "Reference an existing component ID",
+                )
 
     # Rule 4: Composition Validation (Already partially handled by Pydantic validator in schema.py)
     # But we double check here to gather all errors at once if we wanted custom messaging
