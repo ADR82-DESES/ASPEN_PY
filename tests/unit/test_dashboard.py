@@ -141,3 +141,36 @@ def test_figure_energy_per_block_duty_bars():
     assert fig.data[0].type == "bar"
     assert list(fig.data[0].x) == ["B-ATR", "B-COOL"]
     assert list(fig.data[0].y) == [1200.0, -800.0]
+
+
+from aspen_automation.dashboard import render_mermaid_html, kpi_cards_html
+
+
+def test_render_mermaid_html_wraps_diagram_in_iframe():
+    html = render_mermaid_html("graph LR\n A-->B")
+    assert "<iframe" in html.data
+    assert "srcdoc=" in html.data
+    assert "graph LR" in html.data
+    assert "mermaid" in html.data
+
+
+def test_kpi_cards_html_contains_values():
+    data = {"kpis": {
+                "methanol_tpd": 9812,
+                "convergence_status": "converged",
+                "product_stream": "MEOH",
+                "synthesis_loop": {
+                    "inlet_stoichiometric_number": 1.97,
+                    "inlet_ch4_mole_frac": 0.02,
+                    "inlet_co2_mole_frac": 0.05,
+                },
+            },
+            "acceptance": {"passed": True}}
+    html = kpi_cards_html(data)
+    assert "9812" in html
+    assert "MEOH" in html
+    assert "PASS" in html
+    # synthesis-loop SN + recycle surfaced as cards (with SN target band noted)
+    assert "1.97" in html
+    assert "1.8" in html and "2.2" in html
+    assert "0.02" in html

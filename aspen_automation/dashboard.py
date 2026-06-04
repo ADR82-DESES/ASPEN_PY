@@ -203,3 +203,57 @@ def figure_energy(data: dict[str, Any]):
         fig.add_bar(name="duty_kw", x=list(df["block_name"]), y=list(df["duty_kw"]))
         fig.update_layout(title="Per-block duty (kW)", yaxis_title="kW", height=350)
     return fig
+
+
+import html as _html
+
+
+def render_mermaid_html(mermaid_text: str, mermaid_js_url: str = DEFAULT_MERMAID_JS, height: int = 480):
+    """Return an IPython HTML iframe that renders the Mermaid diagram.
+
+    The diagram is placed inside an ``<iframe srcdoc>`` so the Mermaid module
+    script executes even in renderers (e.g. VS Code notebooks) that strip
+    scripts from top-level HTML outputs.
+    """
+    from IPython.display import HTML
+
+    srcdoc = (
+        '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        "<style>body{margin:0;font-family:Arial,sans-serif;}</style></head><body>"
+        '<pre class="mermaid">' + _html.escape(mermaid_text) + "</pre>"
+        '<script type="module">'
+        f'import mermaid from "{mermaid_js_url}";'
+        "mermaid.initialize({startOnLoad:true});"
+        "</script></body></html>"
+    )
+    iframe = (
+        f'<iframe srcdoc="{_html.escape(srcdoc, quote=True)}" '
+        f'style="width:100%;height:{height}px;border:0;"></iframe>'
+    )
+    return HTML(iframe)
+
+
+def kpi_cards_html(data: dict[str, Any]) -> str:
+    """Compact HTML KPI card row."""
+    kpis = data.get("kpis") or {}
+    loop = kpis.get("synthesis_loop") or {}
+    passed = (data.get("acceptance") or {}).get("passed")
+    acceptance = "PASS" if passed else ("FAIL" if passed is not None else "n/a")
+    cards = [
+        ("Convergence", kpis.get("convergence_status", "unknown")),
+        ("Product stream", kpis.get("product_stream", "n/a")),
+        ("Methanol TPD", kpis.get("methanol_tpd", "n/a")),
+        ("Total product TPD", kpis.get("product_total_tpd", "n/a")),
+        ("Acceptance", acceptance),
+        ("Stoich number SN (target 1.8–2.2)", loop.get("inlet_stoichiometric_number", "n/a")),
+        ("Recycle CH4 mole frac", loop.get("inlet_ch4_mole_frac", "n/a")),
+        ("Recycle CO2 mole frac", loop.get("inlet_co2_mole_frac", "n/a")),
+    ]
+    cell = (
+        '<div style="flex:1;min-width:140px;border:1px solid #ddd;border-radius:8px;'
+        'padding:10px;margin:4px;background:#f8fafc;">'
+        '<div style="font-size:12px;color:#64748b;">{label}</div>'
+        '<div style="font-size:18px;font-weight:700;color:#0f172a;">{value}</div></div>'
+    )
+    body = "".join(cell.format(label=label, value=value) for label, value in cards)
+    return f'<div style="display:flex;flex-wrap:wrap;">{body}</div>'
