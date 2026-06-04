@@ -174,3 +174,32 @@ def test_kpi_cards_html_contains_values():
     assert "1.97" in html
     assert "1.8" in html and "2.2" in html
     assert "0.02" in html
+
+
+from aspen_automation.dashboard import build_dashboard_html, save_dashboard_html
+
+
+def test_build_dashboard_html_contains_sections():
+    data = {
+        "metadata": {"title": "Methanol Plant"},
+        "kpis": {"methanol_tpd": 9812, "product_stream": "MEOH"},
+        "acceptance": {"passed": True},
+        "streams": pd.DataFrame({"stream_name": ["FEED"], "CH4_mole_frac": [1.0]}),
+        "material_balance": pd.DataFrame({"component": ["CH4"], "input_kmol_hr": [1.0], "output_kmol_hr": [1.0]}),
+        "flowsheet_mermaid": "graph LR\n A-->B",
+    }
+    html = build_dashboard_html(data, [figure_kpis(data)])
+    assert "Methanol Plant" in html
+    assert "graph LR" in html
+    assert "plotly" in html.lower()
+    assert "MEOH" in html
+
+
+def test_save_dashboard_html_writes_file(tmp_path):
+    results_dir = tmp_path / "results"
+    results_dir.mkdir()
+    _seed_results_dir(results_dir)
+    out = save_dashboard_html(results_dir, tmp_path, spec={"metadata": {"title": "X"}, "components": [{"id": "CH4"}]})
+    assert out == tmp_path / "dashboard.html"
+    assert out.is_file()
+    assert "X" in out.read_text(encoding="utf-8")

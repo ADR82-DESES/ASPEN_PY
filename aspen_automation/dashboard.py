@@ -257,3 +257,66 @@ def kpi_cards_html(data: dict[str, Any]) -> str:
     )
     body = "".join(cell.format(label=label, value=value) for label, value in cards)
     return f'<div style="display:flex;flex-wrap:wrap;">{body}</div>'
+
+
+def _all_figures(data: dict[str, Any]) -> list:
+    return [
+        figure_kpis(data),
+        figure_synthesis_loop(data),
+        figure_stream_composition(data),
+        figure_balances(data),
+        figure_energy(data),
+    ]
+
+
+def build_dashboard_html(
+    data: dict[str, Any],
+    figures: list,
+    mermaid_js_url: str = DEFAULT_MERMAID_JS,
+) -> str:
+    """Assemble a standalone HTML dashboard string (cards + flowsheet + charts)."""
+    title = (data.get("metadata") or {}).get("title", "Aspen Run Dashboard")
+    cards = kpi_cards_html(data)
+    mermaid = data.get("flowsheet_mermaid") or ""
+    mermaid_block = ""
+    if mermaid:
+        mermaid_block = (
+            "<h2>Process flowsheet</h2>"
+            '<pre class="mermaid">' + _html.escape(mermaid) + "</pre>"
+            '<script type="module">'
+            f'import mermaid from "{mermaid_js_url}";'
+            "mermaid.initialize({startOnLoad:true});"
+            "</script>"
+        )
+
+    fig_blocks = []
+    for index, fig in enumerate(figures):
+        fig_blocks.append(
+            fig.to_html(full_html=False, include_plotlyjs="cdn" if index == 0 else False)
+        )
+
+    return (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        f"<title>{_html.escape(str(title))}</title>"
+        "<style>body{font-family:Arial,sans-serif;margin:24px;color:#0f172a;}</style>"
+        "</head><body>"
+        f"<h1>{_html.escape(str(title))}</h1>"
+        f"{cards}{mermaid_block}"
+        "<h2>Results</h2>"
+        + "".join(fig_blocks)
+        + "</body></html>"
+    )
+
+
+def save_dashboard_html(
+    results_dir: str | Path,
+    run_dir: str | Path,
+    spec: dict[str, Any] | None = None,
+    mermaid_js_url: str = DEFAULT_MERMAID_JS,
+) -> Path:
+    """Write a standalone ``dashboard.html`` into ``run_dir`` and return its path."""
+    data = collect_dashboard_data(results_dir, spec)
+    html = build_dashboard_html(data, _all_figures(data), mermaid_js_url)
+    out = Path(run_dir) / "dashboard.html"
+    out.write_text(html, encoding="utf-8")
+    return out
