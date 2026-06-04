@@ -31,6 +31,12 @@ from .capsule_runner import resolve_capsule_job, run_capsule_job
 from .com_builder import build_flowsheet_via_com, infer_external_feed_streams
 from .session import check_aspen_running, check_aspen_v14_connection, run_simulation_session, SessionResult
 from .reporter import generate_reports
+from .dashboard import (
+    build_flowsheet_mermaid,
+    collect_dashboard_data,
+    display_dashboard,
+    save_dashboard_html,
+)
 from .acceptance import validate_acceptance, print_acceptance_report, load_template
 from .process_spec_coherence import (
     analyze_process_spec_coherence,
@@ -83,6 +89,10 @@ __all__ = [
     "extract_results",
     "calculate_synthesis_loop_diagnostics",
     "generate_reports",
+    "build_flowsheet_mermaid",
+    "collect_dashboard_data",
+    "display_dashboard",
+    "save_dashboard_html",
     "generate_inp",
     "KineticSweepCase",
     "build_reactor_only_kinetic_sweep_specs",
