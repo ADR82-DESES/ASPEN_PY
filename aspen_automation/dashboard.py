@@ -320,3 +320,55 @@ def save_dashboard_html(
     out = Path(run_dir) / "dashboard.html"
     out.write_text(html, encoding="utf-8")
     return out
+
+
+def display_dashboard(
+    result: Any,
+    spec: dict[str, Any] | None = None,
+    *,
+    save_html: bool = False,
+    mermaid_js_url: str = DEFAULT_MERMAID_JS,
+) -> None:
+    """Render the interactive dashboard inline in a notebook for one run result."""
+    from IPython.display import HTML, Markdown, display
+
+    layout = getattr(result, "layout", None)
+    if layout is None:
+        print(f"No run layout available for {getattr(result, 'process_name', 'run')}; cannot build dashboard.")
+        return
+
+    if spec is None:
+        try:
+            spec = load_process_spec(result.process_dir)
+        except Exception as exc:  # noqa: BLE001 - spec is optional for the flowsheet
+            print(f"Could not load spec for flowsheet ({exc}); rendering without it.")
+            spec = None
+
+    data = collect_dashboard_data(layout.results_dir, spec)
+    title = (data.get("metadata") or {}).get("title") or getattr(result, "process_name", "Run")
+
+    display(Markdown(f"# Dashboard: {title}"))
+    display(HTML(kpi_cards_html(data)))
+
+    if data.get("flowsheet_mermaid"):
+        display(Markdown("## Process flowsheet"))
+        display(render_mermaid_html(data["flowsheet_mermaid"], mermaid_js_url))
+
+    display(Markdown("## Results"))
+    for fig in _all_figures(data):
+        fig.show()
+
+    streams = data.get("streams")
+    if isinstance(streams, pd.DataFrame) and not streams.empty:
+        display(Markdown("## Streams"))
+        display(streams)
+
+    for label, key in (("Material balance", "material_balance"), ("Energy balance", "energy_balance")):
+        table = data.get(key)
+        if isinstance(table, pd.DataFrame) and not table.empty:
+            display(Markdown(f"## {label}"))
+            display(table)
+
+    if save_html:
+        out = save_dashboard_html(layout.results_dir, layout.run_dir, spec, mermaid_js_url)
+        print(f"Saved standalone dashboard: {out}")

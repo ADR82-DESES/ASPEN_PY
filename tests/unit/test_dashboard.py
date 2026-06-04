@@ -203,3 +203,13 @@ def test_save_dashboard_html_writes_file(tmp_path):
     assert out == tmp_path / "dashboard.html"
     assert out.is_file()
     assert "X" in out.read_text(encoding="utf-8")
+
+
+import aspen_automation
+
+
+def test_dashboard_symbols_exported():
+    assert hasattr(aspen_automation, "display_dashboard")
+    assert hasattr(aspen_automation, "collect_dashboard_data")
+    assert hasattr(aspen_automation, "build_flowsheet_mermaid")
+    assert hasattr(aspen_automation, "save_dashboard_html")
