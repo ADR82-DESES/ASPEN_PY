@@ -74,6 +74,8 @@ def test_collect_dashboard_data_missing_files_are_empty(tmp_path):
 
 from aspen_automation.dashboard import figure_kpis, figure_synthesis_loop
 
+import pandas as pd
+
 
 def test_figure_kpis_is_gauge_with_methanol_value():
     data = {"kpis": {"methanol_tpd": 9812.0}}
@@ -93,3 +95,49 @@ def test_figure_synthesis_loop_bar_labels():
     assert fig.data[0].type == "bar"
     assert list(fig.data[0].x) == ["CO conv", "CO2 conv", "H2 use"]
     assert list(fig.data[0].y) == [0.34, 0.12, 0.40]
+
+
+from aspen_automation.dashboard import (
+    figure_balances,
+    figure_energy,
+    figure_stream_composition,
+)
+
+
+def test_figure_stream_composition_one_trace_per_component():
+    data = {"streams": pd.DataFrame({
+        "stream_name": ["FEED", "PROD"],
+        "CH4_mole_frac": [0.9, 0.0],
+        "H2_mole_frac": [0.1, 0.2],
+    })}
+    fig = figure_stream_composition(data)
+    names = sorted(trace.name for trace in fig.data)
+    assert names == ["CH4", "H2"]
+    assert fig.layout.barmode == "stack"
+
+
+def test_figure_stream_composition_empty_is_blank_figure():
+    fig = figure_stream_composition({"streams": pd.DataFrame()})
+    assert len(fig.data) == 0
+
+
+def test_figure_balances_in_out_traces():
+    data = {"material_balance": pd.DataFrame({
+        "component": ["CH4", "H2"],
+        "input_kmol_hr": [10.0, 5.0],
+        "output_kmol_hr": [9.0, 5.0],
+    })}
+    fig = figure_balances(data)
+    names = sorted(trace.name for trace in fig.data)
+    assert names == ["in", "out"]
+
+
+def test_figure_energy_per_block_duty_bars():
+    data = {"blocks": pd.DataFrame({
+        "block_name": ["B-ATR", "B-COOL"],
+        "duty_kw": [1200.0, -800.0],
+    })}
+    fig = figure_energy(data)
+    assert fig.data[0].type == "bar"
+    assert list(fig.data[0].x) == ["B-ATR", "B-COOL"]
+    assert list(fig.data[0].y) == [1200.0, -800.0]

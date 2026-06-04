@@ -164,3 +164,42 @@ def figure_synthesis_loop(data: dict[str, Any]):
     fig = go.Figure(go.Bar(x=labels, y=values))
     fig.update_layout(title="Synthesis-loop conversions", yaxis_title="fraction", height=350)
     return fig
+
+
+def figure_stream_composition(data: dict[str, Any]):
+    """Stacked mole-fraction composition per stream."""
+    go = _require_plotly()
+    fig = go.Figure()
+    df = data.get("streams")
+    if isinstance(df, pd.DataFrame) and not df.empty and "stream_name" in df.columns:
+        comp_cols = [c for c in df.columns if c.endswith("_mole_frac")]
+        for col in comp_cols:
+            component = col[: -len("_mole_frac")]
+            fig.add_bar(name=component, x=list(df["stream_name"]), y=list(df[col]))
+        fig.update_layout(barmode="stack", title="Stream composition (mole frac)", height=400)
+    return fig
+
+
+def figure_balances(data: dict[str, Any]):
+    """Material balance: input vs output per component."""
+    go = _require_plotly()
+    fig = go.Figure()
+    df = data.get("material_balance")
+    if isinstance(df, pd.DataFrame) and not df.empty and "component" in df.columns:
+        if "input_kmol_hr" in df.columns:
+            fig.add_bar(name="in", x=list(df["component"]), y=list(df["input_kmol_hr"]))
+        if "output_kmol_hr" in df.columns:
+            fig.add_bar(name="out", x=list(df["component"]), y=list(df["output_kmol_hr"]))
+        fig.update_layout(barmode="group", title="Material balance (kmol/hr)", height=350)
+    return fig
+
+
+def figure_energy(data: dict[str, Any]):
+    """Per-block duty bars (kW) from the blocks table."""
+    go = _require_plotly()
+    fig = go.Figure()
+    df = data.get("blocks")
+    if isinstance(df, pd.DataFrame) and not df.empty and {"block_name", "duty_kw"} <= set(df.columns):
+        fig.add_bar(name="duty_kw", x=list(df["block_name"]), y=list(df["duty_kw"]))
+        fig.update_layout(title="Per-block duty (kW)", yaxis_title="kW", height=350)
+    return fig
