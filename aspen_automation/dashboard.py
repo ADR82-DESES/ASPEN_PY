@@ -110,3 +110,57 @@ def collect_dashboard_data(results_dir: str | Path, spec: dict[str, Any] | None)
         "components": components,
         "metadata": spec.get("metadata") or {},
     }
+
+
+def _require_plotly():
+    try:
+        import plotly.graph_objects as go
+    except ImportError as exc:  # pragma: no cover - environment guard
+        raise ImportError(
+            "plotly is required for dashboard charts. Add it to the pixi env and run "
+            "`pixi install` (plotly + nbformat)."
+        ) from exc
+    return go
+
+
+def _as_float(value: Any) -> float | None:
+    try:
+        if value is None:
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def figure_kpis(data: dict[str, Any]):
+    """Gauge of methanol production (TPD) toward the 10k target."""
+    go = _require_plotly()
+    methanol = _as_float((data.get("kpis") or {}).get("methanol_tpd")) or 0.0
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=methanol,
+            title={"text": "Methanol Production (TPD)"},
+            gauge={
+                "axis": {"range": [0, 10000]},
+                "threshold": {"line": {"color": "red", "width": 4}, "thickness": 0.75, "value": 10000},
+            },
+        )
+    )
+    fig.update_layout(height=300)
+    return fig
+
+
+def figure_synthesis_loop(data: dict[str, Any]):
+    """Grouped conversions for the synthesis loop."""
+    go = _require_plotly()
+    loop = (data.get("kpis") or {}).get("synthesis_loop") or {}
+    labels = ["CO conv", "CO2 conv", "H2 use"]
+    values = [
+        _as_float(loop.get("co_conversion_fraction")) or 0.0,
+        _as_float(loop.get("co2_conversion_fraction")) or 0.0,
+        _as_float(loop.get("h2_consumption_fraction")) or 0.0,
+    ]
+    fig = go.Figure(go.Bar(x=labels, y=values))
+    fig.update_layout(title="Synthesis-loop conversions", yaxis_title="fraction", height=350)
+    return fig

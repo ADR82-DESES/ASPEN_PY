@@ -70,3 +70,26 @@ def test_collect_dashboard_data_missing_files_are_empty(tmp_path):
     assert data["acceptance"] == {}
     assert data["streams"].empty
     assert data["flowsheet_mermaid"] == ""
+
+
+from aspen_automation.dashboard import figure_kpis, figure_synthesis_loop
+
+
+def test_figure_kpis_is_gauge_with_methanol_value():
+    data = {"kpis": {"methanol_tpd": 9812.0}}
+    fig = figure_kpis(data)
+    assert fig.data[0].type == "indicator"
+    assert fig.data[0].value == 9812.0
+    assert fig.data[0].gauge.axis.range == (0, 10000)
+
+
+def test_figure_synthesis_loop_bar_labels():
+    data = {"kpis": {"synthesis_loop": {
+        "co_conversion_fraction": 0.34,
+        "co2_conversion_fraction": 0.12,
+        "h2_consumption_fraction": 0.40,
+    }}}
+    fig = figure_synthesis_loop(data)
+    assert fig.data[0].type == "bar"
+    assert list(fig.data[0].x) == ["CO conv", "CO2 conv", "H2 use"]
+    assert list(fig.data[0].y) == [0.34, 0.12, 0.40]
