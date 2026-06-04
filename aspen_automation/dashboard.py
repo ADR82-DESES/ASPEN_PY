@@ -70,3 +70,43 @@ def build_flowsheet_mermaid(spec: dict[str, Any]) -> str:
                 lines.append(f"    {_node_id(src)} -->|{stream}| {_node_id(dst)}")
 
     return "\n".join(lines)
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.is_file():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+
+
+def _read_csv(path: Path) -> pd.DataFrame:
+    if not path.is_file():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except (ValueError, OSError):
+        return pd.DataFrame()
+
+
+def collect_dashboard_data(results_dir: str | Path, spec: dict[str, Any] | None) -> dict[str, Any]:
+    """Gather every artifact the dashboard needs from a run's results dir."""
+    results_dir = Path(results_dir)
+    spec = spec or {}
+    components = [
+        str(c.get("id"))
+        for c in (spec.get("components") or [])
+        if isinstance(c, dict) and c.get("id")
+    ]
+    return {
+        "kpis": _read_json(results_dir / "kpis.json"),
+        "acceptance": _read_json(results_dir / "acceptance.json"),
+        "streams": _read_csv(results_dir / "streams.csv"),
+        "blocks": _read_csv(results_dir / "blocks.csv"),
+        "material_balance": _read_csv(results_dir / "material_balance.csv"),
+        "energy_balance": _read_csv(results_dir / "energy_balance.csv"),
+        "flowsheet_mermaid": build_flowsheet_mermaid(spec) if spec else "",
+        "components": components,
+        "metadata": spec.get("metadata") or {},
+    }
