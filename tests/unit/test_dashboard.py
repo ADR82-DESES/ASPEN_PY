@@ -213,3 +213,18 @@ def test_dashboard_symbols_exported():
     assert hasattr(aspen_automation, "collect_dashboard_data")
     assert hasattr(aspen_automation, "build_flowsheet_mermaid")
     assert hasattr(aspen_automation, "save_dashboard_html")
+
+
+def test_collect_dashboard_data_non_dict_json_root_degrades(tmp_path):
+    # A corrupt artifact whose JSON root is an array/scalar must not break the
+    # "never raises" contract: it should degrade to an empty dict, and
+    # downstream consumers must not raise on the degraded data.
+    (tmp_path / "kpis.json").write_text("[1, 2, 3]", encoding="utf-8")
+    (tmp_path / "acceptance.json").write_text("true", encoding="utf-8")
+
+    data = collect_dashboard_data(tmp_path, None)
+
+    assert data["kpis"] == {}
+    assert data["acceptance"] == {}
+    figure_kpis(data)
+    kpi_cards_html(data)

@@ -76,9 +76,10 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        result = json.loads(path.read_text(encoding="utf-8"))
     except (ValueError, OSError):
         return {}
+    return result if isinstance(result, dict) else {}
 
 
 def _read_csv(path: Path) -> pd.DataFrame:
