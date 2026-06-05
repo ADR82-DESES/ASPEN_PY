@@ -17,6 +17,16 @@ def _require_plotly():
     return go
 
 
+def _rgba(hex_color: str, alpha: float) -> str:
+    """Translucent rgba() string from a #rrggbb hex (for softer, overlap-readable links)."""
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+_SANKEY_FONT = dict(family="Arial, Helvetica, sans-serif", size=12, color="#1a1a1a")
+
+
 def _mass_flow_lookup(streams: Any) -> dict[str, float]:
     if not isinstance(streams, pd.DataFrame) or streams.empty or "stream_name" not in streams.columns:
         return {}
@@ -129,9 +139,12 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
                 add_link(source_node, target_node, value, total_color, f"{stream} · total")
 
     fig = go.Figure(go.Sankey(
-        node=dict(label=labels, pad=18, thickness=16,
-                  color="#b8c4d0", line=dict(color="#33536e", width=0.5)),
-        link=dict(source=src_idx, target=dst_idx, value=values, color=link_color,
+        arrangement="snap",
+        node=dict(label=labels, pad=24, thickness=18,
+                  color="#e2e8f0", line=dict(color="#94a3b8", width=0.4)),
+        textfont=dict(color="#1a1a1a", size=11, family="Arial, Helvetica, sans-serif"),
+        link=dict(source=src_idx, target=dst_idx, value=values,
+                  color=[_rgba(c, 0.6) for c in link_color],
                   customdata=customdata,
                   hovertemplate="%{customdata}: %{value:.0f} kg/hr<extra></extra>"),
     ))
@@ -143,10 +156,12 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
             marker=dict(size=10, color=species_color(component)), showlegend=True,
         ))
     fig.update_layout(
-        title="Whole-process mass balance by species (kg/hr)",
-        font=dict(family="Helvetica, Arial, sans-serif", size=12),
-        paper_bgcolor="white", height=560, showlegend=True,
-        legend=dict(title="species", orientation="v", x=1.02, y=1.0),
+        title=dict(text="Whole-process mass balance by species (kg/hr)",
+                   font=dict(size=15, color="#1a1a1a")),
+        font=_SANKEY_FONT, paper_bgcolor="white", plot_bgcolor="white",
+        height=660, margin=dict(l=12, r=120, t=48, b=12), showlegend=True,
+        legend=dict(title=dict(text="species"), orientation="v", x=1.01, y=1.0,
+                    bgcolor="rgba(255,255,255,0)", font=dict(size=11)),
         xaxis=dict(visible=False), yaxis=dict(visible=False),
     )
     return fig
@@ -175,9 +190,18 @@ def sankey_energy_balance(data: dict[str, Any]):
             labels.append(label)
         return index[label]
 
+    cat_color = {"heat in": "#e8a87c", "heat out": "#7fb3d5", "work": "#b39ddb"}
+
     src_idx: list[int] = []
     dst_idx: list[int] = []
     values: list[float] = []
+    link_color: list[str] = []
+
+    def add(source: int, target: int, value: float, category: str) -> None:
+        src_idx.append(source)
+        dst_idx.append(target)
+        values.append(value)
+        link_color.append(_rgba(cat_color[category], 0.6))
 
     if isinstance(df, pd.DataFrame) and not df.empty and "block_name" in df.columns:
         for _, row in df.iterrows():
@@ -185,19 +209,32 @@ def sankey_energy_balance(data: dict[str, Any]):
             duty = _as_float(row.get("duty_kw")) if "duty_kw" in df.columns else None
             work = _as_float(row.get("net_work_kw")) if "net_work_kw" in df.columns else None
             if duty is not None and duty > 0:
-                src_idx.append(index["Utilities"]); dst_idx.append(node(name)); values.append(duty)
+                add(index["Utilities"], node(name), duty, "heat in")
             elif duty is not None and duty < 0:
-                src_idx.append(node(name)); dst_idx.append(index["Heat removed"]); values.append(-duty)
+                add(node(name), index["Heat removed"], -duty, "heat out")
             if work is not None and work > 0:
-                src_idx.append(index["Work"]); dst_idx.append(node(name)); values.append(work)
+                add(index["Work"], node(name), work, "work")
 
     fig = go.Figure(go.Sankey(
-        node=dict(label=labels, pad=18, thickness=16,
-                  color="#f0b67f", line=dict(color="#9a5b2c", width=0.5)),
-        link=dict(source=src_idx, target=dst_idx, value=values,
+        arrangement="snap",
+        node=dict(label=labels, pad=22, thickness=18,
+                  color="#e2e8f0", line=dict(color="#94a3b8", width=0.4)),
+        textfont=dict(color="#1a1a1a", size=11, family="Arial, Helvetica, sans-serif"),
+        link=dict(source=src_idx, target=dst_idx, value=values, color=link_color,
                   hovertemplate="%{value:.0f} kW<extra></extra>"),
     ))
-    fig.update_layout(title="Energy balance by unit (kW)",
-                      font=dict(family="Helvetica, Arial, sans-serif", size=12),
-                      paper_bgcolor="white", height=520)
+    for label, category in (("heat in (utilities)", "heat in"),
+                            ("heat removed", "heat out"), ("shaft work", "work")):
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="markers", name=label,
+            marker=dict(size=10, color=cat_color[category]), showlegend=True,
+        ))
+    fig.update_layout(
+        title=dict(text="Energy balance by unit (kW)", font=dict(size=15, color="#1a1a1a")),
+        font=_SANKEY_FONT, paper_bgcolor="white", plot_bgcolor="white",
+        height=560, margin=dict(l=12, r=130, t=48, b=12), showlegend=True,
+        legend=dict(orientation="v", x=1.01, y=1.0, bgcolor="rgba(255,255,255,0)",
+                    font=dict(size=11)),
+        xaxis=dict(visible=False), yaxis=dict(visible=False),
+    )
     return fig

@@ -138,6 +138,51 @@ def _edge_style(stream, flow_by_stream, species_by_stream, flow_max):
     return attrs
 
 
+def _pfd_digraph(spec, flow_by_stream, species_by_stream):
+    """Build the styled equipment PFD as a graphviz.Digraph (raises if graphviz absent)."""
+    import graphviz  # type: ignore
+
+    block_types = {
+        str(b.get("name")): str(b.get("type", ""))
+        for b in (spec.get("blocks") or [])
+        if isinstance(b, dict) and b.get("name")
+    }
+    producers, consumers = stream_endpoints(spec)
+    flow_max = max(flow_by_stream.values()) if flow_by_stream else 0.0
+    dot = graphviz.Digraph(
+        "pfd",
+        graph_attr={"rankdir": "LR", "bgcolor": "white", "nodesep": "0.45",
+                    "ranksep": "0.9", "splines": "ortho", "fontname": "Helvetica",
+                    "pad": "0.3", "dpi": "200"},
+        node_attr={"style": "filled", "fillcolor": "#eef3f8", "color": "#33536e",
+                   "penwidth": "1.1", "fontname": "Helvetica", "fontsize": "11",
+                   "margin": "0.10,0.06"},
+        edge_attr={"fontname": "Helvetica", "fontsize": "7.5", "color": "#5a6b7b",
+                   "arrowsize": "0.7", "penwidth": "1.0", "fontcolor": "#475569"},
+    )
+    for name, btype in block_types.items():
+        shape = equipment_shape(block_to_equipment(btype))
+        label = f"{name}\\n{btype}" if btype else name
+        dot.node(_node_id(name), label, shape=shape)
+    for stream in sorted(set(producers) | set(consumers)):
+        src = producers.get(stream)
+        dsts = consumers.get(stream, [])
+        style = _edge_style(stream, flow_by_stream, species_by_stream, flow_max)
+        if src is None:
+            fid = f"feed_{_node_id(stream)}"
+            dot.node(fid, stream, shape="plaintext", fillcolor="white", fontcolor="#475569")
+            for dst in dsts:
+                dot.edge(fid, _node_id(dst), label=stream, **style)
+        elif not dsts:
+            oid = f"out_{_node_id(stream)}"
+            dot.node(oid, stream, shape="plaintext", fillcolor="white", fontcolor="#475569")
+            dot.edge(_node_id(src), oid, label=stream, **style)
+        else:
+            for dst in dsts:
+                dot.edge(_node_id(src), _node_id(dst), label=stream, **style)
+    return dot
+
+
 def build_flowsheet_graphviz(
     spec: dict[str, Any],
     *,
@@ -150,45 +195,8 @@ def build_flowsheet_graphviz(
     stream edge is tinted by its dominant species (shared color code) and its width is
     scaled by mass flow.
     """
-    flow_by_stream = flow_by_stream or {}
-    species_by_stream = species_by_stream or {}
-    flow_max = max(flow_by_stream.values()) if flow_by_stream else 0.0
     try:
-        import graphviz  # type: ignore
-
-        block_types = {
-            str(b.get("name")): str(b.get("type", ""))
-            for b in (spec.get("blocks") or [])
-            if isinstance(b, dict) and b.get("name")
-        }
-        producers, consumers = stream_endpoints(spec)
-        dot = graphviz.Digraph(
-            "pfd",
-            graph_attr={"rankdir": "LR", "bgcolor": "white", "nodesep": "0.5", "ranksep": "0.8"},
-            node_attr={"style": "filled", "fillcolor": "#eef3f8", "color": "#33536e",
-                       "fontname": "Helvetica", "fontsize": "10"},
-            edge_attr={"fontname": "Helvetica", "fontsize": "8", "color": "#5a6b7b", "arrowsize": "0.7"},
-        )
-        for name, btype in block_types.items():
-            shape = equipment_shape(block_to_equipment(btype))
-            label = f"{name}\\n{btype}" if btype else name
-            dot.node(_node_id(name), label, shape=shape)
-        for stream in sorted(set(producers) | set(consumers)):
-            src = producers.get(stream)
-            dsts = consumers.get(stream, [])
-            style = _edge_style(stream, flow_by_stream, species_by_stream, flow_max)
-            if src is None:
-                fid = f"feed_{_node_id(stream)}"
-                dot.node(fid, stream, shape="plaintext", fillcolor="white")
-                for dst in dsts:
-                    dot.edge(fid, _node_id(dst), label=stream, **style)
-            elif not dsts:
-                oid = f"out_{_node_id(stream)}"
-                dot.node(oid, stream, shape="plaintext", fillcolor="white")
-                dot.edge(_node_id(src), oid, label=stream, **style)
-            else:
-                for dst in dsts:
-                    dot.edge(_node_id(src), _node_id(dst), label=stream, **style)
+        dot = _pfd_digraph(spec, flow_by_stream or {}, species_by_stream or {})
         svg = dot.pipe(format="svg").decode("utf-8")
         return "graphviz-svg", svg
     except Exception:
