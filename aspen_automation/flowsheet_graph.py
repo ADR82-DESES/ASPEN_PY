@@ -7,6 +7,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from .species_colors import species_color
+
 
 def _node_id(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", str(name)) or "n"
@@ -124,8 +126,33 @@ def build_flowsheet_mermaid(spec: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def build_flowsheet_graphviz(spec: dict[str, Any]) -> tuple[str, str]:
-    """Equipment-shaped Graphviz PFD as SVG; degrade to ('mermaid', text) if unavailable."""
+def _edge_style(stream, flow_by_stream, species_by_stream, flow_max):
+    """Graphviz edge attrs: tint by dominant species, thicken by mass flow."""
+    attrs: dict[str, str] = {}
+    dominant = species_by_stream.get(stream)
+    if dominant:
+        attrs["color"] = species_color(dominant)
+    flow = flow_by_stream.get(stream)
+    if flow and flow_max > 0:
+        attrs["penwidth"] = f"{1.0 + 5.0 * (flow / flow_max):.2f}"
+    return attrs
+
+
+def build_flowsheet_graphviz(
+    spec: dict[str, Any],
+    *,
+    flow_by_stream: dict[str, float] | None = None,
+    species_by_stream: dict[str, str] | None = None,
+) -> tuple[str, str]:
+    """Equipment-shaped Graphviz PFD as SVG; degrade to ('mermaid', text) if unavailable.
+
+    When ``flow_by_stream``/``species_by_stream`` are supplied (from run data), each
+    stream edge is tinted by its dominant species (shared color code) and its width is
+    scaled by mass flow.
+    """
+    flow_by_stream = flow_by_stream or {}
+    species_by_stream = species_by_stream or {}
+    flow_max = max(flow_by_stream.values()) if flow_by_stream else 0.0
     try:
         import graphviz  # type: ignore
 
@@ -149,27 +176,39 @@ def build_flowsheet_graphviz(spec: dict[str, Any]) -> tuple[str, str]:
         for stream in sorted(set(producers) | set(consumers)):
             src = producers.get(stream)
             dsts = consumers.get(stream, [])
+            style = _edge_style(stream, flow_by_stream, species_by_stream, flow_max)
             if src is None:
                 fid = f"feed_{_node_id(stream)}"
                 dot.node(fid, stream, shape="plaintext", fillcolor="white")
                 for dst in dsts:
-                    dot.edge(fid, _node_id(dst), label=stream)
+                    dot.edge(fid, _node_id(dst), label=stream, **style)
             elif not dsts:
                 oid = f"out_{_node_id(stream)}"
                 dot.node(oid, stream, shape="plaintext", fillcolor="white")
-                dot.edge(_node_id(src), oid, label=stream)
+                dot.edge(_node_id(src), oid, label=stream, **style)
             else:
                 for dst in dsts:
-                    dot.edge(_node_id(src), _node_id(dst), label=stream)
+                    dot.edge(_node_id(src), _node_id(dst), label=stream, **style)
         svg = dot.pipe(format="svg").decode("utf-8")
         return "graphviz-svg", svg
     except Exception:
         return "mermaid", build_flowsheet_mermaid(spec)
 
 
-def build_pfd_svg(spec: dict[str, Any], *, out_path: str | None = None) -> tuple[str, str]:
-    """Return (source, svg_or_mermaid_text). Graphviz primary, Mermaid fallback."""
-    kind, content = build_flowsheet_graphviz(spec)
+def build_pfd_svg(
+    spec: dict[str, Any],
+    *,
+    flow_by_stream: dict[str, float] | None = None,
+    species_by_stream: dict[str, str] | None = None,
+    out_path: str | None = None,
+) -> tuple[str, str]:
+    """Return (source, svg_or_mermaid_text). Graphviz primary, Mermaid fallback.
+
+    ``flow_by_stream``/``species_by_stream`` (from run data) tint edges by dominant
+    species and scale their width by mass flow.
+    """
+    kind, content = build_flowsheet_graphviz(
+        spec, flow_by_stream=flow_by_stream, species_by_stream=species_by_stream)
     if out_path and kind == "graphviz-svg":
         with open(out_path, "w", encoding="utf-8") as handle:
             handle.write(content)
