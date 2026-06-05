@@ -80,3 +80,54 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
                       font=dict(family="Helvetica, Arial, sans-serif", size=12),
                       paper_bgcolor="white", height=520)
     return fig
+
+
+def _as_float(value: Any) -> float | None:
+    try:
+        if value is None:
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def sankey_energy_balance(data: dict[str, Any]):
+    """Per-unit energy Sankey from block duties/work (kW)."""
+    go = _require_plotly()
+    df = data.get("blocks")
+
+    labels: list[str] = ["Utilities", "Heat removed", "Work"]
+    index = {label: i for i, label in enumerate(labels)}
+
+    def node(label: str) -> int:
+        if label not in index:
+            index[label] = len(labels)
+            labels.append(label)
+        return index[label]
+
+    src_idx: list[int] = []
+    dst_idx: list[int] = []
+    values: list[float] = []
+
+    if isinstance(df, pd.DataFrame) and not df.empty and "block_name" in df.columns:
+        for _, row in df.iterrows():
+            name = str(row["block_name"])
+            duty = _as_float(row.get("duty_kw")) if "duty_kw" in df.columns else None
+            work = _as_float(row.get("net_work_kw")) if "net_work_kw" in df.columns else None
+            if duty is not None and duty > 0:
+                src_idx.append(index["Utilities"]); dst_idx.append(node(name)); values.append(duty)
+            elif duty is not None and duty < 0:
+                src_idx.append(node(name)); dst_idx.append(index["Heat removed"]); values.append(-duty)
+            if work is not None and work > 0:
+                src_idx.append(index["Work"]); dst_idx.append(node(name)); values.append(work)
+
+    fig = go.Figure(go.Sankey(
+        node=dict(label=labels, pad=18, thickness=16,
+                  color="#f0b67f", line=dict(color="#9a5b2c", width=0.5)),
+        link=dict(source=src_idx, target=dst_idx, value=values,
+                  hovertemplate="%{value:.0f} kW<extra></extra>"),
+    ))
+    fig.update_layout(title="Energy balance by unit (kW)",
+                      font=dict(family="Helvetica, Arial, sans-serif", size=12),
+                      paper_bgcolor="white", height=520)
+    return fig
