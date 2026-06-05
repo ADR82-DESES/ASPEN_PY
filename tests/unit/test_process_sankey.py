@@ -114,5 +114,7 @@ def test_stream_styles_flow_and_dominant_species():
 
 
 def test_stream_styles_empty_is_blank():
+    from aspen_automation.process_sankey import stream_styles
+
     flow, dominant = stream_styles(pd.DataFrame())
     assert flow == {} and dominant == {}
