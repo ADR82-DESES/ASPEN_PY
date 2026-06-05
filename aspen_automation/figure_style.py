@@ -41,7 +41,7 @@ def fig_synthesis_loop(data: dict[str, Any]):
 
     use_nature_style()
     loop = (data.get("kpis") or {}).get("synthesis_loop") or {}
-    labels = ["CO", "CO₂", "H₂"]
+    labels = ["CO", r"CO$_2$", r"H$_2$"]
     values = [
         _as_float(loop.get("co_conversion_fraction")),
         _as_float(loop.get("co2_conversion_fraction")),
@@ -53,7 +53,7 @@ def fig_synthesis_loop(data: dict[str, Any]):
     ax.set_ylim(0, 1)
     sn = loop.get("inlet_stoichiometric_number")
     if sn is not None:
-        ax.set_title(f"Synthesis loop (SN={_as_float(sn):.2f}, target 1.8–2.2)")
+        ax.set_title(f"Synthesis loop (SN={_as_float(sn):.2f}, target 1.8-2.2)")
     else:
         ax.set_title("Synthesis loop")
     fig.tight_layout()
