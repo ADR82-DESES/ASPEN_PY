@@ -25,15 +25,24 @@ import pandas as pd
 from aspen_automation.figure_style import fig_stream_composition, fig_kpi_summary
 
 
-def test_fig_stream_composition_stacks_components():
+def test_fig_stream_composition_horizontal_mass_frac_shared_colors():
+    import matplotlib.colors as mcolors
+
+    from aspen_automation.species_colors import species_color
+
     data = {"streams": pd.DataFrame({
         "stream_name": ["FEED", "PROD"],
-        "CH4_mole_frac": [0.9, 0.0],
-        "H2_mole_frac": [0.1, 0.2],
+        "CH4_mass_frac": [0.9, 0.0],
+        "H2_mass_frac": [0.1, 0.2],
     })}
     fig = fig_stream_composition(data)
     ax = fig.axes[0]
     assert len(ax.patches) >= 2  # stacked bars across components/streams
+    # horizontal: stream names are the y tick labels (legible even with many streams)
+    assert [t.get_text() for t in ax.get_yticklabels()] == ["FEED", "PROD"]
+    # shared species color code is used
+    patch_hexes = {mcolors.to_hex(p.get_facecolor()) for p in ax.patches}
+    assert mcolors.to_hex(species_color("CH4")) in patch_hexes
 
 
 def test_fig_kpi_summary_returns_figure():
