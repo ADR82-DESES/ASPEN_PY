@@ -91,9 +91,12 @@ def test_sankey_mass_balance_splits_by_species():
     fig = sankey_mass_balance(data, spec)
     sankey = fig.data[0]
     # FEED(100) -> CH4 80 + H2O 20 ; PROD(100) -> H2O 100 (CH4 frac 0 skipped)
+    from aspen_automation.process_sankey import _rgba
+
     assert sorted(sankey.link.value) == [20.0, 80.0, 100.0]
-    assert species_color("CH4") in list(sankey.link.color)
-    assert species_color("H2O") in list(sankey.link.color)
+    # links are translucent rgba of the shared species colors
+    assert _rgba(species_color("CH4"), 0.6) in list(sankey.link.color)
+    assert _rgba(species_color("H2O"), 0.6) in list(sankey.link.color)
     # hidden legend traces exist for the species present
     legend_names = {trace.name for trace in fig.data[1:]}
     assert legend_names == {"CH4", "H2O"}
