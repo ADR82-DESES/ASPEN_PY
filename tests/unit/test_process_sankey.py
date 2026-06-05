@@ -75,3 +75,25 @@ def test_sankey_mass_balance_fans_out_to_all_consumers():
     links = set(zip(fig.data[0].link.source, fig.data[0].link.target))
     assert (idx["A"], idx["B"]) in links
     assert (idx["A"], idx["C"]) in links
+
+
+def test_sankey_mass_balance_splits_by_species():
+    from aspen_automation.species_colors import species_color
+
+    spec = {"blocks": [{"name": "RX", "type": "X"}],
+            "flowsheet": [{"block": "RX", "inputs": ["FEED"], "outputs": ["PROD"]}]}
+    data = {"streams": pd.DataFrame({
+        "stream_name": ["FEED", "PROD"],
+        "mass_flow": [100.0, 100.0],
+        "CH4_mass_frac": [0.8, 0.0],
+        "H2O_mass_frac": [0.2, 1.0],
+    })}
+    fig = sankey_mass_balance(data, spec)
+    sankey = fig.data[0]
+    # FEED(100) -> CH4 80 + H2O 20 ; PROD(100) -> H2O 100 (CH4 frac 0 skipped)
+    assert sorted(sankey.link.value) == [20.0, 80.0, 100.0]
+    assert species_color("CH4") in list(sankey.link.color)
+    assert species_color("H2O") in list(sankey.link.color)
+    # hidden legend traces exist for the species present
+    legend_names = {trace.name for trace in fig.data[1:]}
+    assert legend_names == {"CH4", "H2O"}

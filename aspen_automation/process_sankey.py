@@ -6,6 +6,7 @@ from typing import Any
 import pandas as pd
 
 from .flowsheet_graph import stream_endpoints
+from .species_colors import species_color
 
 
 def _require_plotly():
@@ -30,6 +31,27 @@ def _mass_flow_lookup(streams: Any) -> dict[str, float]:
     return out
 
 
+def _mass_fraction_lookup(streams: Any) -> dict[str, dict[str, float]]:
+    """stream_name -> {component: mass_fraction>0} from the ``<COMP>_mass_frac`` columns."""
+    if not isinstance(streams, pd.DataFrame) or streams.empty or "stream_name" not in streams.columns:
+        return {}
+    frac_cols = [c for c in streams.columns if c.endswith("_mass_frac")]
+    out: dict[str, dict[str, float]] = {}
+    for _, row in streams.iterrows():
+        comps: dict[str, float] = {}
+        for col in frac_cols:
+            component = col[: -len("_mass_frac")]
+            try:
+                frac = float(row[col])
+            except (TypeError, ValueError):
+                continue
+            if frac == frac and frac > 0:  # skip NaN and zero/negative
+                comps[component] = frac
+        if comps:
+            out[str(row["stream_name"])] = comps
+    return out
+
+
 def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
     """Whole-process mass-flow Sankey (kg/hr).
 
@@ -39,6 +61,7 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
     go = _require_plotly()
     producers, consumers = stream_endpoints(spec)
     flows = _mass_flow_lookup(data.get("streams"))
+    fracs = _mass_fraction_lookup(data.get("streams"))
 
     labels: list[str] = []
     index: dict[str, int] = {}
@@ -52,7 +75,17 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
     src_idx: list[int] = []
     dst_idx: list[int] = []
     values: list[float] = []
+    link_color: list[str] = []
     customdata: list[str] = []
+    species_present: list[str] = []  # first-seen order, for the legend
+    total_color = "#cccccc"
+
+    def add_link(source: int, target: int, value: float, color: str, label: str) -> None:
+        src_idx.append(source)
+        dst_idx.append(target)
+        values.append(value)
+        link_color.append(color)
+        customdata.append(label)
 
     for stream in sorted(set(producers) | set(consumers)):
         value = flows.get(stream)
@@ -71,25 +104,40 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
             targets = [node(dst) for dst in dsts]
         else:
             continue
-        # Fan out to every consumer so no block is left without inflow; for the
-        # common point-to-point case this is a single link and conservation at
-        # each block node is visible.
+        comp_fracs = fracs.get(stream)
+        # Fan out to every consumer; split each link into per-species sub-links so a
+        # stream's width is the sum of its components (consistent color per species).
         for target_node in targets:
-            src_idx.append(source_node)
-            dst_idx.append(target_node)
-            values.append(value)
-            customdata.append(stream)
+            if comp_fracs:
+                for component, frac in comp_fracs.items():
+                    add_link(source_node, target_node, value * frac,
+                             species_color(component), f"{stream} · {component}")
+                    if component not in species_present:
+                        species_present.append(component)
+            else:
+                add_link(source_node, target_node, value, total_color, f"{stream} · total")
 
     fig = go.Figure(go.Sankey(
         node=dict(label=labels, pad=18, thickness=16,
-                  color="#9ec3e6", line=dict(color="#33536e", width=0.5)),
-        link=dict(source=src_idx, target=dst_idx, value=values,
+                  color="#b8c4d0", line=dict(color="#33536e", width=0.5)),
+        link=dict(source=src_idx, target=dst_idx, value=values, color=link_color,
                   customdata=customdata,
                   hovertemplate="%{customdata}: %{value:.0f} kg/hr<extra></extra>"),
     ))
-    fig.update_layout(title="Whole-process mass balance (kg/hr)",
-                      font=dict(family="Helvetica, Arial, sans-serif", size=12),
-                      paper_bgcolor="white", height=520)
+    # Plotly Sankey has no native legend; add hidden marker traces so each species
+    # appears as a colored legend entry.
+    for component in species_present:
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="markers", name=component,
+            marker=dict(size=10, color=species_color(component)), showlegend=True,
+        ))
+    fig.update_layout(
+        title="Whole-process mass balance by species (kg/hr)",
+        font=dict(family="Helvetica, Arial, sans-serif", size=12),
+        paper_bgcolor="white", height=560, showlegend=True,
+        legend=dict(title="species", orientation="v", x=1.02, y=1.0),
+        xaxis=dict(visible=False), yaxis=dict(visible=False),
+    )
     return fig
 
 
