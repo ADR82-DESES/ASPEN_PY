@@ -52,6 +52,17 @@ def _mass_fraction_lookup(streams: Any) -> dict[str, dict[str, float]]:
     return out
 
 
+def stream_styles(streams: Any) -> tuple[dict[str, float], dict[str, str]]:
+    """Return (mass_flow_by_stream, dominant_species_by_stream) for PFD edge styling."""
+    flows = _mass_flow_lookup(streams)
+    fracs = _mass_fraction_lookup(streams)
+    dominant: dict[str, str] = {}
+    for stream, comps in fracs.items():
+        if comps:
+            dominant[stream] = max(comps, key=comps.get)
+    return flows, dominant
+
+
 def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
     """Whole-process mass-flow Sankey (kg/hr).
 

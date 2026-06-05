@@ -99,3 +99,24 @@ def test_build_flowsheet_graphviz_uses_real_svg_when_available():
     kind, content = build_flowsheet_graphviz(SPEC)
     assert kind == "graphviz-svg"
     assert "<svg" in content
+
+
+def test_build_flowsheet_graphviz_styles_edges_by_species_and_flow():
+    import importlib.util
+    import shutil
+
+    if importlib.util.find_spec("graphviz") is None or shutil.which("dot") is None:
+        pytest.skip("graphviz not available")
+    from aspen_automation.species_colors import species_color
+
+    # RXOUT is the RX->SEP edge; tint it by CO and give it a heavy flow.
+    kind, svg = build_flowsheet_graphviz(
+        SPEC,
+        flow_by_stream={"RXOUT": 100.0},
+        species_by_stream={"RXOUT": "CO"},
+    )
+    assert kind == "graphviz-svg"
+    # the dominant-species color is applied as the edge stroke
+    assert species_color("CO").lower() in svg.lower()
+    # mass-flow -> a thicker stroke than the default 1pt
+    assert "stroke-width" in svg.lower()

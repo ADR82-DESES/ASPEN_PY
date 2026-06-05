@@ -97,3 +97,24 @@ def test_sankey_mass_balance_splits_by_species():
     # hidden legend traces exist for the species present
     legend_names = {trace.name for trace in fig.data[1:]}
     assert legend_names == {"CH4", "H2O"}
+
+
+def test_stream_styles_flow_and_dominant_species():
+    from aspen_automation.process_sankey import stream_styles
+
+    streams = pd.DataFrame({
+        "stream_name": ["FEED", "PROD"],
+        "mass_flow": [100.0, 50.0],
+        "CH4_mass_frac": [0.8, 0.1],
+        "H2O_mass_frac": [0.2, 0.9],
+    })
+    flow, dominant = stream_styles(streams)
+    assert flow == {"FEED": 100.0, "PROD": 50.0}
+    assert dominant == {"FEED": "CH4", "PROD": "H2O"}
+
+
+def test_stream_styles_empty_is_blank():
+    from aspen_automation.process_sankey import stream_styles
+
+    flow, dominant = stream_styles(pd.DataFrame())
+    assert flow == {} and dominant == {}

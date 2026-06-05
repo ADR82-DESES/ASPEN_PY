@@ -15,7 +15,7 @@ import pandas as pd
 
 from .process_library import load_process_spec
 from .flowsheet_graph import build_flowsheet_mermaid, build_pfd_svg
-from .process_sankey import sankey_mass_balance, sankey_energy_balance
+from .process_sankey import sankey_mass_balance, sankey_energy_balance, stream_styles
 from . import figure_style
 
 DEFAULT_MERMAID_JS = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
@@ -131,7 +131,8 @@ def build_dashboard_html(data: dict[str, Any], spec: dict[str, Any] | None = Non
     title = (data.get("metadata") or {}).get("title", "Aspen Run Dashboard")
     cards = kpi_cards_html(data)
 
-    _source, pfd_svg = build_pfd_svg(spec)
+    _flow, _species = stream_styles(data.get("streams"))
+    _source, pfd_svg = build_pfd_svg(spec, flow_by_stream=_flow, species_by_stream=_species)
     pfd_block = pfd_svg if "<svg" in pfd_svg else f'<pre class="mermaid">{_html.escape(pfd_svg)}</pre>'
 
     mass = sankey_mass_balance(data, spec).to_html(full_html=False, include_plotlyjs="cdn")
@@ -169,7 +170,9 @@ def save_dashboard_figures(
     figdir.mkdir(parents=True, exist_ok=True)
     out: dict[str, Path] = {}
 
-    _source, pfd_svg = build_pfd_svg(spec, out_path=str(figdir / "flowsheet_pfd.svg"))
+    _flow, _species = stream_styles(data.get("streams"))
+    _source, pfd_svg = build_pfd_svg(spec, flow_by_stream=_flow, species_by_stream=_species,
+                                     out_path=str(figdir / "flowsheet_pfd.svg"))
     if not (figdir / "flowsheet_pfd.svg").is_file():
         (figdir / "flowsheet_pfd.svg").write_text(pfd_svg, encoding="utf-8")
     out["pfd"] = figdir / "flowsheet_pfd.svg"
@@ -225,7 +228,8 @@ def display_dashboard(
     display(Markdown(f"# Dashboard: {title}"))
     display(HTML(kpi_cards_html(data)))
 
-    _source, pfd_svg = build_pfd_svg(spec or {})
+    _flow, _species = stream_styles(data.get("streams"))
+    _source, pfd_svg = build_pfd_svg(spec or {}, flow_by_stream=_flow, species_by_stream=_species)
     display(Markdown("## Process flow diagram"))
     if "<svg" in pfd_svg:
         display(HTML(pfd_svg))
