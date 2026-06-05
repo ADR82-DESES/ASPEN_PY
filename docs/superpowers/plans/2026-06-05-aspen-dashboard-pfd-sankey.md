@@ -6,7 +6,35 @@
 
 **Architecture:** New focused modules (`flowsheet_graph.py`, `process_pfd.py`, `process_sankey.py`, `figure_style.py`) own the connectivity, PFD, Sankey, and Nature-figure concerns; `dashboard.py` keeps only orchestration + export. Heavy libs are lazy-imported; a fallback chain (pyflowsheet → graphviz → mermaid) guarantees a flowsheet always renders.
 
-**Tech Stack:** Python 3.12, pandas, plotly + kaleido (Sankey static export), matplotlib + SciencePlots `nature` (no-latex), pyflowsheet (PFD SVG), python-graphviz (fallback). Managed by Pixi.
+**Tech Stack:** Python 3.12, pandas, plotly + kaleido (Sankey static export), matplotlib + SciencePlots `nature` (no-latex), python-graphviz (PFD SVG). Managed by Pixi.
+
+---
+
+## REVISION 2026-06-05 (post Task-1 spike): Graphviz-primary PFD
+
+The Task 1 spike proved **pyflowsheet's auto-router is broken** with every installable
+`pathfinding` (1.0.x passes a `SimpleHeap` to pyflowsheet's list-based `heapq.heappush`;
+the old list-based `0.0.4` violates pyflowsheet's own `>=1.0.1` metadata). A pyflowsheet
+PFD would require hand-rolled manual routing. **User decision: use Graphviz as the primary
+PFD engine** (clean auto-layout + auto-routing) with equipment-ish node shapes, Mermaid as
+the only fallback. Consequences for the tasks below:
+
+- **DROP** `compute_layout` (Graphviz auto-layouts) and the separate `process_pfd.py`
+  module. **DROP** the `pyflowsheet` dependency. The PFD lives entirely in
+  `flowsheet_graph.py`.
+- `block_to_equipment(type) -> category` is KEPT but now maps category → a **Graphviz node
+  shape** (reactor/vessel/column→`cylinder`, heater/pump→`circle`, compressor→`trapezium`,
+  mixer→`invtriangle`, splitter→`triangle`, valve→`diamond`, blackbox→`box`).
+- `build_flowsheet_graphviz(spec)` is upgraded to use those shapes + clean styling and
+  returns `("graphviz-svg", svg)` or falls back to `("mermaid", text)`.
+- `build_pfd_svg(spec, *, out_path=None) -> (source, svg)` lives in `flowsheet_graph.py`
+  (not `process_pfd.py`): try graphviz → fall back to mermaid.
+- Renumbered remaining work: **T2** endpoints/edges, **T3** `block_to_equipment` + shape
+  map, **T4** move mermaid + equipment-shaped graphviz + `build_pfd_svg` (and drop
+  pyflowsheet from pixi), **T5** mass Sankey, **T6** energy Sankey, **T7** nature style +
+  synthesis fig, **T8** composition + KPI figs, **T9** dashboard rewire (import PFD from
+  `flowsheet_graph`), **T10** codex sync, **T11** full sweep. Tasks 5–10 in the original
+  numbering below are superseded where they mention pyflowsheet/`process_pfd`/`compute_layout`.
 
 ---
 
