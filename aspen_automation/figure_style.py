@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pandas as pd
+
 _STYLE_APPLIED = False
 
 
@@ -58,9 +60,6 @@ def fig_synthesis_loop(data: dict[str, Any]):
         ax.set_title("Synthesis loop")
     fig.tight_layout()
     return fig
-
-
-import pandas as pd
 
 
 def fig_stream_composition(data: dict[str, Any]):

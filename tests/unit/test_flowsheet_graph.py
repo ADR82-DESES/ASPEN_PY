@@ -85,3 +85,17 @@ def test_build_pfd_svg_source_and_content():
     source, content = build_pfd_svg(SPEC)
     assert source in {"graphviz-svg", "mermaid"}
     assert content.strip()
+
+
+def test_build_flowsheet_graphviz_uses_real_svg_when_available():
+    # When graphviz (python pkg + dot binary) is present, the PRIMARY branch must
+    # produce a real SVG — guards against the fallback silently masking a broken
+    # graphviz path.
+    import importlib.util
+    import shutil
+
+    if importlib.util.find_spec("graphviz") is None or shutil.which("dot") is None:
+        pytest.skip("graphviz not available")
+    kind, content = build_flowsheet_graphviz(SPEC)
+    assert kind == "graphviz-svg"
+    assert "<svg" in content

@@ -56,3 +56,22 @@ def test_sankey_energy_balance_empty_blocks_is_blank():
     fig = sankey_energy_balance({"blocks": pd.DataFrame()})
     assert fig.data[0].type == "sankey"
     assert len(fig.data[0].link.value) == 0
+
+
+def test_sankey_mass_balance_fans_out_to_all_consumers():
+    # A stream feeding two blocks must produce a link into BOTH (no silent drop).
+    spec = {
+        "blocks": [{"name": "A", "type": "X"}, {"name": "B", "type": "X"}, {"name": "C", "type": "X"}],
+        "flowsheet": [
+            {"block": "A", "inputs": ["FEED"], "outputs": ["S"]},
+            {"block": "B", "inputs": ["S"], "outputs": []},
+            {"block": "C", "inputs": ["S"], "outputs": []},
+        ],
+    }
+    data = {"streams": pd.DataFrame({"stream_name": ["FEED", "S"], "mass_flow": [10.0, 8.0]})}
+    fig = sankey_mass_balance(data, spec)
+    labels = list(fig.data[0].node.label)
+    idx = {label: i for i, label in enumerate(labels)}
+    links = set(zip(fig.data[0].link.source, fig.data[0].link.target))
+    assert (idx["A"], idx["B"]) in links
+    assert (idx["A"], idx["C"]) in links

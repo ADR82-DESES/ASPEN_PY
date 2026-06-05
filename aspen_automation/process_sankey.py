@@ -31,7 +31,11 @@ def _mass_flow_lookup(streams: Any) -> dict[str, float]:
 
 
 def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
-    """Whole-process mass-flow Sankey (kg/hr). Each unit is a node; conservation visible."""
+    """Whole-process mass-flow Sankey (kg/hr).
+
+    Each unit is a node; a stream is routed to every consuming block (fan-out). For
+    the common point-to-point case this means per-node mass conservation is visible.
+    """
     go = _require_plotly()
     producers, consumers = stream_endpoints(spec)
     flows = _mass_flow_lookup(data.get("streams"))
@@ -57,17 +61,24 @@ def sankey_mass_balance(data: dict[str, Any], spec: dict[str, Any]):
         producer = producers.get(stream)
         dsts = consumers.get(stream, [])
         if producer is None and dsts:
-            s, t = node(f"FEED: {stream}"), node(dsts[0])
+            source_node = node(f"FEED: {stream}")
+            targets = [node(dst) for dst in dsts]
         elif producer is not None and not dsts:
-            s, t = node(producer), node(f"OUT: {stream}")
+            source_node = node(producer)
+            targets = [node(f"OUT: {stream}")]
         elif producer is not None and dsts:
-            s, t = node(producer), node(dsts[0])
+            source_node = node(producer)
+            targets = [node(dst) for dst in dsts]
         else:
             continue
-        src_idx.append(s)
-        dst_idx.append(t)
-        values.append(value)
-        customdata.append(stream)
+        # Fan out to every consumer so no block is left without inflow; for the
+        # common point-to-point case this is a single link and conservation at
+        # each block node is visible.
+        for target_node in targets:
+            src_idx.append(source_node)
+            dst_idx.append(target_node)
+            values.append(value)
+            customdata.append(stream)
 
     fig = go.Figure(go.Sankey(
         node=dict(label=labels, pad=18, thickness=16,

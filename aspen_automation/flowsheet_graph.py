@@ -5,7 +5,6 @@ No plotting or heavy dependencies — safe to import anywhere.
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 from typing import Any
 
 
