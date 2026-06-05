@@ -18,3 +18,25 @@ def test_fig_synthesis_loop_returns_figure_with_bars():
     ax = fig.axes[0]
     assert len(ax.patches) == 3  # three bars
     assert ax.get_ylabel()
+
+
+import pandas as pd
+
+from aspen_automation.figure_style import fig_stream_composition, fig_kpi_summary
+
+
+def test_fig_stream_composition_stacks_components():
+    data = {"streams": pd.DataFrame({
+        "stream_name": ["FEED", "PROD"],
+        "CH4_mole_frac": [0.9, 0.0],
+        "H2_mole_frac": [0.1, 0.2],
+    })}
+    fig = fig_stream_composition(data)
+    ax = fig.axes[0]
+    assert len(ax.patches) >= 2  # stacked bars across components/streams
+
+
+def test_fig_kpi_summary_returns_figure():
+    data = {"kpis": {"methanol_tpd": 9812, "product_total_tpd": 12000, "purity_fraction": 0.997}}
+    fig = fig_kpi_summary(data)
+    assert fig.axes  # has at least one axis
