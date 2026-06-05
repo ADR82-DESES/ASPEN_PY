@@ -1,11 +1,12 @@
 """Interactive in-notebook dashboard for process runs.
 
-Pure helpers (``build_flowsheet_mermaid``, ``collect_dashboard_data``) have no
-plotting/IPython dependency. Chart and render helpers import plotly / IPython
-lazily so importing this module never requires them.
+Pure helpers (``collect_dashboard_data``) have no plotting/IPython dependency.
+Chart and render helpers import plotly / matplotlib / IPython lazily so
+importing this module never requires them.
 """
 from __future__ import annotations
 
+import html as _html
 import json
 from pathlib import Path
 from typing import Any
@@ -13,7 +14,9 @@ from typing import Any
 import pandas as pd
 
 from .process_library import load_process_spec
-from .flowsheet_graph import build_flowsheet_mermaid
+from .flowsheet_graph import build_flowsheet_mermaid, build_pfd_svg
+from .process_sankey import sankey_mass_balance, sankey_energy_balance
+from . import figure_style
 
 DEFAULT_MERMAID_JS = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs"
 
@@ -57,102 +60,6 @@ def collect_dashboard_data(results_dir: str | Path, spec: dict[str, Any] | None)
         "components": components,
         "metadata": spec.get("metadata") or {},
     }
-
-
-def _require_plotly():
-    try:
-        import plotly.graph_objects as go
-    except ImportError as exc:  # pragma: no cover - environment guard
-        raise ImportError(
-            "plotly is required for dashboard charts. Add it to the pixi env and run "
-            "`pixi install` (plotly + nbformat)."
-        ) from exc
-    return go
-
-
-def _as_float(value: Any) -> float | None:
-    try:
-        if value is None:
-            return None
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def figure_kpis(data: dict[str, Any]):
-    """Gauge of methanol production (TPD) toward the 10k target."""
-    go = _require_plotly()
-    methanol = _as_float((data.get("kpis") or {}).get("methanol_tpd")) or 0.0
-    fig = go.Figure(
-        go.Indicator(
-            mode="gauge+number",
-            value=methanol,
-            title={"text": "Methanol Production (TPD)"},
-            gauge={
-                "axis": {"range": [0, 10000]},
-                "threshold": {"line": {"color": "red", "width": 4}, "thickness": 0.75, "value": 10000},
-            },
-        )
-    )
-    fig.update_layout(height=300)
-    return fig
-
-
-def figure_synthesis_loop(data: dict[str, Any]):
-    """Grouped conversions for the synthesis loop."""
-    go = _require_plotly()
-    loop = (data.get("kpis") or {}).get("synthesis_loop") or {}
-    labels = ["CO conv", "CO2 conv", "H2 use"]
-    values = [
-        _as_float(loop.get("co_conversion_fraction")) or 0.0,
-        _as_float(loop.get("co2_conversion_fraction")) or 0.0,
-        _as_float(loop.get("h2_consumption_fraction")) or 0.0,
-    ]
-    fig = go.Figure(go.Bar(x=labels, y=values))
-    fig.update_layout(title="Synthesis-loop conversions", yaxis_title="fraction", height=350)
-    return fig
-
-
-def figure_stream_composition(data: dict[str, Any]):
-    """Stacked mole-fraction composition per stream."""
-    go = _require_plotly()
-    fig = go.Figure()
-    df = data.get("streams")
-    if isinstance(df, pd.DataFrame) and not df.empty and "stream_name" in df.columns:
-        comp_cols = [c for c in df.columns if c.endswith("_mole_frac")]
-        for col in comp_cols:
-            component = col[: -len("_mole_frac")]
-            fig.add_bar(name=component, x=list(df["stream_name"]), y=list(df[col]))
-        fig.update_layout(barmode="stack", title="Stream composition (mole frac)", height=400)
-    return fig
-
-
-def figure_balances(data: dict[str, Any]):
-    """Material balance: input vs output per component."""
-    go = _require_plotly()
-    fig = go.Figure()
-    df = data.get("material_balance")
-    if isinstance(df, pd.DataFrame) and not df.empty and "component" in df.columns:
-        if "input_kmol_hr" in df.columns:
-            fig.add_bar(name="in", x=list(df["component"]), y=list(df["input_kmol_hr"]))
-        if "output_kmol_hr" in df.columns:
-            fig.add_bar(name="out", x=list(df["component"]), y=list(df["output_kmol_hr"]))
-        fig.update_layout(barmode="group", title="Material balance (kmol/hr)", height=350)
-    return fig
-
-
-def figure_energy(data: dict[str, Any]):
-    """Per-block duty bars (kW) from the blocks table."""
-    go = _require_plotly()
-    fig = go.Figure()
-    df = data.get("blocks")
-    if isinstance(df, pd.DataFrame) and not df.empty and {"block_name", "duty_kw"} <= set(df.columns):
-        fig.add_bar(name="duty_kw", x=list(df["block_name"]), y=list(df["duty_kw"]))
-        fig.update_layout(title="Per-block duty (kW)", yaxis_title="kW", height=350)
-    return fig
-
-
-import html as _html
 
 
 def render_mermaid_html(mermaid_text: str, mermaid_js_url: str = DEFAULT_MERMAID_JS, height: int = 480):
@@ -206,66 +113,86 @@ def kpi_cards_html(data: dict[str, Any]) -> str:
     return f'<div style="display:flex;flex-wrap:wrap;">{body}</div>'
 
 
-def _all_figures(data: dict[str, Any]) -> list:
-    return [
-        figure_kpis(data),
-        figure_synthesis_loop(data),
-        figure_stream_composition(data),
-        figure_balances(data),
-        figure_energy(data),
-    ]
+def _fig_to_svg_data_uri(fig) -> str:
+    import base64
+    import io
+    import matplotlib.pyplot as plt
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="svg", bbox_inches="tight")
+    plt.close(fig)
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return f'<img style="max-width:100%" src="data:image/svg+xml;base64,{b64}"/>'
 
 
-def build_dashboard_html(
-    data: dict[str, Any],
-    figures: list,
-    mermaid_js_url: str = DEFAULT_MERMAID_JS,
-) -> str:
-    """Assemble a standalone HTML dashboard string (cards + flowsheet + charts)."""
+def build_dashboard_html(data: dict[str, Any], spec: dict[str, Any] | None = None) -> str:
+    """Assemble a standalone HTML dashboard: KPI cards + PFD + Sankeys + nature figures."""
+    spec = spec or {}
     title = (data.get("metadata") or {}).get("title", "Aspen Run Dashboard")
     cards = kpi_cards_html(data)
-    mermaid = data.get("flowsheet_mermaid") or ""
-    mermaid_block = ""
-    if mermaid:
-        mermaid_block = (
-            "<h2>Process flowsheet</h2>"
-            '<pre class="mermaid">' + _html.escape(mermaid) + "</pre>"
-            '<script type="module">'
-            f'import mermaid from "{mermaid_js_url}";'
-            "mermaid.initialize({startOnLoad:true});"
-            "</script>"
-        )
 
-    fig_blocks = []
-    for index, fig in enumerate(figures):
-        fig_blocks.append(
-            fig.to_html(full_html=False, include_plotlyjs="cdn" if index == 0 else False)
-        )
+    _source, pfd_svg = build_pfd_svg(spec)
+    pfd_block = pfd_svg if "<svg" in pfd_svg else f'<pre class="mermaid">{_html.escape(pfd_svg)}</pre>'
+
+    mass = sankey_mass_balance(data, spec).to_html(full_html=False, include_plotlyjs="cdn")
+    energy = sankey_energy_balance(data).to_html(full_html=False, include_plotlyjs=False)
+
+    figs = "".join(_fig_to_svg_data_uri(f) for f in (
+        figure_style.fig_kpi_summary(data),
+        figure_style.fig_synthesis_loop(data),
+        figure_style.fig_stream_composition(data),
+    ))
 
     return (
         "<!DOCTYPE html><html><head><meta charset='utf-8'>"
         f"<title>{_html.escape(str(title))}</title>"
-        "<style>body{font-family:Arial,sans-serif;margin:24px;color:#0f172a;}</style>"
+        "<style>body{font-family:Helvetica,Arial,sans-serif;margin:24px;color:#0f172a;}</style>"
         "</head><body>"
-        f"<h1>{_html.escape(str(title))}</h1>"
-        f"{cards}{mermaid_block}"
-        "<h2>Results</h2>"
-        + "".join(fig_blocks)
-        + "</body></html>"
+        f"<h1>{_html.escape(str(title))}</h1>{cards}"
+        f"<h2>Process flow diagram</h2>{pfd_block}"
+        f"<h2>Mass balance</h2>{mass}"
+        f"<h2>Energy balance</h2>{energy}"
+        f"<h2>Key figures</h2>{figs}"
+        "</body></html>"
     )
 
 
-def save_dashboard_html(
+def save_dashboard_figures(
     results_dir: str | Path,
     run_dir: str | Path,
     spec: dict[str, Any] | None = None,
-    mermaid_js_url: str = DEFAULT_MERMAID_JS,
-) -> Path:
-    """Write a standalone ``dashboard.html`` into ``run_dir`` and return its path."""
+) -> dict[str, Path]:
+    """Write publication figures (SVG/PDF) into ``run_dir/figures`` and return the paths."""
+    spec = spec or {}
     data = collect_dashboard_data(results_dir, spec)
-    html = build_dashboard_html(data, _all_figures(data), mermaid_js_url)
-    out = Path(run_dir) / "dashboard.html"
-    out.write_text(html, encoding="utf-8")
+    figdir = Path(run_dir) / "figures"
+    figdir.mkdir(parents=True, exist_ok=True)
+    out: dict[str, Path] = {}
+
+    _source, pfd_svg = build_pfd_svg(spec, out_path=str(figdir / "flowsheet_pfd.svg"))
+    if not (figdir / "flowsheet_pfd.svg").is_file():
+        (figdir / "flowsheet_pfd.svg").write_text(pfd_svg, encoding="utf-8")
+    out["pfd"] = figdir / "flowsheet_pfd.svg"
+
+    for name, fig in (("mass_balance_sankey", sankey_mass_balance(data, spec)),
+                      ("energy_balance_sankey", sankey_energy_balance(data))):
+        for ext in ("svg", "pdf"):
+            path = figdir / f"{name}.{ext}"
+            try:
+                fig.write_image(str(path))  # kaleido
+                out[f"{name}_{ext}"] = path
+            except Exception as exc:  # pragma: no cover - kaleido missing
+                print(f"Static export of {name}.{ext} skipped ({exc}).")
+
+    import matplotlib.pyplot as plt
+    for name, fig in (("kpi_summary", figure_style.fig_kpi_summary(data)),
+                      ("synthesis_loop", figure_style.fig_synthesis_loop(data)),
+                      ("stream_composition", figure_style.fig_stream_composition(data))):
+        for ext in ("svg", "pdf"):
+            path = figdir / f"{name}.{ext}"
+            fig.savefig(str(path), bbox_inches="tight")
+            out[f"{name}_{ext}"] = path
+        plt.close(fig)
     return out
 
 
@@ -274,6 +201,7 @@ def display_dashboard(
     spec: dict[str, Any] | None = None,
     *,
     save_html: bool = False,
+    save_figures: bool = False,
     mermaid_js_url: str = DEFAULT_MERMAID_JS,
 ) -> None:
     """Render the interactive dashboard inline in a notebook for one run result."""
@@ -297,13 +225,25 @@ def display_dashboard(
     display(Markdown(f"# Dashboard: {title}"))
     display(HTML(kpi_cards_html(data)))
 
-    if data.get("flowsheet_mermaid"):
-        display(Markdown("## Process flowsheet"))
-        display(render_mermaid_html(data["flowsheet_mermaid"], mermaid_js_url))
+    _source, pfd_svg = build_pfd_svg(spec or {})
+    display(Markdown("## Process flow diagram"))
+    if "<svg" in pfd_svg:
+        display(HTML(pfd_svg))
+    else:
+        display(render_mermaid_html(pfd_svg, mermaid_js_url))
 
-    display(Markdown("## Results"))
-    for fig in _all_figures(data):
-        fig.show()
+    display(Markdown("## Mass balance"))
+    sankey_mass_balance(data, spec or {}).show()
+    display(Markdown("## Energy balance"))
+    sankey_energy_balance(data).show()
+
+    display(Markdown("## Key figures"))
+    import matplotlib.pyplot as plt
+    for fig in (figure_style.fig_kpi_summary(data),
+                figure_style.fig_synthesis_loop(data),
+                figure_style.fig_stream_composition(data)):
+        display(fig)
+        plt.close(fig)
 
     streams = data.get("streams")
     if isinstance(streams, pd.DataFrame) and not streams.empty:
@@ -316,6 +256,10 @@ def display_dashboard(
             display(Markdown(f"## {label}"))
             display(table)
 
+    if save_figures:
+        paths = save_dashboard_figures(layout.results_dir, layout.run_dir, spec)
+        print(f"Saved {len(paths)} publication figures to {Path(layout.run_dir) / 'figures'}")
     if save_html:
-        out = save_dashboard_html(layout.results_dir, layout.run_dir, spec, mermaid_js_url)
-        print(f"Saved standalone dashboard: {out}")
+        out = Path(layout.run_dir) / "dashboard.html"
+        out.write_text(build_dashboard_html(data, spec), encoding="utf-8")
+        print(f"Saved dashboard: {out}")
