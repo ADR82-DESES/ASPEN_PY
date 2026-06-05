@@ -245,10 +245,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.0-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zlib-ng-2.3.3-h0261ad2_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_6.conda
-      - pypi: https://files.pythonhosted.org/packages/de/f0/8a87d4f63c1460018efc4578547ba4879d7170ab249beb6bf7573acf7f3a/pathfinding-1.0.21-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/72/64/dc52afd2993215950d79f551523e2084198c636ce1fd1cf0b446ca28389d/pyflowsheet-0.2.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/cc/22/14e7b20f7d11f3e9ea9b5ae6acf9ea695c423eee785906cd5c5914a841dc/scienceplots-2.2.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/84/15/640e399579024a6875918839454025bb1d5f850bb70d96a11eabb644d11c/svgwrite-1.4.3-py3-none-any.whl
 packages:
 - conda: https://conda.anaconda.org/conda-forge/win-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -2414,10 +2411,6 @@ packages:
   - pkg:pypi/parso?source=hash-mapping
   size: 82287
   timestamp: 1770676243987
-- pypi: https://files.pythonhosted.org/packages/de/f0/8a87d4f63c1460018efc4578547ba4879d7170ab249beb6bf7573acf7f3a/pathfinding-1.0.21-py3-none-any.whl
-  name: pathfinding
-  version: 1.0.21
-  sha256: ed63d967202b452f667e9e86ddf881a810b5751441e0fc1bf0942da4d43b214d
 - conda: https://conda.anaconda.org/conda-forge/win-64/pcre2-10.47-hd2b5f0e_0.conda
   sha256: 3e9e02174edf02cb4bcdd75668ad7b74b8061791a3bc8bdb8a52ae336761ba3e
   md5: 77eaf2336f3ae749e712f63e36b0f0a1
@@ -2621,15 +2614,6 @@ packages:
   - pkg:pypi/pydantic-core?source=hash-mapping
   size: 1970249
   timestamp: 1762989032818
-- pypi: https://files.pythonhosted.org/packages/72/64/dc52afd2993215950d79f551523e2084198c636ce1fd1cf0b446ca28389d/pyflowsheet-0.2.2-py3-none-any.whl
-  name: pyflowsheet
-  version: 0.2.2
-  sha256: 73580ca2fbee5cdb584e0c4019836bb006528c6aeeeca5667f34d2e7cba3c2df
-  requires_dist:
-  - svgwrite>=1.4
-  - pathfinding>=1.0.1
-  - matplotlib ; extra == 'plots'
-  requires_python: '>=3.7'
 - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
   sha256: cf70b2f5ad9ae472b71235e5c8a736c9316df3705746de419b59d442e8348e86
   md5: 16c18772b340887160c79a6acc022db0
@@ -3136,11 +3120,6 @@ packages:
   - pkg:pypi/stack-data?source=hash-mapping
   size: 26988
   timestamp: 1733569565672
-- pypi: https://files.pythonhosted.org/packages/84/15/640e399579024a6875918839454025bb1d5f850bb70d96a11eabb644d11c/svgwrite-1.4.3-py3-none-any.whl
-  name: svgwrite
-  version: 1.4.3
-  sha256: bb6b2b5450f1edbfa597d924f9ac2dd099e625562e492021d7dd614f65f8a22d
-  requires_python: '>=3.6'
 - conda: https://conda.anaconda.org/conda-forge/win-64/tbb-2022.3.0-h3155e25_2.conda
   sha256: abd9a489f059fba85c8ffa1abdaa4d515d6de6a3325238b8e81203b913cf65a9
   md5: 0f9817ffbe25f9e69ceba5ea70c52606

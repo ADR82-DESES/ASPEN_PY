@@ -58,3 +58,30 @@ def test_block_to_equipment(block_type, category):
 ])
 def test_equipment_shape(category, shape):
     assert equipment_shape(category) == shape
+
+
+from aspen_automation.flowsheet_graph import (
+    build_flowsheet_mermaid,
+    build_flowsheet_graphviz,
+    build_pfd_svg,
+)
+
+
+def test_build_flowsheet_mermaid_here():
+    m = build_flowsheet_mermaid(SPEC)
+    assert m.startswith("graph LR")
+    assert "RX -->|RXOUT| SEP" in m
+
+
+def test_build_flowsheet_graphviz_returns_svg_or_mermaid():
+    kind, content = build_flowsheet_graphviz(SPEC)
+    assert kind in {"graphviz-svg", "mermaid"}
+    assert content
+    if kind == "graphviz-svg":
+        assert "<svg" in content
+
+
+def test_build_pfd_svg_source_and_content():
+    source, content = build_pfd_svg(SPEC)
+    assert source in {"graphviz-svg", "mermaid"}
+    assert content.strip()

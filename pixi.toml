@@ -23,7 +23,6 @@ python-kaleido = ">=0.2"
 python-graphviz = ">=0.20"
 
 [pypi-dependencies]
-pyflowsheet = "*"
 scienceplots = ">=2.1"
 
 [tasks]
