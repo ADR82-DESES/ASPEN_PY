@@ -38,3 +38,51 @@ def block_edges(spec: dict[str, Any]) -> set[tuple[str, str]]:
         for dst in consumers.get(stream, []):
             edges.add((src, dst))
     return edges
+
+
+_CATEGORY_BY_TYPE = {
+    "MIXER": "mixer",
+    "FSPLIT": "splitter",
+    "SSPLIT": "splitter",
+    "RADFRAC": "column",
+    "DISTL": "column",
+    "MULTIFRAC": "column",
+    "FLASH2": "vessel",
+    "FLASH3": "vessel",
+    "FLASH": "vessel",
+    "HEATER": "heater",
+    "HEATX": "heater",
+    "COMPR": "compressor",
+    "MCOMPR": "compressor",
+    "PUMP": "pump",
+    "VALVE": "valve",
+    "RGIBBS": "reactor",
+    "RSTOIC": "reactor",
+    "RPLUG": "reactor",
+    "RCSTR": "reactor",
+    "REQUIL": "reactor",
+    "RYIELD": "reactor",
+}
+
+_SHAPE_BY_CATEGORY = {
+    "reactor": "cylinder",
+    "vessel": "cylinder",
+    "column": "cylinder",
+    "heater": "circle",
+    "pump": "circle",
+    "compressor": "trapezium",
+    "mixer": "invtriangle",
+    "splitter": "triangle",
+    "valve": "diamond",
+    "blackbox": "box",
+}
+
+
+def block_to_equipment(block_type: str) -> str:
+    """Map an Aspen block type to a PFD equipment category."""
+    return _CATEGORY_BY_TYPE.get(str(block_type).strip().upper(), "blackbox")
+
+
+def equipment_shape(category: str) -> str:
+    """Map an equipment category to a Graphviz node shape."""
+    return _SHAPE_BY_CATEGORY.get(category, "box")
