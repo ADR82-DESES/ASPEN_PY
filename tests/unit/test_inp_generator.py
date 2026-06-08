@@ -1220,6 +1220,48 @@ def test_generate_inp_groups_multiple_lhhw_reactions():
     assert "PARAM NTERM-ADS=2" in inp
 
 
+def test_lhhw_block_keyword_order_matches_reference():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"}],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0}, "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {"power": 2.0, "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}}]}],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+
+    inp = generate_inp(spec)
+    order = ["REACTIONS RXN-LHHW GENERAL", "PARAM NTERM-ADS=", "REAC-DATA 1", "RATE-CON 1",
+             "STOIC 1 MIXED", "DFORCE-EXP 1", "DFORCE-EXP-2 1", "DFORCE-EQ-1", "DFORCE-EQ-2",
+             "ADSORP-EXP", "ADSORP-EQTER", "ADSORP-POW"]
+    positions = [inp.index(token) for token in order]
+    assert positions == sorted(positions), "LHHW keyword paragraphs are out of reference order"
+
+
 def test_compr_type_parameter_keeps_batch_type_and_maps_efficiency():
     """COMPR batch INP uses TYPE plus SEFF for isentropic efficiency."""
     spec = PlantSpecification(**{
