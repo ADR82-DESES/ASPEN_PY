@@ -1,0 +1,946 @@
+;
+;Input Summary created by Aspen Plus Rel. 40.0 at 14:56:15 Mon Jun 8, 2026
+;Directory C:\Users\domingueza\ASPEN_PY\docs\superpowers\notes  Filename C:\Users\domingueza\ASPEN_PY\docs\superpowers\notes\_export_probe\exp_4.inp
+;
+
+
+DYNAMICS
+    DYNAMICS RESULTS=ON
+
+IN-UNITS SI MASS-FLOW='kg/hr' MOLE-FLOW='kmol/hr'  &
+        VOLUME-FLOW='cum/hr' PRESSURE=bar TEMPERATURE=C DELTA-T=C  &
+        PDROP-PER-HT='mbar/m' PDROP=bar SHORT-LENGTH=mm 
+
+DEF-STREAMS CONVEN ALL 
+
+MODEL-OPTION 
+
+DESCRIPTION "
+    Chemical Simulation with Metric Units : 
+    C, bar, kg/hr, kmol/hr, Gcal/hr, cum/hr. 
+      
+    Property Method: NRTL 
+      
+    Flow basis for input: Mole 
+      
+    Stream report composition: Mole flow 
+    "
+
+DATABANKS 'APV140 PURE40' / 'APV140 AQUEOUS' / 'APV140 SOLIDS' &
+         / 'APV140 INORGANIC' / NOASPENPCD
+
+PROP-SOURCES 'APV140 PURE40' / 'APV140 AQUEOUS' /  &
+        'APV140 SOLIDS' / 'APV140 INORGANIC'
+
+COMPONENTS 
+    O2 O2 / 
+    H2 H2 / 
+    N2 N2 / 
+    CO CO / 
+    CO2 CO2 / 
+    NH3 H3N / 
+    H2O H2O / 
+    CH4 CH4 / 
+    C2H6 C2H6 / 
+    C3H8 C3H8 / 
+    I-C4 C4H10-2 / 
+    N-C4 C4H10-1 / 
+    MEOH CH4O / 
+    ETOH C2H6O-2 / 
+    DME C2H6O-1 / 
+    AR AR 
+
+SOLVE 
+    RUN-MODE MODE=SIM 
+
+FLOWSHEET 
+    BLOCK B1 IN=S4 OUT=GIBBS 
+    BLOCK B3 IN=S3 OUT=PLUG 
+    BLOCK B2 IN=S1 OUT=S4 S3 
+
+PROPERTIES SRK FREE-WATER=STEAMNBS 
+    PROPERTIES NRTL / NRTL-RK 
+
+PROP-DATA PURE-1
+    IN-UNITS SI MASS-FLOW='kg/hr' MOLE-FLOW='kmol/hr'  &
+        VOLUME-FLOW='cum/hr' PRESSURE=bar TEMPERATURE=C DELTA-T=C  &
+        PDROP-PER-HT='mbar/m' PDROP=bar SHORT-LENGTH=mm 
+    PROP-LIST DGFORM 
+    PVAL MEOH -1.6165E8 
+    PVAL CO -137.218E6 
+
+PROP-DATA NRTL-1
+    IN-UNITS MET VOLUME-FLOW='cum/hr' ENTHALPY-FLO='Gcal/hr'  &
+        HEAT-TRANS-C='kcal/hr-sqm-K' PRESSURE=bar TEMPERATURE=C  &
+        VOLUME=cum DELTA-T=C HEAD=meter MASS-DENSITY='kg/cum'  &
+        MOLE-ENTHALP='kcal/mol' MASS-ENTHALP='kcal/kg'  &
+        MOLE-VOLUME='cum/kmol' HEAT=Gcal MOLE-CONC='mol/l'  &
+        PDROP=bar SHORT-LENGTH=mm 
+    PROP-LIST NRTL 
+    BPVAL NH3 H2O 9.612100000 -3232.815900 .3000000000 0.0 0.0  &
+        0.0 10.00000000 91.50000000 
+    BPVAL H2O NH3 -6.268400000 1525.454300 .3000000000 0.0 0.0  &
+        0.0 10.00000000 91.50000000 
+    BPVAL H2O MEOH 2.732200000 -617.2687000 .3000000000 0.0  &
+        0.0 0.0 24.99000000 100.0000000 
+    BPVAL MEOH H2O -.6930000000 172.9871000 .3000000000 0.0  &
+        0.0 0.0 24.99000000 100.0000000 
+    BPVAL N-C4 MEOH 0.0 551.7243000 .3000000000 0.0 0.0 0.0  &
+        50.00000000 50.00000000 
+    BPVAL MEOH N-C4 0.0 380.4331000 .3000000000 0.0 0.0 0.0  &
+        50.00000000 50.00000000 
+    BPVAL H2O ETOH 3.457800000 -586.0809000 .3000000000 0.0  &
+        0.0 0.0 24.99000000 100.0000000 
+    BPVAL ETOH H2O -.8009000000 246.1800000 .3000000000 0.0  &
+        0.0 0.0 24.99000000 100.0000000 
+    BPVAL MEOH ETOH 4.711900000 -1162.294900 .3000000000 0.0  &
+        0.0 0.0 20.00000000 78.40000000 
+    BPVAL ETOH MEOH -2.312700000 483.8436000 .3000000000 0.0  &
+        0.0 0.0 20.00000000 78.40000000 
+    BPVAL MEOH DME 0.0 653.0063000 .2951000000 0.0 0.0 0.0  &
+        0.0 0.0 
+    BPVAL DME MEOH 0.0 -18.93720000 .2951000000 0.0 0.0 0.0  &
+        0.0 0.0 
+
+PROP-DATA SRKKIJ-1
+    IN-UNITS MET VOLUME-FLOW='cum/hr' ENTHALPY-FLO='Gcal/hr'  &
+        HEAT-TRANS-C='kcal/hr-sqm-K' PRESSURE=bar TEMPERATURE=C  &
+        VOLUME=cum DELTA-T=C HEAD=meter MASS-DENSITY='kg/cum'  &
+        MOLE-ENTHALP='kcal/mol' MASS-ENTHALP='kcal/kg'  &
+        MOLE-VOLUME='cum/kmol' HEAT=Gcal MOLE-CONC='mol/l'  &
+        PDROP=bar SHORT-LENGTH=mm 
+    PROP-LIST SRKKIJ 
+    BPVAL H2 CH4 -.0244851000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL CH4 H2 -.0244851000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL H2 C2H6 .0163828000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL C2H6 H2 .0163828000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL H2 C3H8 .1014650000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL C3H8 H2 .1014650000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL CO CO2 -.0154400000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL CO2 CO -.0154400000 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL NH3 C3H8 .1612000000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C3H8 NH3 .1612000000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL NH3 N-C4 .1659000000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL N-C4 NH3 .1659000000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL CH4 C2H6 4.21992000E-4 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C2H6 CH4 4.21992000E-4 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL CH4 C3H8 .0241509000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C3H8 CH4 .0241509000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL CH4 I-C4 .0460715000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL I-C4 CH4 .0460715000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL CH4 N-C4 .0226440000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL N-C4 CH4 .0226440000 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C2H6 C3H8 1.69511000E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C3H8 C2H6 1.69511000E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C2H6 I-C4 5.51229000E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL I-C4 C2H6 5.51229000E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C2H6 N-C4 5.32194000E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL N-C4 C2H6 5.32194000E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C3H8 I-C4 -2.9093200E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL I-C4 C3H8 -2.9093200E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL C3H8 N-C4 -2.0759400E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL N-C4 C3H8 -2.0759400E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL I-C4 N-C4 -3.7749700E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL N-C4 I-C4 -3.7749700E-3 0.0 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL H2 N-C4 .3911000000 0.0 0.0 1.00000000000000e+35  &
+        1.00000000000000e+35 
+    BPVAL N-C4 H2 .3911000000 0.0 0.0 1.00000000000000e+35  &
+        1.00000000000000e+35 
+    BPVAL H2 CO2 -.3180807980 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL CO2 H2 -.3180807980 0.0 0.0 -273.1500000 726.8500000 
+    BPVAL H2 CO .0583111662 0.0 0.0 0.0 1000.000000 
+    BPVAL CO H2 .0583111662 0.0 0.0 0.0 1000.000000 
+    BPVAL H2 MEOH -2.676057730 4.93736254E-3 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL MEOH H2 -2.676057730 4.93736254E-3 0.0 -273.1500000  &
+        726.8500000 
+
+PROP-DATA SRKLIJ-1
+    IN-UNITS MET VOLUME-FLOW='cum/hr' ENTHALPY-FLO='Gcal/hr'  &
+        HEAT-TRANS-C='kcal/hr-sqm-K' PRESSURE=bar TEMPERATURE=C  &
+        VOLUME=cum DELTA-T=C HEAD=meter MASS-DENSITY='kg/cum'  &
+        MOLE-ENTHALP='kcal/mol' MASS-ENTHALP='kcal/kg'  &
+        MOLE-VOLUME='cum/kmol' HEAT=Gcal MOLE-CONC='mol/l'  &
+        PDROP=bar SHORT-LENGTH=mm 
+    PROP-LIST SRKLIJ 
+    BPVAL MEOH H2 5.465559730 -.0395641725 0.0 -273.1500000  &
+        726.8500000 
+    BPVAL H2 MEOH 0.0 0.0 0.0 -273.1500000 726.8500000 
+    
+;References for data group D-1
+;#1-1:Andrews, T. J. Chem. Soc., 1848, 1, 27
+;#2-2:Brown, J. C. J. Chem. Soc. Trans., 1903, 83, 987
+;#3-3:Tyrer, D. J. Chem. Soc. Trans., 1912, 101, 1104-13
+;#4-4:Mathews, J. H. J. Phys. Chem., 1917, 21, 536-69
+;#5-5:Ormandy, W. R.; Craven, E. C. J. Inst. Pet., 1923, 9, 368
+;#6-7:Mathews, J. H. J. Am. Chem. Soc., 1926, 48, 562-576
+;#8-11:Fiock, E. F.; Ginnings, D. C.; Holton, W. B. J. Res. Natl. Bur. Stand. (U. S.), 1931, 6, 881
+;#12-12:Bennewitz, K.; Rossner, W. Z. Phys. Chem. Abt. B, 1938, 39, 126
+;#13-13:Staveley, L. A. K.; Gupta, A. K. Trans. Faraday Soc., 1949, 45, 50-61
+;#14-16:Weltner, W.; Pitzer, K. S. J. Am. Chem. Soc., 1951, 73, 2606
+;#17-17:Plewes, A. C.; Jardine, D. A.; Butler, R. M. Can. J. Technol., 1954, 32, 133-45
+;#18-18:Tallmadge, J. A.; Schroeder, D. W.; Edmister, W. C.; Canjar, L. N. Chem. Eng. Prog. Symp. Ser., 1954, 50(10), 137-42
+;#19-19:McCurdy, K. G.; Laidler, K. J. Can. J. Chem., 1963, 41, 1867-71
+;#20-20:Wadso, I. Acta Chem. Scand., 1966, 20, 544-552
+;#21-24:Polak, J.; Benson, G. C. J. Chem. Thermodyn., 1971, 3, 235-42
+;#25-25:Boublik, T.; Aim, K. Collect. Czech. Chem. Commun., 1972, 37, 3513
+;#26-27:Svoboda, V.; Hynek, V.; Vesely, F.; Pick, J. Collect. Czech. Chem. Commun., 1972, 37, 3165-73
+;#28-31:Counsell, J. F.; Lee, D. A. J. Chem. Thermodyn., 1973, 5, 583
+;#32-32:Konicek, J. Acta Chem. Scand., 1973, 27, 1496-502
+;#33-38:Svoboda, V.; Vesely, F.; Holub, R.; Pick, J. Collect. Czech. Chem. Commun., 1973, 38, 3539-43
+;#39-39:Arnett, E. M.; Oancea, D. J. Chem. Educ., 1975, 52, 269
+;#40-43:Radosz, M.; Lydersen, A. L. Chem.-Ing.-Tech., 1980, 52, 756-7
+;#44-47:Vesely, F.; Svab, L.; Provaznik, R.; Svoboda, V. J. Chem. Thermodyn., 1988, 20, 981-3
+    
+;References for data group D-2
+;#1-1:Schiff, R. Chem. Ber., 1882, 15, 2965
+;#2-2:Schiff, R. Justus Liebigs Ann. Chem., 1883, 220, 71
+;#3-3:Schiff, R. Justus Liebigs Ann. Chem., 1884, 223, 247-68
+;#4-13:Richardson, A. J. Chem. Soc., 1886, 49, 761-76
+;#14-73:Ramsay, W.; Young, S. Philos. Trans. R. Soc. London, Ser. A, 1887, 178, 313-34
+;#74-83:Schmidt, G. C. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1891, 8, 628-46
+;#84-85:Schmidt, G. C. Justus Liebigs Ann. Chem., 1891, 266, 266-92
+;#86-86:Schall, C.; Kossakowsky, L. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1891, 8, 241-71
+;#87-87:Landolt, H.; Jahn, H. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1892, 10, 289
+;#88-88:Zelinskii, N. D.; Krapiwin, S. Z. Phys. Chem. (Leipzig), 1896, 21, 35
+;#89-90:Loomis, E. H. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1900, 32, 578-606
+;#91-91:Young, S.; Fortey, E. C. J. Chem. Soc., 1902, 81, 717
+;#92-92:Gyr, J. Ber. Dtsch. Chem. Ges., 1908, 41, 4332
+;#93-93:Doroshevskii, A. G. Zh. Russ. Fiz.-Khim. O-va, Chast Khim., 1909, 41, 958
+;#94-96:Doroshevskii, A.; Polansky, E. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1910, 73, 192
+;#97-97:Timmermans, J. Bull. Soc. Chim. Belg., 1910, 24, 244
+;#98-125:Young, S. Sci. Proc. R. Dublin Soc., 1910, 12, 374-443
+;#126-126:Timmermans, J. Bull. Soc. Chim. Belg., 1911, 25, 300
+;#127-127:Timmermans, J. Sci. Proc. R. Dublin Soc., 1912, 13, 310
+;#128-128:Tyrer, D. J. Chem. Soc. Trans., 1912, 101, 1104-13
+;#129-129:Atkins, W. R. G.; Wallace, T. A. J. Chem. Soc. Trans., 1913, 103, 1461
+;#130-130:Bridgman, P. W. Proc. Am. Acad. Arts Sci., 1913, 49(1), 3-114
+;#131-136:Muendel, C. F. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1913, 85, 435-65
+;#137-137:Tower, O. F.; Germann, A. F. O. J. Am. Chem. Soc., 1914, 36, 2449-56
+;#138-138:Tyrer, D. J. Chem. Soc. Trans., 1914, 105, 2534
+;#139-139:Campbell, F. H. Trans. Faraday Soc., 1915, 10, 197
+;#140-140:Richards, T. W.; Coombs, L. B. J. Am. Chem. Soc., 1915, 37, 1656
+;#141-141:Richards, T. W.; Shipley, J. W. J. Am. Chem. Soc., 1916, 38, 989-99
+;#142-142:Willcox, M.; Brunel, R. F. J. Am. Chem. Soc., 1916, 38, 1821
+;#143-143:Richards, T. W.; Davis, H. S. J. Am. Chem. Soc., 1920, 42, 1599-1617
+;#144-144:Barr, G.; Bircumshaw, L. L. Aeron. Res. Comm. Rep. Mem. No. 746, 1921,
+;#145-145:Reilly, J.; Hickinbottom, W. J. Sci. Proc. R. Dublin Soc., 1921, 16, 233
+;#146-146:Norris, J. F.; Ashdown, A. A. J. Am. Chem. Soc., 1925, 47, 837-46
+;#147-147:Lecat, M. Recl. Trav. Chim. Pays-Bas, 1926, 45, 620-627
+;#148-148:Mathews, J. H. J. Am. Chem. Soc., 1926, 48, 562-576
+;#149-164:Schmidt, G. C. Z. Phys. Chem., Stoechiom. Verwandschaftsl., 1926, 121, 221-53
+;#165-165:Lecat, M. Ann. Soc. Sci. Bruxelles, Ser. B, 1927, 47, 108-14
+;#166-166:Lecat, M. Ann. Soc. Sci. Bruxelles, Ser. B, 1927, 47, 63-71
+;#167-167:Lecat, M. Recl. Trav. Chim. Pays-Bas, 1927, 46, 240-7
+;#168-168:Lecat, M. Ann. Soc. Sci. Bruxelles, Ser. B, 1928, 48, 1-16
+;#169-169:Othmer, D. F. Ind. Eng. Chem., 1928, 20, 743-6
+;#170-170:Bennett, G. W. J. Chem. Educ., 1929, 6, 1544
+;#171-171:Foote, H. W.; Dixon, J. K. Am. J. Sci., 1929, 17, 146
+;#172-172:Lecat, M. Z. Anorg. Allg. Chem., 1930, 186, 119
+;#173-174:Rakovskii, A. V.; Frost, A. V. Tr. Inst. Chist. Khim. Reakt., 1930, 9, 95-103
+;#175-175:Timmermans, J.; Hennaut-Roland, M. J. Chim. Phys. Phys.-Chim. Biol., 1930, 27, 401-38
+;#176-176:Aldrich, E. W.; Querfeld, D. W. Ind. Eng. Chem., 1931, 23, 708
+;#177-177:Lee, S. C. J. Phys. Chem., 1931, 35, 3558-3582
+;#178-178:Butler, J. A. V.; Thomson, D. W.; Maclennan, W. H. J. Chem. Soc., 1933, 674-686
+;#179-179:Titani, T. Bull. Chem. Soc. Jpn., 1933, 8, 255-276
+;#180-180:Tonomura, T. Sci. Rep. Tohoku Imp. Univ., Ser. 1, 1933, 22, 104-30
+;#181-183:Joukovsky, N. I. Bull. Soc. Chim. Belg., 1934, 43, 397
+;#184-184:Smith, D. M. Ind. Eng. Chem., 1934, 26, 392-5
+;#185-185:Uchida, S.-I.; Kato, H. Kogyo Kagaku Zasshi, 1934, 37, 525-30
+;#186-188:De Brouckere, L.; Gillet, A. Bull. Soc. Chim. Belg., 1935, 44, 473
+;#189-189:Wojciechowski, M. J. Res. Natl. Bur. Stand. (U. S.), 1936, 17, 721
+;#190-190:Stull, D. R. J. Am. Chem. Soc., 1937, 59, 2726
+;#191-191:Bennewitz, K.; Rossner, W. Z. Phys. Chem. Abt. B, 1938, 39, 126
+;#192-192:Ingle, J. D.; Cady, H. P. J. Phys. Chem., 1938, 42, 397
+;#193-200:Radulescu, D.; Alexa, M. Bull. Soc. Chim. Romania, 1938, 20A, 89-113
+;#201-201:Niini, A. Ann. Acad. Sci. Fenn., 1940, 55(8), 1-52
+;#202-202:Maryott, A. A. J. Am. Chem. Soc., 1941, 63, 3079-83
+;#203-203:Briscoe, H. T.; Rinehart, W. T. J. Phys. Chem., 1942, 46, 387
+;#204-204:Morris, A. C.; Munn, L. T.; Anderson, G. Can. J. Res. B, 1942, 20, 207-11
+;#205-205:Dulitskaya, K. A. Zh. Obshch. Khim., 1945, 15, 9-21
+;#206-206:Kretschmer, C. B.; Nowakowska, J.; Wiebe, R. Ind. Eng. Chem., 1946, 38, 506
+;#207-207:Lecat, M. C. R. Hebd. Seances Acad. Sci., 1946, 223, 478
+;#208-208:Pollock, D. L.; Collett, A. R.; Lazzell, C. L. J. Phys. Chem., 1946, 50, 23-9
+;#209-218:Scatchard, G.; Wood, S. E.; Mochel, J. M. J. Am. Chem. Soc., 1946, 68, 1957
+;#219-219:Lecat, M. Bull. Cl. Sci. Acad. R. Belg., 1947, 33, 160-82
+;#220-220:Lecat, M. Ann. Soc. Sci. Bruxelles, Ser. 1, 1947, 61, 73
+;#221-221:Baron, N. M.; Mishchenko, K. P. Zh. Obshch. Khim., 1948, 18, 2067
+;#222-222:Lauder, I. Trans. Faraday Soc., 1948, 44, 729
+;#223-228:Udovenko, V. V.; Frid, Ts. B. Zh. Fiz. Khim., 1948, 22, 1263-70
+;#229-229:Udovenko, V. V.; Frid, Ts. B. Zh. Fiz. Khim., 1948, 22, 1135-45
+;#230-230:Griswold, J.; Buford, C. B. Ind. Eng. Chem., 1949, 41, 2347
+;#231-231:Hatem, S. Bull. Soc. Chim. Fr., 1949, 337-40
+;#232-232:Lecat, M. Tables Azeotropiques, 1949, 10th ed., Vol. 1, : Brussels, Belgium
+;#233-233:McKenna, F. E.; Tartar, H. V.; Lingafelter, E. C. J. Am. Chem. Soc., 1949, 71, 729-32
+;#234-234:Tschamler, H.; Richter, E.; Wettig, F. Monatsh. Chem., 1949, 80, 749
+;#235-235:Udovenko, V. V.; Kalabanovskaya, E. I.; Prokop'eva, M. F. Zh. Obshch. Khim., 1949, 19, 165-8
+;#236-236:Lang, H. Z. Phys. Chem. (Leipzig), 1950, 196, 278-297
+;#237-238:Natta, G.; Pino, P.; Mantica, E. Gazz. Chim. Ital., 1950, 80, 680
+;#239-239:Pichler, H.; Ziesecke, K. H.; Traeger, B. Brennst.-Chem., 1950, 31, 361
+;#240-240:Teitel'baum, B. Ya.; Gortalova, T. A.; Ganelina, S. G. Zh. Obshch. Khim., 1950, 20, 1422
+;#241-241:Uchida, S.; Ogawa, S.; Yamaguchi, M. Japan Sci. Rev., Eng. Sci., 1950, 1(2), 41-9
+;#242-242:Alpert, N.; Elving, P. J. Ind. Eng. Chem., 1951, 43, 1174
+;#243-243:Heyding, R. D.; Winkler, C. A. Can. J. Chem., 1951, 29, 790-803
+;#244-244:Lyubomilov, V. I.; Terent'ev, A. P. Zh. Obshch. Khim., 1951, 21, 1479
+;#245-245:Pino, P.; Ercoli, R.; Mantica, E. Gazz. Chim. Ital., 1951, 81, 635
+;#246-246:Sieg, L.; Cruetzen, J. L.; Jost, W. Z. Elektrochem., 1951, 55, 199-200
+;#247-247:Teitel'baum, B. Ya.; Gortalova, T. A.; Sidorova, E. E. Zh. Fiz. Khim., 1951, 25, 911
+;#248-248:Desseigne, G.; Belliot, C. J. Chim. Phys. Phys.-Chim. Biol., 1952, 49, 46
+;#249-249:Hill, W. D.; Van Winkle, M. Ind. Eng. Chem., 1952, 44, 205-8
+;#250-250:Hill, W. D.; Van Winkle, M. Ind. Eng. Chem., 1952, 44, 208-10
+;#251-251:Hughes, H. E.; Maloney, J. O. Chem. Eng. Prog., 1952, 48, 192-200
+;#252-252:Scatchard, G.; Ticknor, L. B. J. Am. Chem. Soc., 1952, 74, 3724-9
+;#253-253:Staveley, L. A. K.; Spice, B. J. Chem. Soc., 1952, 406-14
+;#254-254:West, P. W.; Senise, P.; Burkhalter, T. S. Anal. Chem., 1952, 24, 1250
+;#255-255:Amer, H. H.; Paxton, R. R.; Van Winkle, M. Anal. Chem., 1953, 25, 1204-1206
+;#256-256:McKenna, F. E.; Tartar, H. V.; Lingafelter, E. C. J. Am. Chem. Soc., 1953, 75, 604-7
+;#257-260:Colmant, P. Bull. Soc. Chim. Belg., 1954, 63, 5
+;#261-261:Cropper, W. H.; Spieth, F.; Olson, A. R. J. Am. Chem. Soc., 1954, 76, 6248
+;#262-262:Griffiths, V. S. J. Chem. Soc., 1954, 860-2
+;#263-263:Purnell, J. H.; Bowden, S. T. J. Chem. Soc., 1954, 539
+;#264-302:Dever, D. F.; Finch, A.; Grunwald, E. J. Phys. Chem., 1955, 59, 668
+;#303-303:Hammond, B. R.; Stokes, R. H. Trans. Faraday Soc., 1955, 51, 1641
+;#304-318:Kay, W. B.; Donham, W. E. Chem. Eng. Sci., 1955, 4, 1-16
+;#319-327:Amer, H. H.; Paxton, R. R.; Van Winkle, M. Ind. Eng. Chem., 1956, 48, 142-146
+;#328-328:McCracken, P. G.; Smith, J. M. AIChE J., 1956, 2, 498-507
+;#329-329:Vandenheuvel, F. A.; Vatcher, D. R. Anal. Chem., 1956, 28, 838
+;#330-330:Bushmakin, I. N.; Kish, I. N. Zh. Prikl. Khim. (Leningrad), 1957, 30, 200
+;#331-331:Costello, J. M.; Bowden, S. T. Recl. Trav. Chim. Pays-Bas, 1958, 77, 36-46
+;#332-332:Ling, T. D.; Van Winkle, M. Chem. Eng. Data Ser., 1958, 3, 88-95
+;#333-334:Murti, P. S.; Van Winkle, M. Ind. Chem. Eng., 1958, 3, 72-81
+;#335-335:Ocon, J.; Rebolleda, F. An. R. Soc. Esp. Fis. Quim., B, 1958, 54, 525-30
+;#336-336:Macarron, A. Rev. R. Acad. Cienc., Exactas, Fis. Nat. (Madrid), 1959, 53, 607-647
+;#337-337:Papousek, D.; Pago, L. Collect. Czech. Chem. Commun., 1959, 24, 2666-2672
+;#338-338:Yen, L. C.; Reed, T. M. J. Chem. Eng. Data, 1959, 4, 102
+;#339-339:Copp, J. L.; Findlay, T. J. V. Trans. Faraday Soc., 1960, 56, 13
+;#340-359:Klyueva, M. L.; Mishchenko, K. P.; Fedorov, M. K. Zh. Prikl. Khim. (Leningrad), 1960, 33, 473-5
+;#360-369:McCracken, P. G.; Storvick, T. S.; Smith, J. M. J. Chem. Eng. Data, 1960, 5, 130-2
+;#370-370:Ogorodnikov, S. K.; Kogan, V. B.; Nemtsov, M. S. Zh. Prikl. Khim. (Leningrad), 1960, 33, 2685-93
+;#371-371:Belousov, V. P.; Zhigunov, I. S.; Morachevskii, A. G. Vestn. Leningr. Univ., Ser. 4: Fiz. Khim., 1961, 16, 111
+;#372-372:Brown, I.; Fock, W. Aust. J. Chem., 1961, 14, 387
+;#373-373:Kiser, R. W.; Johnson, D.; Shetlar, M. D. J. Chem. Eng. Data, 1961, 6, 338-341
+;#374-378:Mishchenko, K. P.; Fedorov, M. K. Zh. Prikl. Khim. (Leningrad), 1961, 34, 1889-91
+;#379-379:Brown, I.; Smith, F. Aust. J. Chem., 1962, 15, 3-8
+;#380-380:Chandramouli, V. V.; Laddha, G. S. J. Sci. Ind. Res., Sect. D, 1962, 21, 269-274
+;#381-381:Nagata, I. J. Chem. Eng. Data, 1962, 7, 367-73
+;#382-383:Paraskevopoulos, G. C.; Missen, R. W. Trans. Faraday Soc., 1962, 58, 869-78
+;#384-385:Akita, K.; Yoshida, F. J. Chem. Eng. Data, 1963, 8, 484
+;#386-386:Cratin, P. D.; Gladden, J. K. J. Phys. Chem., 1963, 67, 1665
+;#387-387:Fishtine, S. H. Ind. Eng. Chem., 1963, 55, 20
+;#388-388:McCurdy, K. G.; Laidler, K. J. Can. J. Chem., 1963, 41, 1867-71
+;#389-389:Raju, B. N.; Ranganathan, R.; Narasinga Rao, M. Indian Chem. Eng., 1963, 5, 82
+;#390-390:Brown, I.; Fock, W.; Smith, F. Aust. J. Chem., 1964, 17, 1106
+;#391-392:Burke, D. E.; Williams, G. C.; Plank, C. A. J. Chem. Eng. Data, 1964, 9, 212
+;#393-403:Ma, Y. H.; Kohn, J. P. J. Chem. Eng. Data, 1964, 9, 3-5
+;#404-404:Makhan'ko, I. G.; Nozdrev, V. F. Sov. Phys. - Acoust., 1964, 10, 207-208
+;#405-410:Miller, G. A. J. Chem. Eng. Data, 1964, 9, 418-20
+;#411-411:Fort, R. J.; Moore, W. R. Trans. Faraday Soc., 1965, 61, 2102
+;#412-412:Friedman, M. E.; Scheraga, H. A. J. Phys. Chem., 1965, 69, 3795-3800
+;#413-413:Grove, E. L.; Walden, G. E. J. Chem. Eng. Data, 1965, 10, 98-100
+;#414-421:Marinichev, A. N.; Susarev, M. P. Zh. Prikl. Khim. (Leningrad), 1965, 38, 378
+;#422-422:Marinichev, A. N.; Susarev, M. P. Zh. Prikl. Khim. (Leningrad), 1965, 38, 1054
+;#423-424:Marinichev, A. N.; Susarev, M. P. Zh. Prikl. Khim. (Leningrad), 1965, 38, 1619
+;#425-425:Prakash, O.; Katti, P. K. Indian Chem. Eng., 1965, 7, 41-3
+;#426-426:Raju, B. N.; Ranganathan, R.; Narasinga Rao, M. Indian Chem. Eng., 1965, 7, 33-7
+;#427-427:Arm, H.; Bankay, D.; Schaller, R.; Waelti, M. Helv. Chim. Acta, 1966, 49, 2598
+;#428-432:Butcher, K. L.; Robinson, W. I. J. Appl. Chem. (London), 1966, 16, 289
+;#433-433:Frolov, A. F.; Loginova, M. A.; Ustavshchikov, B. F. Zh. Obshch. Khim., 1966, 36(2), 180-184
+;#434-434:Katti, P. K.; Prakash, O. J. Chem. Eng. Data, 1966, 11, 46-47
+;#435-435:Loeffler, C. E.; McKetta, J. J. J. Chem. Eng. Data, 1966, 11, 431
+;#436-436:Freshwater, D. C.; Pike, K. A. J. Chem. Eng. Data, 1967, 12, 179
+;#437-437:Hannaert, H.; Haccuria, M.; Mathieu, M. P. Ind. Chim. Belge, 1967, 32, 156-164
+;#438-453:Hirata, M.; Suda, S.; Onodera, Y. Kagaku Kogaku, 1967, 31, 339-41
+;#454-454:Nakanishi, K.; Nakasato, K.; Toba, R.; Shirai, H. J. Chem. Eng. Data, 1967, 12, 440-2
+;#455-455:Pollak, P.; Cave, G. C. B. Can. J. Chem., 1967, 45, 3089-95
+;#456-458:Quitzsch, K.; Hofmann, H.-P.; Pfestorf, R.; Geiseler, G. Z. Phys. Chem. (Leipzig), 1967, 235, 99-109
+;#459-488:Zubarev, V. N.; Bagdonas, A. V. Teploenergetika, 1967, 14(4), 79-82
+;#489-489:Bekarek, V.; Hala, E. Collect. Czech. Chem. Commun., 1968, 33, 2598-607
+;#490-496:Butcher, K. L.; Medani, M. S. J. Appl. Chem. (London), 1968, 18, 100-7
+;#497-497:Garber, Yu. N.; Mironenko, V. F. Zh. Prikl. Khim. (Leningrad), 1968, 41, 2022-26
+;#498-498:Kirk, P. G.; Smith, T. D.  J. Inorg. Nucl. Chem., 1968, 30, 892-3
+;#499-499:Nakanishi, K.; Shirai, H.; Nakasato, K. J. Chem. Eng. Data, 1968, 13, 188-91
+;#500-500:Rudakovskaya, T. S.; Soboleva, S. A.; Timofeev, V. S.; Serafimov, L. A. Zh. Prikl. Khim. (Leningrad), 1968, 41, 1556-61
+;#501-506:Singh, J.; Benson, G. C. Can. J. Chem., 1968, 46, 1249-1254
+;#507-513:Wolff, H.; Hoeppel, H. E. Ber. Bunsen-Ges. Phys. Chem., 1968, 72, 1173
+;#514-520:Wolff, H.; Hoeppel, H. E. Ber. Bunsen-Ges. Phys. Chem., 1968, 72, 710-21
+;#521-550:Broul, M.; Hlavaty, K.; Linek, J. Collect. Czech. Chem. Commun., 1969, 34, 3428
+;#551-551:Hudson, J. W.; Van Winkle, M. J. Chem. Eng. Data, 1969, 14(3), 310-318
+;#552-552:Nagata, I. J. Chem. Eng. Data, 1969, 14, 418-20
+;#553-553:Quitzsch, K.; Prinz, H. P.; Suehnel, K.; Pham, V. S.; Geiseler, G. Z. Phys. Chem. (Leipzig), 1969, 241, 273-84
+;#554-554:Rudakovskaya, T. S.; Soboleva, S. A.; Toropygina, T. M.; Timofeev, V. S.; Serafimov, L. A. Izv. Vyssh. Uchebn. Zaved., Khim. Khim. Tekhnol., 1969, 12, 1223-7
+;#555-555:Scheller, M.; Schuberth, H.; Koennecke, H. G. J. Prakt. Chem., 1969, 311, 974-82
+;#556-556:Sedletskaya, I. S.; Kogan, V. B. Zh. Prikl. Khim. (Leningrad), 1969, 42, 2551-6
+;#557-557:Vesely, F.; Pick, J. Collect. Czech. Chem. Commun., 1969, 34, 1854
+;#558-577:Ambrose, D.; Sprake, C. H. S. J. Chem. Thermodyn., 1970, 2, 631-45
+;#578-578:Kato, M.; Konishi, H.; Hirata, M. J. Chem. Eng. Data, 1970, 15, 435-9
+;#579-579:Kato, M.; Konishi, H.; Hirata, M. J. Chem. Eng. Data, 1970, 15, 501-5
+;#580-580:Kirby, C. E.; Van Winkle, M. J. Chem. Eng. Data, 1970, 15(1), 177-182
+;#581-581:Kohoutova, J.; Suska, J.; Novak, J. P.; Pick, J. Collect. Czech. Chem. Commun., 1970, 35, 3210-22
+;#582-582:Paz Andrade, M. I.; Casas, M. I. An. Quim., 1970, 66, 709-12
+;#583-583:Polak, J.; Murakami, S.; Lam, V. T.; Pflug, H. D.; Benson, G. C. Can. J. Chem., 1970, 48, 2457-65
+;#584-584:Strubl, K.; Svoboda, V.; Holub, R.; Pick, J. Collect. Czech. Chem. Commun., 1970, 35, 3004
+;#585-585:Willock, J. M.; Van Winkle, M. J. Chem. Eng. Data, 1970, 15(2), 281-286
+;#586-586:Kato, M.; Konishi, H.; Sato, T.; Hirata, M. J. Chem. Eng. Jpn., 1971, 4, 6-10
+;#587-587:Kato, M.; Sato, T.; Hirata, M. J. Chem. Eng. Jpn., 1971, 4, 308-11
+;#588-588:Koshel'kov, V. A.; Grudinina, T. A.; Pavlenko, T. G.; Timofeev, V. S.; Serafimov, L. A. Tr. Inst. - Mosk. Inst. Tonkoi Khim. Tekhnol. im. M. V. Lomonosova, 1971, 1, 44-8
+;#589-589:Nagata, I.; Ohta, T. J. Chem. Eng. Data, 1971, 16, 164
+;#590-590:Ohe, S.; Yokoyama, K.; Nakamura, S. J. Chem. Eng. Data, 1971, 16, 70-2
+;#591-591:Sagnes, M.; Sanchez, V. J. Chem. Eng. Data, 1971, 16, 351-4
+;#592-607:Boublik, T.; Aim, K. Collect. Czech. Chem. Commun., 1972, 37, 3513
+;#608-609:Chun, K. W.; Davison, R. R. J. Chem. Eng. Data, 1972, 17, 307
+;#610-610:Kato, M.; Konishi, H.; Sato, T.; Hirata, M.; Katayama, T. J. Chem. Eng. Jpn., 1972, 5, 1-4
+;#611-611:Maripuri, V. O.; Ratcliff, G. A. J. Chem. Eng. Data, 1972, 17, 366-9
+;#612-612:Matous, J.; Zivny, A.; Biros, J. Collect. Czech. Chem. Commun., 1972, 37, 3960-3964
+;#613-613:Nagata, I.; Ohta, T.; Takahashi, T. J. Chem. Eng. Jpn., 1972, 5, 227-31
+;#614-638:Pavlov, S. Yu.; Kirnos, A. B.; Pavlova, S. P.; Lazaryants, V. E. Zh. Prikl. Khim. (Leningrad), 1972, 45, 618-22
+;#639-641:Polak, J.; Lu, B. C.-Y. J. Chem. Eng. Data, 1972, 17, 456-8
+;#642-642:Svoboda, V.; Hynek, V.; Vesely, F.; Pick, J. Collect. Czech. Chem. Commun., 1972, 37, 3165-73
+;#643-643:Zharov, V. T.; Pervukhin, O. K. Zh. Fiz. Khim., 1972, 46, 1970
+;#644-644:Campbell, R. H.; Kartzmark, E. M. J. Chem. Thermodyn., 1973, 5, 163
+;#645-645:Doniec, A.; Krauze, R.; Michalowski, S.; Serwinski, M. Zesz. Nauk. Politech. Lodz, Chem., 1973, 22(139), 85-94
+;#646-647:Matsunaga, I.; Katayama, T. J. Chem. Eng. Jpn., 1973, 6, 397
+;#648-648:Strubl, K.; Vonka, P.; Svoboda, V.; Holub, R. Collect. Czech. Chem. Commun., 1973, 38, 468-476
+;#649-649:Svoboda, V.; Vesely, F.; Holub, R.; Pick, J. Collect. Czech. Chem. Commun., 1973, 38, 3539-43
+;#650-650:Verhoeye, L. A. J.; Deschepper, H. J. Appl. Chem. Biotechnol., 1973, 23, 607
+;#651-688:Gibbard, H. F.; Creek, J. L. J. Chem. Eng. Data, 1974, 19, 308
+;#689-689:Schuberth, H. Z. Phys. Chem. (Leipzig), 1974, 255, 165-79
+;#690-690:Van Zandijcke, F.; Verhoeye, F. J. Appl. Chem. Biotechnol., 1974, 24, 709-29
+;#691-693:Abbott, M. M.; Van Ness, H. C. AIChE J., 1975, 21, 62
+;#694-705:Ambrose, D.; Sprake, C. H. S.; Townsend, R. J. Chem. Thermodyn., 1975, 7, 185
+;#706-706:Berro, C.; Deyrieux, R.; Peneloux, A. J. Chim. Phys. Phys.-Chim. Biol., 1975, 72, 1118
+;#707-709:Davis, F. T.; Bedsole, A. D.; Taylor, Z. L. J. Chem. Thermodyn., 1975, 7, 611
+;#710-710:Nagata, I.; Yamada, T.; Nakagawa, S. J. Chem. Eng. Data, 1975, 20, 271-5
+;#711-711:Nakanishi, K.; Wada, H.; Touhara, H. J. Chem. Thermodyn., 1975, 7, 1125
+;#712-712:Warycha, S. 5th Int. Congr. Chem. Eng. Chem. Equip. Des. Autom., 1975, Prague, pp F4.8SA-7
+;#713-720:Apelblat, A.; Kohler, F. J. Chem. Thermodyn., 1976, 8, 749
+;#721-721:Belousov, V. P.; Panov, M. Y. Vestn. Leningr. Univ., Ser. 4: Fiz. Khim., 1976, No. 2, 149
+;#722-722:Berro, C.; Canals, E.; Neau, E.; Deyrieux, R. J. Chim. Phys. Phys.-Chim. Biol., 1976, 73, 717
+;#723-723:Chubarov, G. A.; Danov, S. M.; Brovkina, G. V. Zh. Prikl. Khim. (Leningrad), 1976, 49, 1623-24
+;#724-724:Glukhareva, M. I.; Taravkova, E. N.; Chashchin, A. M.; Kushner, T. M.; Serafimov, L. A. Zh. Prikl. Khim. (Leningrad), 1976, 49, 660-62
+;#725-725:Grishunin, A. V.; Balashov, M. I.; Patlasov, V. P.; Kissel, V. L.; Serafimov, L. A. Osnovn. Org. Sint. Neftekhim., 1976, 5, 109-113
+;#726-726:Nagata, I.; Ohta, T.; Ogura, M.; Yasuda, S. J. Chem. Eng. Data, 1976, 21, 310-4
+;#727-727:Nagata, I.; Ohta, T.; Nakagawa, S. J. Chem. Eng. Jpn., 1976, 9, 276
+;#728-733:Nakanishi, K.; Ashitani, K.; Touhara, H. J. Chem. Thermodyn., 1976, 8, 121
+;#734-734:Smirnov, V. V.; Saraev, B. A.; Pavlov, S. Yu.; Serafimov, L. A. Prom-st Sint. Kauch., 1976, No. 12, 3-6
+;#735-736:Valent, V. Thesis, Tubingen University, Tubingen, Germany (1976)
+;#737-737:Eng, W. W. Y. M.Sc. Thesis, Brigham Young University, Provo, UT (1977)
+;#738-738:Hwang, S.-C.; Robinson Jr., R. L. J. Chem. Eng. Data, 1977, 22, 319-325
+;#739-739:Ramakrishnan, K.; Sabarethinam, P. L. Chem. Ind. Dev., 1977, 11, 19
+;#740-741:Warycha, S. Z. Phys. Chem. (Leipzig), 1977, 258, 864
+;#742-742:Warycha, S. Z. Phys. Chem. (Leipzig), 1977, 258, 873
+;#743-743:Churkin, V. N.; Gorshkov, V. A.; Pavlov, S. Yu.; Levicheva, E. N.; Karpacheva, L. L. Zh. Fiz. Khim., 1978, 52, 488-9
+;#744-744:Murthy, S.; Chhotray, S. K.; Sarma, H.; Singh, R. P.; Kudchadker, A. P. Trans. Indian Inst. Chem. Eng., 1978, 20, 45-50
+;#745-747:Ishikawa, T.; Lu, B. C.-Y. Fluid Phase Equilib., 1979, 3, 23-34
+;#748-748:Jimenez Cuesta, E.; Paz Andrade, M. I.; Casanova, C. J. Chim. Phys. Phys.-Chim. Biol., 1979, 76, 46-50
+;#749-751:Maher, P. J.; Smith, B. D. J. Chem. Eng. Data, 1979, 24, 363-77
+;#752-752:Vasil'eva, V. A.; Fedotova, C. A.; Tsirlin, Yu. A. Sb. Tr., Vses. Nauch.-Issled. Inst. Gidroliza Rastit. Mater., 1979, 3, 34
+;#753-754:Wagner, M. Ph.D. Thesis, Ben Gurion University of Negev, Nagev, Israel (1979)
+;#755-771:Aim, K.; Ciprian, M. J. Chem. Eng. Data, 1980, 25, 100
+;#772-772:Arce, A.; Blanco, A.; Antorrena, G.; Quintela, M. D. An. Quim., 1980, 76, 405-413
+;#773-773:Goral, M.; Oracz, P.; Warycha, S. Unpublished data, Warsaw University, Warsaw, (1980)
+;#774-774:Hu, W.-l.; Chen, J.-j.; Liu, Q.; Xiao, Z. Journal of Chemical Industry and Engineering(China), 1980, No. 4, 353-364
+;#775-777:Jackowski, A. W. Pol. J. Chem., 1980, 54, 1765-73
+;#778-778:Janaszewski, B. Unpublished data, Warsaw University, Warsaw, (1980)
+;#779-779:Kato, M. Ind. Eng. Chem. Fundam., 1980, 19, 253-9
+;#780-780:Kooner, Z. S.; Phutela, R. C.; Fenby, D. V. Aust. J. Chem., 1980, 33, 9-13
+;#781-783:Maher, P. J.; Smith, B. D. J. Chem. Eng. Data, 1980, 25, 61
+;#784-784:Oracz, P. Unpublished data, Warsaw University, Warsaw, (1980)
+;#785-786:Yoshikawa, Y.; Takagi, A.; Kato, M. J. Chem. Eng. Data, 1980, 25, 344
+;#787-787:Eduljee, G. H.; Boyes, A. P. J. Chem. Eng. Data, 1981, 26, 55
+;#788-788:Goloborodkina, R. V.; Beregovykh, V. V.; Babich, S. V.; Timoveev, V. S.; L'vov, S. V. Khim. -Farm. Zh., 1981, 15, 79
+;#789-789:Toome, M. Yu.; Kudryavtseva, L. S. Tr. Tallin. Politekh. Inst., 1981, 509, 27
+;#790-790:Damyanov, D.; Velchev, K. Nauchni Tr. - Vissh Inst. Khranit. Vkusova Prom-st., Plovdiv, 1982, 29, 267
+;#791-791:Dizechi, M.; Marschell, E. J. Chem. Eng. Data, 1982, 27, 358
+;#792-792:Goral, M.; Oracz, P.; Warycha, S. Conference V on mixtures....Halle, 1983,
+;#793-794:Goral, M.; Oracz, P.; Warycha, S. Unpublished data, Warsaw University, Warsaw, (1983)
+;#795-812:Olivares, A.; Suarez, J.; Trejo Rodriguez, A. Rev. Mex. Fis., 1983, 30, 63
+;#813-815:Triday, J. O. J. Chem. Eng. Data, 1983, 28, 307-10
+;#816-822:Cervenkova, I.; Boublik, T. J. Chem. Eng. Data, 1984, 29, 425
+;#823-823:Munster, N.; Plank, C. A.; Laukhuf, W. L. S.; Christopher, P. M. J. Chem. Eng. Data, 1984, 29, 178-81
+;#824-841:Olivares, A.; Suarez, J.; Trejo Rodriguez, A. Rev. Inst. Mex. Pet., 1984, 16(2), 48
+;#842-842:Rubio, R. G.; Aracil, J.; Diaz Pena, M.; Renuncio, J. A. R. Thermochim. Acta, 1984, 73, 17
+;#843-843:Scaramucci, M. A.; Vangeli, G. J. Chem. Eng. Data, 1984, 29, 87-90
+;#844-845:Choi, J. S.; Park, D. W.; Rhim, J. N. Hwahak Konghak, 1985, 23, 89
+;#846-846:Dribika, M. M.; Rashed, I. G.; Biddulph, M. W. J. Chem. Eng. Data, 1985, 30, 146
+;#847-848:Goral, M.; Kolasinska, G; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1985, 23, 89
+;#849-850:Kim, J. Y.; Rousseau, R. W. AIChE Symp. Ser., 1985, 81, 74-79
+;#851-851:Kovac, A.; Svoboda, J.; Ondrus, I. Chem. Zvesti, 1985, 39(6), 729
+;#852-852:Mato, F.; Benito, G. G. An. Quim., A, 1985, 81, 116
+;#853-853:Mato, F.; Benito, G. G.; Sobron, F. An. Quim., A, 1985, 81, 400
+;#854-855:Radnai, G.; Bottini, S.; Rasmussen, P.; Fredenslund, A. AIChE Symp. Ser., 1985, 81(244), 102-120
+;#856-858:Triday, J. O.; Rodriguez, P. J. Chem. Eng. Data, 1985, 30, 112
+;#859-859:Villamanan, M. A.; Van Ness, H. C. Int. DATA Ser., Sel. Data Mixtures, Ser. A, 1985, 13(1), 32-37
+;#860-860:Wisniak, J.; Tamir, A. J. Chem. Eng. Data, 1985, 30, 339
+;#861-861:Abusleme, J. A.; Vera, J. H. Report World Congress III,, 1986, Tokyo,
+;#862-878:Denisov, I. V.; Karavaeva, A. P.; Bobylev, B. N.; Rumyantseva, T. K. D. M. V. Zh. Prikl. Khim. (Leningrad), 1986, 59, 2688
+;#879-905:Ksiazczak, A. Fluid Phase Equilib., 1986, 28, 57-72
+;#906-906:Linek, J.; Bernatova, S. Collect. Czech. Chem. Commun., 1986, 51, 188
+;#907-910:Niesen, V.; Palavra, A.; Kidnay, A. J.; Yesavage, V. F. Fluid Phase Equilib., 1986, 31, 283
+;#911-911:Oracz, P. Int. DATA Ser., Sel. Data Mixtures, Ser. A, 1986, No. 2, 72-101
+;#912-912:Tamir, A.; Wisniak, J. J. Chem. Eng. Data, 1986, 31, 363
+;#913-913:Vogel, E.; Bich, E.; Nimz, R. Physica A (Amsterdam), 1986, 139, 188-207
+;#914-916:Wilsak, R. A.; Campbell, S. W.; Thodos, G. Fluid Phase Equilib., 1986, 28, 13
+;#917-917:Manjeshwar, L. S.; Aminabhavi, T. M. J. Chem. Eng. Data, 1987, 32, 409-12
+;#918-918:Ni, X.; Wang, Z. Chem. Eng. (China), 1987, No. 3, 50;58
+;#919-919:Oracz, P.; Kolasinska, G Fluid Phase Equilib., 1987, 35, 253
+;#920-934:Oscarson, J. L.; Lundell, S. O.; Cunningham, J. R. AIChE Symp. Ser., 1987, 83(256), 1-17
+;#935-935:Tamir, A.; Wisniak, J. J. Chem. Eng. Data, 1987, 32, 291
+;#936-937:Tomasula, P.; Czerwienski, G. J.; Tassios, D. Fluid Phase Equilib., 1987, 38(2), 129-153
+;#938-940:Wilsak, R. A.; Campbell, S. W.; Thodos, G. Fluid Phase Equilib., 1987, 33, 157
+;#941-941:Abusleme, J. A.; Vera, J. H. Can. J. Chem. Eng., 1988, 66, 964-9
+;#942-950:De Loos, T. W.; Poot, W.; De Swaan Arons, J. Fluid Phase Equilib., 1988, 42, 209-227
+;#951-951:Goral, M.; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1988, 44, 77
+;#952-966:Holldorff, H.; Knapp, H. Fluid Phase Equilib., 1988, 40, 113
+;#967-967:Ohgaki, K.; Takata, H.; Washida, T.; Katayama, T. Fluid Phase Equilib., 1988, 43, 105
+;#968-968:Wisniak, J.; Tamir, A. J. Chem. Eng. Data, 1988, 33, 109
+;#969-969:Wisniak, J.; Tamir, A. J. Chem. Eng. Data, 1988, 33, 376
+;#970-970:Wisniak, J.; Tamir, A. J. Chem. Eng. Data, 1988, 33, 429
+;#971-971:Wisniak, J.; Tamir, A. J. Chem. Eng. Data, 1988, 33, 432
+;#972-972:Chaudhari, S. K.; Katti, S. S. Fluid Phase Equilib., 1989, 50, 329
+;#973-975:Chukanov, V. N.; Kostromin, I. L. Teplofiz. Vys. Temp., 1989, 27, 1078-85
+;#976-976:Fu, J.; Wang, K.; Hu, Y. Huagong Xuebao, 1989, 4(1), 13;1
+;#977-977:Kato, M.; Tanaka, H. J. Chem. Eng. Data, 1989, 34, 203
+;#978-978:Kato, M.; Tanaka, H. J. Chem. Eng. Data, 1989, 34, 206-209
+;#979-982:Kotsarenko, A. A.; Yarym-Agaev, N. L.; Kalinichenko, V. P. Zh. Prikl. Khim. (Leningrad), 1989, 62, 1880
+;#983-983:Oracz, P. Int. DATA Ser., Sel. Data Mixtures, Ser. A, 1989, No. 3, 232-306
+;#984-984:Wilson, L. C.; Wilding, W. V.; Wilson, G. M. AIChE Symp. Ser., 1989, 85(271), 51-72
+;#985-985:Arce, A.; Dominguez, A.; Tojo, J. J. Chem. Eng. Data, 1990, 35, 30-33
+;#986-987:Chen, G.; Chao, K.-C. AIChE Symp. Ser., 1990, 86(279), 33-37
+;#988-990:Cymarnyi, V. A.; Palaguta, V. M. Zh. Prikl. Khim. (Leningrad), 1990, 63, 1080
+;#991-991:Fenclova, D.; Dohnal, V.; Costas, M.; Patterson, D. Fluid Phase Equilib., 1990, 57, 119
+;#992-992:Goral, M.; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1990, 55, 337
+;#993-993:Gultekin, N. J. Chem. Eng. Data, 1990, 35, 132
+;#994-997:Kotsarenko, A. A.; Yarym-Agaev, N. L. Izv. Vyssh. Uchebn. Zaved., Neft Gaz, 1990, No. 1, 59-61
+;#998-998:Palczewska-Tulinska, M.; Wyrzykowska-Stankiewicz, D.; Cholinski, J.; Zieborak, K. Fluid Phase Equilib., 1990, 54, 57
+;#999-1002:Pettenati, C.; Alessi, P.; Fermeglia, M.; Kikic, I. Fluid Phase Equilib., 1990, 54, 81
+;#1003-1003:Velasco, E.; Cocero, M. J.; Mato, F. J. Chem. Eng. Data, 1990, 35, 21-23
+;#1004-1008:Yarym-Agaev, N. L.; Kotsarenko, A. A. Zh. Fiz. Khim., 1990, 64, 2349
+;#1009-1010:Zielkiewicz, J.; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1990, 58, 191
+;#1011-1011:Zielkiewicz, J.; Oracz, P. Fluid Phase Equilib., 1990, 59, 279
+;#1012-1013:Zudkevitch, D.; Forman, A. L.; Deatherage, W. G. AIChE Symp. Ser., 1990, 86(279), 47-61
+;#1014-1014:Cabezas, J. L.; Beltran, S.; Coca, J. J. Chem. Eng. Data, 1991, 36, 184-188
+;#1015-1016:Kato, M.; Tanaka, H.; Yoshikawa, H. J. Chem. Eng. Data, 1991, 36, 387
+;#1017-1017:Lencka, M.; Persson, O.; Rasmussen, P. J. Chem. Thermodyn., 1991, 23, 851-58
+;#1018-1019:Liu, A.; Pusicha, K.; Demiriz, A. M.; Kohler, F. J. Solution Chem., 1991, 20, 39
+;#1020-1020:Srinivas, C.; Rao, M. V.; Prasad, D. H. L. Fluid Phase Equilib., 1991, 61, 285-97
+;#1021-1023:Thomas, S.; Bhethanabotla, V. R.; Campbell, S. W. J. Chem. Eng. Data, 1991, 36, 374
+;#1024-1024:Bittrich, H.-J.; Eckert, R. Z. Phys. Chem. (Munich), 1992, 175, 217-34
+;#1025-1025:Hiaki, T.; Yamato, K.; Kojima, K. J. Chem. Eng. Data, 1992, 37, 203-206
+;#1026-1028:Leu, A. D.; Robinson, D. B.; Chung, S. Y. K.; Chen, C. J. Can. J. Chem. Eng., 1992, 70, 330-4
+;#1029-1029:Paul, H.-I.; Atik, Z.; Knapp, H. Chem. Eng. Process., 1992, 31, 77-85
+;#1030-1030:Reimers, J. L.; Bhethanabotla, V. R.; Campbell, S. W. J. Chem. Eng. Data, 1992, 37, 127-130
+;#1031-1032:Staroske, J.; Figurski, G. Chem. Tech. (Leipzig), 1992, 44(2), 64-6
+;#1033-1034:Tanaka, H.; Kato, M. Kagaku Kogaku Ronbunshu, 1992, 18, 729-31
+;#1035-1035:Kurihara, K.; Nakamichi, M.; Kojima, K. J. Chem. Eng. Data, 1993, 38, 446-449
+;#1036-1036:Lai, J. T. W.; Kam, J. S. C.; Lau, F. W.; Beach, J.; Koga, Y. Thermochim. Acta, 1993, 230, 39-53
+;#1037-1037:Miyano, Y.; Hayduk, W. J. Chem. Eng. Data, 1993, 38, 277-281
+;#1038-1038:Cui, Z.; Li, Z.; Gao, Z.; Li, J. Chin. J. Chem. Eng., 1994, 2(2), 6;119
+;#1039-1039:Hiak, T.; Kurihara, K.; Kojima, K. J. Chem. Eng. Data, 1994, 39, 714-719
+;#1040-1040:Hiaki, T.; Yamato, K.; Miyazawa, H.; Kojima, K. Can. J. Chem. Eng., 1994, 72, 142
+;#1041-1041:Palczewska-Tulinska, M.; Wyrzykowska-Stankiewicz, D.; Szafranski, A. M. Fluid Phase Equilib., 1994, 100, 241-252
+;#1042-1042:Yoshikawa, H.; Kanahira, T.; Kato, M. Fluid Phase Equilib., 1994, 94, 255-265
+;#1043-1043:Arce, A.; Blanco, A.; Martinez-Ageitos, J.; Soto, A. J. Chem. Eng. Data, 1995, 40, 515-18
+;#1044-1044:Arce, A.; Blanco, A.; Soto, A.; Tojo, J. J. Chem. Eng. Data, 1995, 40, 1011-14
+;#1045-1045:Costa-Lopez, J.; Garvin, A.; Espana., F. J. J. Chem. Eng. Data, 1995, 40, 1067-71
+;#1046-1049:Coto, B.; Cabanas, A.; Pando, C.; Menduina, C.; Rubio, R. G.; Renuncio, J. A. R. J. Chem. Soc., Faraday Trans., 1995, 91, 2779
+;#1050-1061:Esteve, X.; Chaudhari, S. K.; Coronas, A. J. Chem. Eng. Data, 1995, 40, 1252-1256
+;#1062-1069:Farkova, J.; Linek, J.; Wichterle, I. Fluid Phase Equilib., 1995, 109, 53-65
+;#1070-1077:Farkova, J.; Wichterle, I. ELDATA: The International Electronic Journal of Physico-Chemical Data, 1995, 1, 121-9
+;#1078-1078:Iliuta, M. C.; Thyrion, F. C. Fluid Phase Equilib., 1995, 103, 257-84
+;#1079-1079:Kurihara, K.; Minoura, T.; Takeda, K.; Kojima, K. J. Chem. Eng. Data, 1995, 40, 679-84
+;#1080-1097:Mokbel, I.; Kasehgari, H.; Rauzy, E.; Jose, J. ELDATA: The International Electronic Journal of Physico-Chemical Data, 1995, 1(2), 135-8
+;#1098-1098:Oracz, P.; Goral, M.; Wilczek-Vera, G.; Warycha, S. Fluid Phase Equilib., 1995, 112, 291-306
+;#1099-1099:Oracz, P.; Warycha, S. Fluid Phase Equilib., 1995, 108, 199-211
+;#1100-1100:Orge, B.; Iglesias, M.; Dominguez, A.; Tojo, J. J. Chem. Eng. Data, 1995, 40, 1203-5
+;#1101-1101:Reddy, K. V. R.; Rambabu, K.; Krishnaiah, A.; Ramakrishna, M. Fluid Phase Equilib., 1995, 103, 251-6
+;#1102-1102:Reddy, V. K.; Rambabu, K.; Devarajulu, T.; Krishnaiah, A. J. Chem. Eng. Data, 1995, 40, 124-7
+;#1103-1107:Xu, X.; An, L.; Zheng, G. Gaoxiao Huaxue Gongcheng Xuebao, 1995, 9(2), 97-105
+;#1108-1108:Arce, A.; Martinez-Ageitos, J.; Soto, A. J. Chem. Eng. Data, 1996, 41, 718-723
+;#1109-1109:Barton, D. P.; Bhethanabotla, V. R.; Campbell, S. W. J. Chem. Eng. Data, 1996, 41, 1138-1140
+;#1110-1110:Comelli, F.; Francesconi, R. J. Chem. Eng. Data, 1996, 41, 1392-1396
+;#1111-1116:Coto, B.; Wiesenberg, R.; Pando, C.; Rubio, R. G.; Renuncio, J. A. R. Ber. Bunsen-Ges. Phys. Chem., 1996, 100, 482-9
+;#1117-1119:Fischer, K.; Park, S.-J.; Gmehling, J. ELDATA: The International Electronic Journal of Physico-Chemical Data, 1996, 2, 135-148
+;#1120-1124:Garriga, R.; Ilarraza, J.; Perez, P.; Gracia, M. J. Chem. Thermodyn., 1996, 28, 233-43
+;#1125-1131:Garriga, R.; Sanchez, F.; Perez, P.; Gracia, M. J. Chem. Thermodyn., 1996, 28, 567-576
+;#1132-1135:Giles, N. F.; Wilson, H. L.; Wilding, W. V. J. Chem. Eng. Data, 1996, 41, 1223
+;#1136-1136:Iliuta, M. C.; Thyrion, F. C.; Landauer, O. M. J. Chem. Eng. Data, 1996, 41, 713-717
+;#1137-1139:Moessner, F.; Coto, B.; Pando, C.; Rubio, R. G.; Renuncio, J. A. R. J. Chem. Eng. Data, 1996, 41, 537-42
+;#1140-1141:Nagata, I.; Tamura, K. J. Chem. Eng. Data, 1996, 41, 1135-1137
+;#1142-1143:Oracz, P.; Goral, M.; Wilczek-Vera, G.; Warycha, S. Fluid Phase Equilib., 1996, 126, 71-92
+;#1144-1144:Reddy, K. V. R.; Rambabu, K.; Devarajulu, T.; Krishnaiah, A. Phys. Chem. Liq., 1996, 31, 9-13
+;#1145-1165:Toghiani, R. K.; Toghiani, H.; Venkateswarlu, G. Fluid Phase Equilib., 1996, 122, 157-168
+;#1166-1167:Wilding, W. V.; Giles, N. F.; Wilson, L. C. J. Chem. Eng. Data, 1996, 41, 1239
+;#1168-1168:Zielkiewicz, J. J. Chem. Thermodyn., 1996, 28, 887-894
+;#1169-1169:Arce, A.; Blanco, A.; Martinez-Ageitos, J.; Soto, A. J. Chem. Eng. Data, 1997, 1997(42), 434-7
+;#1170-1170:Arce, A.; Perez, J.; Soto, A. Fluid Phase Equilib., 1997, 129, 187-195
+;#1171-1171:Aucejo, A.; Loras, S.; Munoz, R.; Wisniak, J.; Segura, H. J. Chem. Eng. Data, 1997, 42, 1201
+;#1172-1204:Aucejo, A.; Wisniak, J.; Segura, H.; Loras, S.; Munoz, R. J. Chem. Eng. Data, 1997, 1997(42), 1201-7
+;#1205-1206:Comelli, F.; Francesconi, R. J. Chem. Eng. Data, 1997, 42, 705-9
+;#1207-1207:De Haan, A. B.; Fischer, K.; Haacke, M.; Gmehling, J. J. Chem. Eng. Data, 1997, 42, 597
+;#1208-1217:Garriga, R.; Sanchez, F.; Perez, P.; Gracia, M. J. Chem. Thermodyn., 1997, 29, 649-659
+;#1218-1218:Goral, M.; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1997, 135(1997), 51-61
+;#1219-1219:Goral, M.; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1997, 129, 223-233
+;#1220-1220:Oh, S.-K. J. Chem. Eng. Data, 1997, 42, 1082-1084
+;#1221-1221:Oracz, P.; Warycha, S. Fluid Phase Equilib., 1997, 137, 149-162
+;#1222-1222:Resa, J. M.; Gonzalez, C.; Moradillo, B.; Ruiz, A. Fluid Phase Equilib., 1997, 132(1997), 205-13
+;#1223-1223:Tu, C. -H.; Wu, Y.-S.; Liu, T.-L. Fluid Phase Equilib., 1997, 129, 129-137
+;#1224-1224:Tu, C. -H.; Wu, Y. -S.; Liu, T. -L. Fluid Phase Equilib., 1997, 135, 97-108
+;#1225-1225:Arce, A.; Blanco, M.; Soto, A. J. Chem. Eng. Data, 1998, 1998(43), 255-58
+;#1226-1227:Arce, A.; Martinez-Ageitos, J.; Sato, A. J. Chem. Eng. Data, 1998, 43, 708-13
+;#1228-1228:Arce, A.; Martinez-Ageitos, J.; Rodil, E.; Soto, A. J. Chem. Thermodyn., 1998, 30, 1363-1372
+;#1229-1229:Arce, A.; Martinez-Ageitos, J.; Rodil, E.; Soto, A. Fluid Phase Equilib., 1998, 146, 139-153
+;#1230-1230:Arce, A.; Martinez-Ageitos, J.; Rodil, E.; Soto, A. ELDATA: The International Electronic Journal of Physico-Chemical Data, 1998, 4, 135-148
+;#1231-1231:Goral, M.; Oracz, P.; Warycha, S. Fluid Phase Equilib., 1998, 152, 109-120
+;#1232-1232:Kurihara, K.; Hori, H.; Kojima, K. J. Chem. Eng. Data, 1998, 43(2), 264-268
+;#1233-1233:Kurihara, K.; Iguchi, T.; Ochi, K.; Kojima, K. Fluid Phase Equilib., 1998, 144, 169-180
+;#1234-1234:Prasad, T. E. V.; Chandrika, K.; Haritha, M.; Geetha, N. B.; Prasad, D. H. L. Fluid Phase Equilib., 1998, 149, 121-125
+;#1235-1235:Prasad, T. E. V.; Vallabhaneni, G. K.; Sameera, M. K.; Bose, V. P.; Prasad, D. H. L. J. Chem. Eng. Data, 1998, 43(4), 555-557
+;#1236-1237:Reichl, A.; Daiminger, U.; Schmidt, A.; Davies, M.; Hoffmann, U.; Brinkmeier, C.; Reder, C.; Marquardt, W. Fluid Phase Equilib., 1998, 153, 113-134
+;#1238-1238:Zielkiewicz, J. J. Chem. Eng. Data, 1998, 43, 650-652
+;#1239-1249:Antosik, M.; Fras, Z.; Malanowski, S. J. Chem. Eng. Data, 1999, 44, 368-372
+;#1250-1250:Arce, A.; Martinez-Ageitos, J.; Rodil, E.; Soto, A. Fluid Phase Equilib., 1999, 165(1), 121-139
+;#1251-1252:Chamorro, C. R.; Segovia, J. J.; Martin, M. C.; Villamanan, M. A. Fluid Phase Equilib., 1999, 165, 197-208
+;#1253-1253:Gorbunov, A. N. Zh. Fiz. Khim., 1999, 73, 138
+;#1254-1254:Iglesias, M.; Orge, B.; Marino, G.; Tojo, J. J. Chem. Eng. Data, 1999, 44, 661-665
+;#1255-1255:Kodama, D.; Tanaka, H.; Kato, M. J. Chem. Eng. Data, 1999, 44, 1252-1253
+;#1256-1256:Loras, S.; Aucejo, A.; Munoz, R.; Wisniak, J. J. Chem. Eng. Data, 1999, 44, 203-208
+;#1257-1270:Osada, O.; Sato, M.; Uematsu, M. J. Chem. Thermodyn., 1999, 31, 451-464
+;#1271-1273:Segovia, J. J.; Martin, M. C.; Chamorro, C. R.; Villamanan, M. A. J. Chem. Thermodyn., 1999, 31, 1231-1246
+;#1274-1274:Shi, Y.; Li, W.; Tu, J. Gaoxiao Huaxue Gongcheng Xuebao, 1999, 13(2), 147-151
+;#1275-1275:Zielkiewicz, J. J. Chem. Thermodyn., 1999, 31, 819-826
+;#1276-1276:Arce, A.; Martinez-Ageitos, J.; Rodil, E.; Soto, A. Fluid Phase Equilib., 2000, 171, 207-218
+;#1277-1277:Arce, A.; Rodil, E.; Soto, A. J. Chem. Eng. Data, 2000, 45, 1112-1115
+;#1278-1278:Hiaki, T.; Nanao, M. Fluid Phase Equilib., 2000, 174, 81-91
+;#1279-1279:Nagata, I.; Tamura, K.; Miyai, K. Fluid Phase Equilib., 2000, 170, 37-48
+;#1280-1280:Rihko-Struckmann, L. K.; Linnekoski, J. A.; Krause, A. O. I. J. Chem. Eng. Data, 2000, 45, 1030-1035
+;#1281-1281:Tu, C. -H.; Wang, W. -F.; Hsian, H. -Y.; Chou, Y. -T. Fluid Phase Equilib., 2000, 175, 139-152
+;#1282-1282:Zeng, J.; Fu, C.; Hu, W. Tianranqi Huagong, 2000, 25(5), 3;54
+;#1283-1285:Fischer, K.; Wilken, M. J. Chem. Thermodyn., 2001, 33, 1285-1308
+;#1286-1286:Kurihara, K.; Iguchi, T.; Banaka, T.; Ochi, K.; Kojima, K. Fluid Phase Equilib., 2001, 180, 59-69
+;#1287-1287:Topphoff, M.; Kiepe, J.; Gmehling, J. J. Chem. Eng. Data, 2001, 46, 1333-1337
+;#1288-1308:Uusi-Kyyny, P.; Pokki, J. -P.; Aittamaa, J.; Liukkonen, S. J. Chem. Eng. Data, 2001, 46, 1244-1248
+;#1309-1311:Wisniak, J.; Aharon, L.; Nagar, Y.; Segura, H.; Reich, R. Phys. Chem. Liq., 2001, 39, 723-737
+;#1312-1312:Wisniak, J.; Yardeni, B.; Sling, T.; Segura, H. J. Chem. Eng. Data, 2001, 46, 223-228
+;#1313-1313:Chen, S.; Lei, Q.; Fang, W. J. Chem. Eng. Data, 2002, 47, 811-815
+;#1314-1314:DeBord, A. M.; Bhethanabotla, V. R.; Campbell, S. W. J. Chem. Eng. Data, 2002, 47, 1355-8
+;#1315-1315:Hiaki, T.; Nanao, M.; Urata, S.; Murata, J. Fluid Phase Equilib., 2002, 194-197, 969-979
+;#1316-1316:Horstmann, S.; Mougin, P.; Lecomte, F.; Fischer, K.; Gmehling, J. J. Chem. Eng. Data, 2002, 47, 1496-1501
+;#1317-1317:Kodama, D.; Tanaka, H.; Kato, M. J. Chem. Eng. Data, 2002, 47, 91-92
+;#1318-1318:Prasad, T. E. V.; Mythili, R.; Nirmala, G. S.; Prasad, D.H.L. J. Chem. Eng. Data, 2002, 47(4), 816-7
+;#1319-1319:Resa, J. M.; Gonzalez, C.; Ortiz de Landaluce, S.; Lanz, J. J. Chem. Eng. Data, 2002, 47(5), 1123-1127
+;#1320-1320:Rodriguez, A.; Canosa, J.; Dominguez, A.; Tojo, J. Fluid Phase Equilib., 2002, 201, 187-201
+;#1321-1321:Ukai, T.; Kodama, D.; Miyazaki, J.; Kato, M. J. Chem. Eng. Data, 2002, 47(5), 1320-1323
+;#1322-1322:Zielkiewicz, J. J. Chem. Thermodyn., 2002, 34, 1693-1701
+;#1323-1328:Jiang, H.; Li, H.; Wang, C.; Tan, T.; Han, S.-J. J. Chem. Thermodyn., 2003, 35(9), 1567-1572
+;#1329-1329:Kurihara, K.; Oshita, T.; Ochi, K.; Kojima, K. J. Chem. Eng. Data, 2003, 2003(48), 102-106
+;#1330-1330:Laakkonen, M.; Pokki, J. -P.; Uusi-Kyyny, P.; Aittamaa, J. Fluid Phase Equilib., 2003, 206, 237-252
+;#1331-1331:Nasirzadeh, K.; Salabat, A. J. Mol. Liq., 2003, 106(1), 1-14
+;#1332-1332:Pokki, J. -P.; Laakkonen, M.; Uusi-Kyyny, P.; Aittamaa, J. Fluid Phase Equilib., 2003, 212, 129-141
+;#1333-1333:Prasad, T. E. V.; Kumar, B. S.; Naveen, P. G.; Prasad, V. V. J.; Prasad, D. H. L. Phys. Chem. Liq., 2003, 41(1), 39-43
+;#1334-1334:Rodriguez, A.; Canosa, J.; Dominguez, A.; Tojo, J. J. Chem. Eng. Data, 2003, 48(1), 86-91
+;#1335-1339:Yokoyama, H.; Uematsu, M. J. Chem. Thermodyn., 2003, 35(5), 813-823
+;#1340-1340:Yu, S.; Zeng, J.; Deng, Z.; Chen, H.; Qiu, Z. Nanchang Daxue Xuebao, Likeban, 2003, 27(2), 3;158
+;#1341-1341:Zhang, L.; Chen, J.; Ding, J. Jingxi Shiyou Huagong, 2003, No. 3, 4;42
+;#1342-1342:Bashirov, M. M.; Naziev, Y. M. Teplofiz. Vys. Temp., 2004, 42(4), 544-550
+;#1343-1343:Goral, M.; Skrzecz, A.; Bok, A.; Maczynski, A.; Oracz, P. J. Phys. Chem. Ref. Data, 2004, 33(3), 959
+;#1344-1344:Kato, M.; Kodama, D. J. Chem. Eng. Data, 2004, 49, 1247-1248
+;#1345-1345:Nagashima, A.; Yoshii, S.; Matsuda, H.; Ochi, K. J. Chem. Eng. Data, 2004, 49, 286-290
+;#1346-1353:Nasirzadeh, K.; Zimin, D.; Neueder, R.; Kunz, W. J. Chem. Eng. Data, 2004, 49, 607-612
+;#1354-1354:Ouni, T.; Uusi-Kyyny, P.; Pokki, J. -P.; Aittamaa, J. J. Chem. Eng. Data, 2004, 49, 787-794
+;#1355-1355:Zaytseva, A.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Aittamaa, J. J. Chem. Eng. Data, 2004, 49, 1168-1174
+;#1356-1356:Al-Asheh, S.; Banat, F. J. Chem. Eng. Data, 2005, 50(6), 1789-1793
+;#1357-1357:Arce, A.; Arce, A.; Rodil, E.; Soto, A. Fluid Phase Equilib., 2005, 233(1), 9-18
+;#1358-1358:Kato, R.; Gmehling, J. Fluid Phase Equilib., 2005, 231, 38-43
+;#1359-1359:Kato, M.; Kodama, D.; Haneda, A. J. Chem. Eng. Data, 2005, 50, 383-384
+;#1360-1360:Ouni, T.; Zaytseva, A.; Uusi-Kyyny, P.; Pokki, J. -P.; Aittamaa, J. Fluid Phase Equilib., 2005, 232, 90-99
+;#1361-1361:Prasad, T. E. V.; Reddy, C. S.; Krishna, R. P.; Prasad, D. H. L. Phys. Chem. Liq., 2005, 43, 59-63
+;#1362-1362:Prasad, T. E. V.; Sridevi, D.; Kalpana, U.; Kavitha, M.; Himabindu, T.; Agrawal, S. B.; Bajaj, A. B.; Prasad, D. H. L. Phys. Chem. Liq., 2005, 43, 1-4
+;#1363-1363:Resa, J. M.; Gonzalez, C.; Goenaga, J. M. J. Chem. Eng. Data, 2005, 50(5), 1570-1575
+;#1364-1369:Safarov, J. T. J. Chem. Thermodyn., 2005, 37, 1261-1267
+;#1370-1379:Verevkin, S. P.; Safarov, J.; Bich, E.; Hassel, E.; Heintz, A. Fluid Phase Equilib., 2005, 236, 222-228
+;#1380-1384:Yunhai, S.; Honglai, L.; Kun, W.; Wende, X.; Ying, H. Fluid Phase Equilib., 2005, 234, 1-10
+;#1385-1386:Alonso-Tristan, C.; Segovia, J. J.; Chamorro, C. R.; Montero, E. A.; Villamanan, M. A. Fluid Phase Equilib., 2006, 245(1), 52-56
+;#1387-1387:Bernatova, S.; Aim, K.; Wichterle, I. Fluid Phase Equilib., 2006, 247, 96-101
+;#1388-1397:Fukano, M.; Matsuda, H.; Kurihara, K.; Ochi, K. J. Chem. Eng. Data, 2006, 51, 1458-1463
+;#1398-1398:Hynynen, K.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Aittamaa, J. J. Chem. Eng. Data, 2006, 51, 562-568
+;#1399-1399:Kato, M.; Kodama, D.; Sato, M.; Haneda, A.; Sugiyama, K. Netsu Bussei, 2006, 20, 87-90
+;#1400-1401:Prasad, T. E. V.; Jaiswal, A.; Prasad, S.; Harish, G.; Krupavaram, N.; Sirisha, N. M.; Ashok, K.; Kumar, Y. N.; Venkanna, N.; Prasad, D.H.L. Fluid Phase Equilib., 2006, 244, 86-98
+;#1402-1402:Prasad, T. E. V.; Kiran, N. A.; Reddy, N. M.; Prasad, D. H. L. J. Chem. Thermodyn., 2006, 38, 1696-1700
+;#1403-1414:Soni, M.; Ramgugernath, D.; Raal, J. D. J. Chem. Eng. Data, 2006, 51, 2083-2087
+;#1415-1425:Vercher, E.; Orchilles, V.; Miguel, P. J.; Gonzalez-Alfaro, V.; Martinez-Andreu, A. Fluid Phase Equilib., 2006, 250, 131-137
+;#1426-1426:Arce, A.; Arce, A.; Martinez-Ageitos, J. M.; Soto, A. Fluid Phase Equilib., 2007, 259, 57-65
+;#1427-1429:Bazaev, A. R.; Abdulagatov, I. M.; Bazaev, E. A.; Abdurashidova, A. A.; Ramazanova, A. E. J. Supercrit. Fluids, 2007, 41, 217-226
+;#1430-1430:Dell'Era, C.; Zaytseva, A.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Aittamaa, J. Fluid Phase Equilib., 2007, 254, 49-59
+;#1431-1431:Gao, D.; Zhu, D.; Ding, M.; Chen, H.; Dong, Q. Huaxue Gongcheng, 2007, 35(11), 33
+;#1432-1437:Lee, M. J.; Lai, C.-H.; Wang, T.-B.; Lin, H. M. J. Chem. Eng. Data, 2007, 52, 1291-1296
+;#1438-1438:Park, S.-J.; Han, K. J.; Gmehling, J. J. Chem. Eng. Data, 2007, 52(1), 230-234
+;#1439-1439:Prasad, T. E. V.; Sudheendra, B. V.; Veerendra, G.; Venugopalachary, K.; Sarma, A. V.; Prasad, D.H.L. Phys. Chem. Liq., 2007, 45(5), 525-530
+;#1440-1441:Schafer, D.; Xia, J.; Vogt, M.; Perez-Salado Kamps, A.; Maurer, G. J. Chem. Eng. Data, 2007, 52, 1653-1659
+;#1442-1442:Zhang, G.; Weeks, B. L.; Wei, J. J. Chem. Eng. Data, 2007, 52(3), 878-883
+;#1443-1443:Kato, M.; Kodama, D.; Kawauchi, S.; Kobayashi, N. J. Chem. Eng. Data, 2008, 53, 888-889
+;#1444-1444:Laavi, H.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Alopeaus, V. J. Chem. Eng. Data, 2008, 53(4), 913-918
+;#1445-1445:Moilanen, P.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Aittamaa, J. J. Chem. Eng. Data, 2008, 53, 83-88
+;#1446-1446:Roininen, J.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Alopaeus, V. J. Chem. Eng. Data, 2008, 53, 607-612
+;#1447-1452:Uno, S.; Matsuda, H.; Kurihara, K.; Tochigi, K.; Miyano, Y.; Kato, S.; Yasuda, H. J. Chem. Eng. Data, 2008, 53, 2066-2071
+;#1453-1453:Wierink, G.; Roininen, J.; Uusi-Kyyny, P.; Pokki, J. -P.; Pakkanen, M.; Alopaeus, V. J. Chem. Eng. Data, 2008, 53(7), 1539-1544
+;#1454-1454:Tamilarasan, R.; Prabu, A. A.; Raajenthiren, M.; Kumar, M. D.; Yoo, C. K. J. Chem. Eng. Data, 2009, 54, 4-7
+;#1455-1456:Garcia-Mardones, M.; Perez-Gregorio, V.; Guerrero, H.; Bandres, I.; Lafuente, C. J. Chem. Thermodyn., 2010, 42, 1500-1505
+;#1457-1457:Resa, J. M.; Cepeda, E. A.; Goenaga, J. M.; Ramos, A.; Aguirre, S.; Urbano, C. J. Chem. Eng. Data, 2010, 55(2), 1017-1021
+;#1458-1459:Susial, P.; Sosa-Rosario, A.; Rios-Santana, R. J. Chem. Eng. Data, 2010, 55(12), 5701-5706
+;#1460-1460:Alvarez, V. H.; Mattedi, S.; Iglesias, M.; Gonzalez-Olmos, R.; Resa, J. M. Phys. Chem. Liq., 2011, 49, 52-71
+;#1461-1461:Cai, J.; Cui, X.; Zhang, Y.; Li, R.; Feng, T. J. Chem. Eng. Data, 2011, 56(2), 282-287
+;#1462-1480:Dong, J.; Feng, C.; Li, Y. J. Chem. Eng. Data, 2011, 56(5), 2386-2392
+;#1481-1484:Kim, S. A.; Yim, J. H.; Byun, H.-S.; Lim, J. S. Korean J. Chem. Eng., 2011, 28(12), 2324-2328
+;#1485-1485:Orchilles, A. V.; Miguel, P. J.; Llopis, F. J.; Vercher, E.; Martinez-Andreu, A. J. Chem. Eng. Data, 2011, 56(12), 4430-4435
+;#1486-1486:Sundberg, A.; Uusi-Kyyny, P.; Pakkanen, M.; Alopaeus, V. J. Chem. Eng. Data, 2011, 56(5), 2634-2640
+;#1487-1487:Yang, C.; Ma, S.; Yin, X. J. Chem. Eng. Data, 2011, 56(10), 3747-3751
+;#1488-1488:Camacho, J.; Diez, E.; Diaz, I.; Ovejero, G. J. Chem. Eng. Data, 2012, 57(11), 3198-3202
+;#1489-1489:Gao, D.; Zhu, D.; Chen, H.; Sun, H.; Zhang, L.; Lv, C.; Shi, J. Chem. Eng. (China), 2012, 40(2), 23-28
+;#1490-1491:Garcia-Mardones, M.; Barros, A.; Bandres, I.; Artigas, H.; Lafuente, C. J. Chem. Thermodyn., 2012, 51, 17-24
+;#1492-1493:Kazoyan, E. A.; Khachatryan, A. S. Zh. Prikl. Khim. (Leningrad), 2012, 85(9), 2012
+;#1494-1494:Kumar, M. P.; Tasleem, S.; Kumar, G. R. J. Chem. Eng. Data, 2012, 57(11), 3109-3113
+;#1495-1495:Li, Q.; Zhu, W.; Fu, Y.; Wang, H.; Li, L.; Wang, B. J. Chem. Eng. Data, 2012, 57(5), 1602-1606
+;#1496-1496:Orchilles, A. V.; Miguel, P. J.; Gonzalez-Alfaro, V.; Vercher, E.; Martinez-Andreu, A. J. Chem. Eng. Data, 2012, 57(2), 394-399
+;#1497-1497:Yang, C.; Yin, X.; Ma, S. J. Chem. Eng. Data, 2012, 57(1), 66-71
+;#1498-1498:Mohsen-Nia, M.; Amiri, H. J. Chem. Thermodyn., 2013, 57, 67-70
+;#1499-1501:Narasigadu, C.; Naidoo, P.; Coquelet, C.; Richon, D.; Ramjugernath, D. J. Chem. Eng. Data, 2013, 58(5), 1280-1287
+;#1502-1511:Reddy, P.; Benecke, T. P.; Ramjugernath, D. J. Chem. Thermodyn., 2013, 58, 330-339
+;#1512-1519:Veneral, J. G.; Benazzi, T.; Mazutti, M. A.; Voll, F. A. P.; Cardozo-Filho, L.; Corazza, M. L.; Guirardello, R.; Oliveira, J. V. J. Chem. Thermodyn., 2013, 58, 398-404
+;#1520-1520:Wang, J.; Bao, Z. Fluid Phase Equilib., 2013, 341, 30-34
+;#1521-1521:Wang, H.-x.; Xiao, J.-j.; Shen, Y.-y.; Ye, C.-s.; Li, L.; Qiu, T. J. Chem. Eng. Data, 2013, 58(6), 1827-1832
+;#1522-1522:Xiao, L.; Wang, Q.-l.; Wang, H.-x.; Qiu, T. Fluid Phase Equilib., 2013, 344, 79-83
+;#1523-1524:Yang, C.; Qin, Z.; Xu, Y.; Zeng, H.; Sun, F.; Zhang, P.; Feng, Y. J. Chem. Eng. Data, 2013, 58(2), 482-487
+;#1525-1526:Garcia-Mardones, M.; Martin, S.; Gascon, I.; Lafuente, C. J. Chem. Eng. Data, 2014, 59(5), 1564-1573
+;#1527-1534:Gomes, C. S. M.; Oliveira, H. N. M. d.; Chiavone-Filho, O.; Foletto, E. L. Chem. Eng. Res. Des., 2014, 92, 2861-2866
+;#1535-1535:Li, W.; Sun, D.; Zhang, T.; Huang, Y.; Zhang, L.; Zhang, Z. J. Chem. Eng. Data, 2014, 59(12), 3975-3981
+;#1536-1536:Wang, H.-x.; Bu, X.-w.; Yang, J.-b.; Jiang, Y.-p.; Li, L. J. Chem. Thermodyn., 2014, 74, 85-90
+;#1537-1537:Ye, C.; Dong, X.; Zhu, W.; Cai, D.; Qiu, T. Fluid Phase Equilib., 2014, 367, 45-50
+;#1538-1543:Belting, P. C.; Gmehling, J.; Bolts, R.; Rarey, J.; Ceriani, R.; Chiavone-Filho, O.; Meirelles, A. J. A. Fluid Phase Equilib., 2015, 395, 15-25
+;#1544-1544:Huang, Z.; Jiang, H.; Li, L.; Wang, H.; Qiu, T. J. Chem. Thermodyn., 2015, 86, 75-79
+;#1545-1548:Jalili, A. H.; Shokouhi, M.; Samani, F.; Hosseini-Jenab, M. J. Chem. Thermodyn., 2015, 85, 13-25
+;#1549-1564:Safarov, J.; Kul, I.; Talibov, M.; Shahverdiyev, A.; Hassel, E. J. Chem. Eng. Data, 2015, 60(6), 1648-1663
+;#1565-1565:Song, Y.-H.; Li, J. Q.; Zhang, H.-P.; Yu, Y.-M.; Zheng, Z.; Ding, J.-F.; Sun, X.; Lin, Y.-K.; Li, W.-J. Fluid Phase Equilib., 2015, 405, 83-87
+;#1566-1572:Sun, X.-F.; Zhao, X.-Y.; Hou, H.-Y.; Wang, L.; Zhu, X.-J.; Zhang, T.; Yang, J. J. Mol. Liq., 2016, 216, 440-449
+;#1573-1573:Zhang, Z.; Hu, A.; Zhang, T.; Zhang, Q.; Yang, Z.; Li, W. Fluid Phase Equilib., 2016, 408, 20-26
+;#1574-1574:Zhang, X.; Liu, H.; Liu, Y.; Jian, C.; Wang, W. Fluid Phase Equilib., 2016, 408, 52-57
+;#1575-1575:Zhang, Z.; Pan, F.; Zhang, Q.; Zhang, T.; Zhang, L.; Wu, K.; Li, W. J. Chem. Eng. Data, 2016, 61(2), 772-779
+;#1576-1576:Ramsay, W.; Young, S. Philos. Trans. R. Soc. London, Ser. A, 1887, 178, 313-34
+;#1577-1577:Kuenen, J. P. Philos. Mag., 1903, 6, 637
+;#1578-1578:Young, S. Sci. Proc. R. Dublin Soc., 1910, 12, 374-443
+;#1579-1579:Kay, W. B.; Donham, W. E. Chem. Eng. Sci., 1955, 4, 1-16
+;#1580-1580:McCracken, P. G.; Storvick, T. S.; Smith, J. M. J. Chem. Eng. Data, 1960, 5, 130-2
+;#1581-1581:Skaates, J. M.; Kay, W. B. Chem. Eng. Sci., 1964, 19, 431-44
+;#1582-1582:Khera, R. Ph.D. Thesis, Ohio State University, Columbus, OH (1968)
+;#1583-1583:Kortuem, G.; Valent, V. Ber. Bunsen-Ges. Phys. Chem., 1977, 81, 752-61
+;#1584-1584:Francesconi, Artur Zaghini; Lentz, H.; Franck, E. U. J. Phys. Chem., 1981, 85, 3303
+;#1585-1585:Brunner, E. J. Chem. Thermodyn., 1988, 20, 273
+;#1586-1586:Brunner, E. J. Chem. Thermodyn., 1988, 20, 1397-1410
+;#1587-1587:De Loos, T. W.; Poot, W.; De Swaan Arons, J. Fluid Phase Equilib., 1988, 42, 209-227
+;#1588-1588:Lydersen, A. L.; Tsochev, V. Chem. Eng. Technol., 1990, 13, 125-30
+;#1589-1589:Bashirov, M. M.; Naziev, Y. M. Teplofiz. Vys. Temp., 2003, 41(4), 527-533
+;#1590-1590:Liu, J.; Qin, Z.; Wang, G.; Hou, X.; Wang, J. J. Chem. Eng. Data, 2003, 48, 1610-1613
+;#1591-1591:Bashirov, M. M.; Naziev, Y. M. Teplofiz. Vys. Temp., 2004, 42(4), 544-550
+;#1592-1592:Gil, L.; Blanco, S. T.; Rivas, C.; Laga, E.; Fernandez, J.; Artal, M.; Velasco, I. J. Supercrit. Fluids, 2012, 71, 26-44
+;#1593-1593:Han, K.; Xia, S.; Ma, P.; Yan, F.; Liu, T. J. Chem. Thermodyn., 2013, 62, 111-117
+;#1594-1594:Wang, L.; Han, K.; Xia, S.; Ma, P.; Yan, F. J. Chem. Thermodyn., 2014, 74, 161-168
+    
+;Tsang, C. Y.; Streett, W. B. Fluid Phase Equilib., 1981, 6, 261-273 Phase equilibria in the H(2) + CO system at temperatures from 70 to 125 k and pressures to 53 mpa.
+    
+;Hong, J. H.; Kobayashi, R. Adv. Cryog. Eng., 1982, 27, 849-859 Phase Equilbrium Studies for Methane/Synthesis Gas Separation: The Hydrogen-Carbon Monoxide-Methane System Adv. Cryo. Eng., Volume 27, pp. 849-859, 1982.
+    
+;Tsang, C. Y.; Streett, W. B. Chem. Eng. Sci., 1981, 36, 993-1000 Phase equilibria in the H2/CO2 system at temperatures from 220 to 290 k and pressures to 172 mpa.
+    
+;Bezanehtak, K.; Combes, G. B.; Dehghani, F.; Foster, N. R.; Tomasko, D. L. J. Chem. Eng. Data, 2002, 47, 161-168
+    
+;Brunner, E.; Hultenschmidt, W.; Schlichtharle, G. J. Chem. Thermodyn., 1987, 19, 273-291
+    
+;Brunner, E.; Hultenschmidt, W.; Schlichtharle, G. J. Chem. Thermodyn., 1987, 19, 273-291
+    
+;Brunner, E.; Hultenschmidt, W.; Schlichtharle, G. J. Chem. Thermodyn., 1987, 19, 273-291
+    
+;Yorizane, M.; Sadamoto, S.; Masuoka, H.; Eto, Y. Kogyo Kagaku Zasshi, 1969, 72, 2174 Solubility of gases in methanol at high pressures
+    
+;Descamps, C.; Coquelet, C.; Bouallou, C.; Richon, D. Thermochim. Acta, 2005, 430, 1-7 Solubility of hydrogen in methanol at temperatures from 248.41 to 308.20K
+    
+;Descamps, C.; Coquelet, C.; Bouallou, C.; Richon, D. Thermochim. Acta, 2005, 430, 1-7 Solubility of hydrogen in methanol at temperatures from 248.41 to 308.20K
+    
+;Brunner, E.; Hultenschmidt, W.; Schlichtharle, G. J. Chem. Thermodyn., 1987, 19, 273-291
+    
+;Brunner, E.; Hultenschmidt, W.; Schlichtharle, G. J. Chem. Thermodyn., 1987, 19, 273-291
+    
+;Brunner, E.; Hultenschmidt, W.; Schlichtharle, G. J. Chem. Thermodyn., 1987, 19, 273-291
+    
+;Liu, Q.; Takemura, F.; Yabe, A. J. Chem. Eng. Data, 1996, 41, 1141-1143 Solubility of Hydrogen in Liquid Methanol and Methyl Formate at 20 .degree. C to 140 .degree.C
+    
+;d'Angelo, Jose Vicente H.; Francesconi, Artur Zaghini J. Chem. Eng. Data, 2001, 46, 671-674 Gas-Liquid Solubility of Hydrogen in n-Alcohols (1<n<4) at Pressures form 3.6 MPa and Temperatures from 298.15 K to 525.15 K
+    
+;Cipollina, A.; Anselmo, R.; Scialdone, O.; Filardo, G.; Galia, A. J. Chem. Eng. Data, 2007, 52(6), 2291-2297
+    
+;Cipollina, A.; Anselmo, R.; Scialdone, O.; Filardo, G.; Galia, A. J. Chem. Eng. Data, 2007, 52(6), 2291-2297
+    
+;Zhang, J.; Zhang, X.; Han, B.; He, J.; Liu, Z.; Yang, G. J. Supercrit. Fluids, 2002, 22, 15-19 Study on intermolecular interactions in supercritical fluids by partial molar volume and isothermal compressibility
+
+PROP-SET PP-H2 PPMX UNITS='bara' SUBSTREAM=MIXED COMPS=H2 CO  &
+        CO2 H2O MEOH PHASE=V 
+
+STREAM S1 
+    SUBSTREAM MIXED TEMP=493.2 <K> PRES=50.  &
+        MASS-FLOW=2.8E-005 <kg/sec> 
+    MOLE-FRAC H2 82. / CO 4. / CO2 3. / AR 11. 
+
+BLOCK B1 RGIBBS 
+    PARAM PRES=0. NPHASE=1 CHEMEQ=YES NREAC=2 MAXIT=50  &
+        DUTY=0.0 
+    PROD H2 / CO / CO2 / H2O / MEOH / AR 
+    STOIC 1 H2 -1. / CO2 -1. / CO 1. / H2O 1. 
+    STOIC 2 CO2 -1. / H2 -3. / MEOH 1. / H2O 1. 
+    TAPP-SPEC 1 0.0 / 2 0.0 
+
+BLOCK B3 RPLUG 
+    PARAM TYPE=ADIABATIC LENGTH=0.15 DIAM=0.016 PRES=0.  &
+        NPOINT=15 CATWT=34.8 <gm> CAT-PRESENT=YES  &
+        BED-VOIDAGE=0.33 
+    BLOCK-OPTION SIM-LEVEL=7 TERM-LEVEL=7 
+    REPORT USERVECS KINETICS 
+    PROP-REPORT PROPERTIES = PP-H2 
+    SUBOBJECTS PROP = PP-H2 
+    REACTIONS RXN-IDS=MEOH-SYN 
+    ADV-PROFILES USE-SECTIONS=YES 
+    PROF-SECT SECNO=1 SECT-NINTVL=4 FRAC-START=0. FRAC-END=0.1 /  &
+        SECNO=2 SECT-NINTVL=6 FRAC-START=0.1 FRAC-END=0.4 /  &
+        SECNO=3 SECT-NINTVL=5 FRAC-START=0.4 FRAC-END=1. 
+
+BLOCK B2 DUPL 
+
+EO-CONV-OPTI 
+
+SENSITIVITY S-1 
+    DEFINE XMPFR MOLE-FRAC STREAM=PLUG SUBSTREAM=MIXED  &
+        COMPONENT=MEOH 
+    DEFINE XMGIBBS MOLE-FRAC STREAM=GIBBS SUBSTREAM=MIXED  &
+        COMPONENT=MEOH 
+    TABULATE 1 "XMPFR" 
+    TABULATE 2 "XMGIBBS" 
+    VARY UNARY-PARAM VARIABLE=DGFORM ID1=MEOH ID2=1 
+    RANGE OPT-LIST=OLIST LIST=-162300000. -1.65E-008 -1.66E-008 
+
+STREAM-REPOR MOLEFLOW MASSFLOW MOLEFRAC MASSFRAC 
+
+PROPERTY-REP NOPCES NOPROP-DATA NODFMS NOPARAM-PLUS 
+
+REACTIONS MEOH-SYN GENERAL 
+    PARAM NTERM-ADS=4 
+    REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW PHASE=V  &
+        CBASIS=PARTIALPRES RBASIS=CAT-WT REVERSIBLE=YES  &
+        REV-METH=USER-SPEC PRES-UNIT="BAR" 
+    REAC-DATA 2 NAME=MEOH-SYN REAC-CLASS=LHHW PHASE=V  &
+        CBASIS=PARTIALPRES RBASIS=CAT-WT REVERSIBLE=YES  &
+        REV-METH=USER-SPEC PRES-UNIT="BAR" 
+    REAC-DATA 3 NAME=F-ETOH REAC-CLASS=POWERLAW PHASE=V  &
+        STATUS=ON CBASIS=PARTIALPRES RBASIS=CAT-WT REVERSIBLE=NO  &
+        PRES-UNIT="BAR" 
+    REAC-DATA 4 NAME=DME-FORM PHASE=V STATUS=ON  &
+        CBASIS=PARTIALPRES RBASIS=CAT-WT REVERSIBLE=NO PRES-UNIT= &
+        "BAR" 
+    RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol>  &
+        T-REF=228.42 
+    RATE-CON 2 PRE-EXP=7.07034 ACT-ENERGY=-8.76469 <kcal/mol>  &
+        T-REF=228.4200000 
+    RATE-CON 3 PRE-EXP=1E-012 ACT-ENERGY=19.467 <kcal/mol>  &
+        T-REF=228.42 
+    RATE-CON 4 PRE-EXP=4.2E-011 ACT-ENERGY=18.66 <kcal/mol>  &
+        T-REF=228.42 
+    STOIC 1 MIXED CO2 -1. / H2 -1. / CO 1. / H2O 1. 
+    STOIC 2 MIXED CO2 -1. / H2 -3. / MEOH 1. / H2O 1. 
+    STOIC 3 MIXED CO -2. / H2 -4. / ETOH 1. / H2O 1. 
+    STOIC 4 MIXED MEOH -2. / DME 1. / H2O 1. 
+    DFORCE-EXP 1 MIXED CO2 1. 
+    DFORCE-EXP 2 MIXED CO2 1. / MIXED H2 1. 
+    DFORCE-EXP 3 MIXED CO 1. / MIXED H2 1.5 
+    DFORCE-EXP 4 MIXED MEOH 0.55 
+    DFORCE-EXP-2 1 MIXED H2 -1. / MIXED CO 1. / MIXED H2O  &
+        1. 
+    DFORCE-EXP-2 2 MIXED H2 -2. / MIXED MEOH 1. / MIXED  &
+        H2O 1. 
+    DFORCE-EQ-1 REACNO=1 A=0. B=0. / REACNO=2 A=0. 
+    DFORCE-EQ-2 REACNO=1 A=-4.671945154 B=4773.258898 /  &
+        REACNO=2 A=24.3889813 B=-7059.72589 
+    ADSORP-EXP REACNO=1 CID=H2O SSID=MIXED EXPONENT=0. 1. 0.  &
+        1. / REACNO=1 CID=H2 SSID=MIXED EXPONENT=0. -1. 0.5  &
+        0. / REACNO=2 CID=H2O SSID=MIXED EXPONENT=0. 1. 0.  &
+        1. / REACNO=2 CID=H2 SSID=MIXED EXPONENT=0. -1. 0.5  &
+        0. 
+    ADSORP-EQTER REACNO=1 TERM= 1 A=0. / REACNO=1 TERM= 2  &
+        A=8.147108741 B=0. / REACNO=1 TERM= 3 A=-0.6951  &
+        B=2068.3 / REACNO=1 TERM= 4 A=-23.438 B=14928.19686 /  &
+        REACNO=2 TERM= 1 A=0. / REACNO=2 TERM= 2  &
+        A=8.147108741 B=0. / REACNO=2 TERM= 3 A=-0.69515  &
+        B=2068.3 / REACNO=2 TERM= 4 A=-23.43827453  &
+        B=14928.19686 
+    ADSORP-POW REACNO=1 EXPONENT=1. / REACNO=2 EXPONENT=3. 
+    ACT-VAL ACTIVITY 
+    SUBOBJECTS ACTIVITY = ACTIVITY 
+    REAC-ACT 1 ACTIVITY=ACTIVITY / 2 ACTIVITY=ACTIVITY / 3  &
+        ACTIVITY=ACTIVITY / 4 ACTIVITY=ACTIVITY 
+
+PROP-TABLE PURE-1 PROPS 
+    IN-UNITS SI MASS-FLOW='kg/hr' MOLE-FLOW='kmol/hr'  &
+        VOLUME-FLOW='cum/hr' PRESSURE=bar TEMPERATURE=C DELTA-T=C  &
+        PDROP-PER-HT='mbar/m' PDROP=bar SHORT-LENGTH=mm 
+    ANALYSIS ANAL-TYPE=PURE PURE-PROP='G' UNITS='GJ/kmol'  &
+        PURE-PHASES= V 
+    MOLE-FLOW CO2 1 / H2 1 / H2O 1 / MEOH 1 / CO 1 
+    PROPERTIES SRK FREE-WATER=STEAM-TA SOLU-WATER=3  &
+        TRUE-COMPS=YES 
+    VARY TEMP 
+    RANGE VARVALUE=RANGE LOWER=200. UPPER=300. INCR=5. 
+    VARY PRES 
+    RANGE LIST=1.01325 
+    PARAM 
+
+PROP-TABLE PURE-2 PROPS 
+    IN-UNITS SI MASS-FLOW='kg/hr' MOLE-FLOW='kmol/hr'  &
+        VOLUME-FLOW='cum/hr' PRESSURE=bar DELTA-T=C  &
+        PDROP-PER-HT='mbar/m' PDROP=bar SHORT-LENGTH=mm 
+    ANALYSIS ANAL-TYPE=PURE PURE-PROP='CP' UNITS='kJ/kmol-K'  &
+        PURE-PHASES= V 
+    MOLE-FLOW MEOH 1 
+    PROPERTIES SRK FREE-WATER=STEAMNBS SOLU-WATER=3  &
+        TRUE-COMPS=YES 
+    VARY TEMP 
+    RANGE VARVALUE=RANGE LOWER=400. UPPER=600. INCR=5. 
+    VARY PRES 
+    RANGE LIST=50. 
+    PARAM 
+
+DISABLE 
+    SENSITIVITY S-1 
+;
+;
+;
+;
+;
