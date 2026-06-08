@@ -834,7 +834,15 @@ def _format_coeff(coeff: List[float]) -> str:
 
 def _generate_lhhw_reactions(reaction_set: ReactionSet, reaction_lookup: Dict[int, Reaction]) -> str:
     pairs = [(rid, reaction_lookup.get(rid)) for rid in reaction_set.reaction_ids]
-    pairs = [(rid, rxn) for rid, rxn in pairs if rxn is not None and rxn.parameters is not None]
+    pairs = [
+        (rid, rxn)
+        for rid, rxn in pairs
+        if rxn is not None
+        and rxn.parameters is not None
+        and rxn.parameters.reaction_type == ReactionParameterType.LHHW
+    ]
+    if not pairs:
+        return ""
 
     nterm = max(
         (len(rxn.parameters.adsorption.terms) for _, rxn in pairs if rxn.parameters.adsorption),

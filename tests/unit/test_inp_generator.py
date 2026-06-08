@@ -1110,6 +1110,59 @@ BLOCK B1 HEATER
     assert any("Section 'CHEMISTRY' is out of order" in e for e in errors)
 
 
+def test_lhhw_set_with_mixed_reaction_types_does_not_crash():
+    # A GENERAL set that contains an LHHW reaction (id 1) and a KINETIC reaction (id 2):
+    # the generator must emit the LHHW reaction without crashing on the KINETIC one.
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHWmix",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"},
+            {"id": "CH3OH", "name": "METHANOL"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.5, "CO": 0.1, "H2O": 0.1, "CH3OH": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-MIX"}],
+        "chemistry": [
+            {"id": "MIX", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"H2": -1.0}, "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {"power": 2.0, "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}},
+                {"id": 2, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -3},
+                    {"component": "CH3OH", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "KINETIC", "phase": "V", "rate_basis": "MOLARITY",
+                     "pre_exponential_factor": 1e-4, "activation_energy": 60000}},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-MIX", "block_type": "GENERAL", "reaction_ids": [1, 2]}],
+    })
+
+    inp = generate_inp(spec)  # must not raise
+
+    assert "REACTIONS RXN-MIX GENERAL" in inp
+    assert "REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW" in inp
+    # the KINETIC reaction is not emitted by the LHHW path (no power-law RATE-CON shorthand here)
+    assert "RATE-CON 2 0.0001 60000.0" not in inp
+
+
 def test_compr_type_parameter_keeps_batch_type_and_maps_efficiency():
     """COMPR batch INP uses TYPE plus SEFF for isentropic efficiency."""
     spec = PlantSpecification(**{
