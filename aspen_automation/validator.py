@@ -167,6 +167,27 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                 if not reaction:
                     continue
 
+                if reaction.parameters and reaction.parameters.reaction_type.value == "LHHW":
+                    referenced: set[str] = set()
+                    df = reaction.parameters.driving_force
+                    if df:
+                        referenced.update(df.term1.exponents.keys())
+                        referenced.update(df.term2.exponents.keys())
+                    ads = reaction.parameters.adsorption
+                    if ads:
+                        referenced.update(ads.exponents.keys())
+                    for component in sorted(referenced):
+                        if comp_ids and component not in comp_ids:
+                            add_error(
+                                "error",
+                                f"{reaction_loc}.parameters",
+                                (
+                                    f"Component '{component}' used in LHHW reaction '{rxn_id}' "
+                                    "but not defined in components"
+                                ),
+                                "Add the component to the components list or fix the exponent key",
+                            )
+
                 if rxn_set.block_type.upper() == "REQUIL":
                     if not reaction.parameters:
                         add_error(
