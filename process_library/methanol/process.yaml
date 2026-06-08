@@ -505,6 +505,7 @@ blocks:
     DIAM: 4.0
     NPOINT: 20
     CAT-WT: 250000.0
+    BED-VOIDAGE: 0.4
   reactions: RXN-SET1
   split_fractions: null
   sep_fractions: null
@@ -622,7 +623,7 @@ chemistry:
         act_energy: 22.6342
         act_energy_unit: kcal/mol
         t_ref: 228.42
-        t_ref_unit: K
+        t_ref_unit: C
       driving_force:
         term1:
           exponents:
@@ -687,7 +688,7 @@ chemistry:
         act_energy: -8.76469
         act_energy_unit: kcal/mol
         t_ref: 228.42
-        t_ref_unit: K
+        t_ref_unit: C
       driving_force:
         term1:
           exponents:
@@ -740,11 +741,14 @@ kinetic_models:
   description: 2-reaction CO2-based LHHW kinetics (RWGS + CO2 hydrogenation to methanol)
     on B-SYN RPLUG; rate per catalyst weight (RBASIS=CAT-WT), partial-pressure basis.
   implementation: Aspen GENERAL reaction set (LHHW) attached to B-SYN RPLUG; CAT-WT=250000
-    kg emitted as CATWT on the reactor block. Constants transcribed from the Aspen V14
-    methanol synthesis lab reactor example (docs/superpowers/notes/lhhw_reference.inp),
-    Aspen-validated. T-REF is emitted as 228.42 <K> because the source deck is IN-UNITS
-    SI while this deck is IN-UNITS MET (deg C); the explicit <K> token preserves the
-    correct reference temperature regardless of the active unit set.
+    kg + BED-VOIDAGE=0.4 emitted on the reactor block (Aspen requires two of catalyst
+    weight / bed voidage / density). Constants transcribed from the Aspen V14 methanol
+    synthesis lab reactor example (docs/superpowers/notes/lhhw_reference.inp),
+    Aspen-validated. T-REF is emitted as 228.42 <C> (the classic Vanden Bussche-Froment
+    reference temperature, 501.57 K); an explicit Celsius token is used so the reference
+    temperature is correct regardless of the deck's active unit set. Verified by Gate-1
+    batch translation (the <K> form caused RPLUG integration runaway; the <C> form
+    converges).
   primary_reference: Vanden Bussche and Froment, Journal of Catalysis 161, 1-10, 1996.
   secondary_reference: Graaf et al., Chemical Engineering Science 43, 3185-3195, 1988.
   calibration_status: Constants transcribed verbatim from the Aspen-validated reference

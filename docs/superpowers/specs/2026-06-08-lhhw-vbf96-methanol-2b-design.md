@@ -61,10 +61,12 @@ The reference deck is `IN-UNITS SI` (temperature K); this deck is `IN-UNITS MET`
 - **ACT-ENERGY** — carries an explicit `<kcal/mol>` token → unit-independent. Transcribe as-is.
 - **Driving-force / adsorption A,B** (in `exp(A + B/T + …)`) — Aspen evaluates these with
   **absolute temperature (K)** regardless of `IN-UNITS` → transcribe as-is.
-- **T-REF** — a RATE-CON reference temperature that *is* governed by `IN-UNITS`. A bare
-  `T-REF=228.42` in a MET deck would mean 228.42 °C ≈ 502 K, not the intended 228.42 K.
-  **Mitigation:** emit an explicit unit token — `T-REF=228.42 <K>` — so the reference
-  temperature is unambiguous and matches the SI reference deck. This is the primary Gate-1
+- **T-REF** — the RATE-CON reference temperature. The value `228.42` is the classic Vanden
+  Bussche–Froment reference temperature expressed in **°C** (= 501.57 K), NOT 228.42 K.
+  (Confirmed by Gate-1: emitting `<K>` gives k_RWGS ≈ 0.00165·e^(+28) ≈ 2.6×10⁹ at 523 K →
+  RPLUG integration runaway; `<C>` gives k ≈ 0.0042 → converges.) **Mitigation:** emit an
+  explicit Celsius token — `T-REF=228.42 <C>` — so the reference temperature is unambiguous
+  regardless of the deck's active unit set. This was the primary Gate-1
   check; if Aspen rejects a token on T-REF, the fallback is to convert (228.42 K = −44.73 °C).
 
 ## Architecture
@@ -86,17 +88,20 @@ The reference deck is `IN-UNITS SI` (temperature K); this deck is `IN-UNITS MET`
 - `reaction_sets.RXN-SET1`: `POWERLAW` → `GENERAL`, `reaction_ids: [1, 2]`.
 - `kinetic_models`: rewrite the `VBF96_SCREENING` entry to describe the real LHHW model, cite the
   provenance (Aspen V14 `methanol synthesis lab reactor` example → `lhhw_reference.inp`), record
-  the T-REF=K unit decision, and drop the "uncalibrated/Ea=0" language.
-- `B-SYN` keeps `CAT-WT: 250000.0` (now actually emitted).
+  the T-REF=°C unit decision, and drop the "uncalibrated/Ea=0" language.
+- `B-SYN` keeps `CAT-WT: 250000.0` and gains `BED-VOIDAGE: 0.4` (Aspen requires two of catalyst
+  weight / bed voidage / density), both now actually emitted.
 
 ## Testing
 
-- **Generator unit tests:** RPLUG with `CAT-WT` emits `CAT-PRESENT=YES CATWT=250000.0`; an LHHW
-  reaction with `t_ref_unit="K"` emits `T-REF=228.42 <K>`.
+- **Generator unit tests:** RPLUG with `CAT-WT` + `BED-VOIDAGE` emits `CAT-PRESENT=YES
+  CATWT=250000.0 ... BED-VOIDAGE=0.4`; an LHHW reaction with a `t_ref_unit` emits the unit token
+  (e.g. `T-REF=228.42 <C>`).
 - **Integration test:** `generate_inp(load_spec(methanol process.yaml))` produces a valid INP
   whose `REACTIONS RXN-SET1 GENERAL` block contains both reactions' `REAC-DATA … REAC-CLASS=LHHW`,
-  the RWGS/MEOH-SYN `RATE-CON` lines with `T-REF=228.42 <K>`, `ADSORP-POW REACNO=1 EXPONENT=1.0 /
-  REACNO=2 EXPONENT=3.0`, and that `B-SYN` emits `CAT-PRESENT=YES CATWT=250000.0`; `validate_spec`
+  the RWGS/MEOH-SYN `RATE-CON` lines with `T-REF=228.42 <C>`, `ADSORP-POW REACNO=1 EXPONENT=1.0 /
+  REACNO=2 EXPONENT=3.0`, and that `B-SYN` emits `CAT-PRESENT=YES CATWT=250000.0 ... BED-VOIDAGE=0.4`;
+  `validate_spec`
   passes.
 
 ## Validation boundary

@@ -664,9 +664,14 @@ def _generate_rplug_block(block: Block) -> List[str]:
         if source in parameters and target not in param_line:
             param_line[target] = parameters[source]
 
-    if "CAT-WT" in parameters:
+    # Catalyst loading. Aspen requires at least TWO of {catalyst loading, bed voidage,
+    # catalyst density} when a catalyst is present (ZURE04.29), so emit every one supplied.
+    catalyst_params = (("CAT-WT", "CATWT"), ("BED-VOIDAGE", "BED-VOIDAGE"), ("CAT-DENSITY", "CAT-DENSITY"))
+    present_catalyst = [(src, tgt) for src, tgt in catalyst_params if src in parameters]
+    if present_catalyst:
         param_line["CAT-PRESENT"] = "YES"
-        param_line["CATWT"] = parameters["CAT-WT"]
+        for src, tgt in present_catalyst:
+            param_line[tgt] = parameters[src]
 
     lines = [_generate_rplug_param_line(param_line)]
 

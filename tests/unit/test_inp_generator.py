@@ -1358,11 +1358,12 @@ def test_rplug_emits_catalyst_loading_when_cat_wt_present():
         "blocks": [
             {"name": "B-SYN", "type": "RPLUG",
              "parameters": {"TEMP": 250.0, "PRES": 80.0, "LENGTH": 21.3, "DIAM": 4.0,
-                            "NPOINT": 20, "CAT-WT": 250000.0}}],
+                            "NPOINT": 20, "CAT-WT": 250000.0, "BED-VOIDAGE": 0.4}}],
     })
     inp = generate_inp(spec)
     assert "CAT-PRESENT=YES" in inp
     assert "CATWT=250000.0" in inp
+    assert "BED-VOIDAGE=0.4" in inp
 
 
 def test_lhhw_rate_con_emits_t_ref_unit_token():
@@ -1416,9 +1417,11 @@ def test_methanol_process_yaml_emits_vbf96_lhhw_kinetics():
     assert "PARAM NTERM-ADS=4" in inp
     assert "REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW" in inp
     assert "REAC-DATA 2 NAME=MEOH-SYN REAC-CLASS=LHHW" in inp
-    assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <K>" in inp
-    assert "RATE-CON 2 PRE-EXP=7.07034 ACT-ENERGY=-8.76469 <kcal/mol> T-REF=228.42 <K>" in inp
+    assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <C>" in inp
+    assert "RATE-CON 2 PRE-EXP=7.07034 ACT-ENERGY=-8.76469 <kcal/mol> T-REF=228.42 <C>" in inp
     assert "ADSORP-POW REACNO=1 EXPONENT=1.0 / REACNO=2 EXPONENT=3.0" in inp
-    # catalyst loading now emitted on the synthesis reactor
+    # catalyst loading now emitted on the synthesis reactor (Aspen needs >=2 of
+    # catalyst weight / bed voidage / catalyst density when catalyst is present)
     assert "CAT-PRESENT=YES" in inp
     assert "CATWT=250000.0" in inp
+    assert "BED-VOIDAGE=0.4" in inp
