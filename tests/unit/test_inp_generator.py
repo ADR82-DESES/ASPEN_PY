@@ -1401,3 +1401,24 @@ def test_lhhw_rate_con_emits_t_ref_unit_token():
     })
     inp = generate_inp(spec)
     assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <K>" in inp
+
+
+def test_methanol_process_yaml_emits_vbf96_lhhw_kinetics():
+    path = os.path.join(os.path.dirname(__file__), "..", "..",
+                        "process_library", "methanol", "process.yaml")
+    spec = load_spec(path)
+    inp = generate_inp(spec)
+    report = validate_inp(inp)
+    assert report["valid"], report.get("errors")
+    # LHHW reaction set replaces the POWERLAW placeholders
+    assert "REACTIONS RXN-SET1 GENERAL" in inp
+    assert "REACTIONS RXN-SET1 POWERLAW" not in inp
+    assert "PARAM NTERM-ADS=4" in inp
+    assert "REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW" in inp
+    assert "REAC-DATA 2 NAME=MEOH-SYN REAC-CLASS=LHHW" in inp
+    assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <K>" in inp
+    assert "RATE-CON 2 PRE-EXP=7.07034 ACT-ENERGY=-8.76469 <kcal/mol> T-REF=228.42 <K>" in inp
+    assert "ADSORP-POW REACNO=1 EXPONENT=1.0 / REACNO=2 EXPONENT=3.0" in inp
+    # catalyst loading now emitted on the synthesis reactor
+    assert "CAT-PRESENT=YES" in inp
+    assert "CATWT=250000.0" in inp

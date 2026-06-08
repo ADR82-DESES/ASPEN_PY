@@ -600,19 +600,69 @@ chemistry:
   reactions:
   - id: 1
     stoichiometry:
-    - component: CO
+    - component: CO2
       coefficient: -1.0
     - component: H2
-      coefficient: -2.0
-    - component: CH3OH
+      coefficient: -1.0
+    - component: CO
+      coefficient: 1.0
+    - component: H2O
       coefficient: 1.0
     parameters:
-      reaction_type: KINETIC
+      reaction_type: LHHW
       phase: V
-      rate_basis: MOLARITY
-      pre_exponential_factor: 0.01
-      activation_energy: 0.0
-      temperature_exponent: 0.0
+      name: RWGS
+      conc_basis: PARTIALPRES
+      cat_basis: CAT-WT
+      reversible: true
+      rev_method: USER-SPEC
+      pres_unit: BAR
+      kinetic_factor:
+        pre_exp: 0.00165
+        act_energy: 22.6342
+        act_energy_unit: kcal/mol
+        t_ref: 228.42
+        t_ref_unit: K
+      driving_force:
+        term1:
+          exponents:
+            CO2: 1.0
+          coeff:
+          - 0.0
+          - 0.0
+        term2:
+          exponents:
+            H2: -1.0
+            CO: 1.0
+            H2O: 1.0
+          coeff:
+          - -4.671945154
+          - 4773.258898
+      adsorption:
+        power: 1.0
+        exponents:
+          H2O:
+          - 0.0
+          - 1.0
+          - 0.0
+          - 1.0
+          H2:
+          - 0.0
+          - -1.0
+          - 0.5
+          - 0.0
+        terms:
+        - coeff:
+          - 0.0
+        - coeff:
+          - 8.147108741
+          - 0.0
+        - coeff:
+          - -0.6951
+          - 2068.3
+        - coeff:
+          - -23.438
+          - 14928.19686
   - id: 2
     stoichiometry:
     - component: CO2
@@ -624,54 +674,87 @@ chemistry:
     - component: H2O
       coefficient: 1.0
     parameters:
-      reaction_type: KINETIC
+      reaction_type: LHHW
       phase: V
-      rate_basis: MOLARITY
-      pre_exponential_factor: 0.005
-      activation_energy: 0.0
-      temperature_exponent: 0.0
-  - id: 3
-    stoichiometry:
-    - component: CO
-      coefficient: -1.0
-    - component: H2O
-      coefficient: -1.0
-    - component: CO2
-      coefficient: 1.0
-    - component: H2
-      coefficient: 1.0
-    parameters:
-      reaction_type: KINETIC
-      phase: V
-      rate_basis: MOLARITY
-      pre_exponential_factor: 0.002
-      activation_energy: 0.0
-      temperature_exponent: 0.0
+      name: MEOH-SYN
+      conc_basis: PARTIALPRES
+      cat_basis: CAT-WT
+      reversible: true
+      rev_method: USER-SPEC
+      pres_unit: BAR
+      kinetic_factor:
+        pre_exp: 7.07034
+        act_energy: -8.76469
+        act_energy_unit: kcal/mol
+        t_ref: 228.42
+        t_ref_unit: K
+      driving_force:
+        term1:
+          exponents:
+            CO2: 1.0
+            H2: 1.0
+          coeff:
+          - 0.0
+          - 0.0
+        term2:
+          exponents:
+            H2: -2.0
+            CH3OH: 1.0
+            H2O: 1.0
+          coeff:
+          - 24.3889813
+          - -7059.72589
+      adsorption:
+        power: 3.0
+        exponents:
+          H2O:
+          - 0.0
+          - 1.0
+          - 0.0
+          - 1.0
+          H2:
+          - 0.0
+          - -1.0
+          - 0.5
+          - 0.0
+        terms:
+        - coeff:
+          - 0.0
+        - coeff:
+          - 8.147108741
+          - 0.0
+        - coeff:
+          - -0.69515
+          - 2068.3
+        - coeff:
+          - -23.43827453
+          - 14928.19686
 reaction_sets:
 - id: RXN-SET1
-  block_type: POWERLAW
+  block_type: GENERAL
   reaction_ids:
   - 1
   - 2
-  - 3
 kinetic_models:
 - id: VBF96_SCREENING
-  description: Methanol-selective RPLUG screening surrogate for Cu/ZnO/Al2O3 synthesis.
-  implementation: Aspen POWERLAW reaction set attached to B-SYN RPLUG; not an exact
-    LHHW rate-law implementation.
+  description: 2-reaction CO2-based LHHW kinetics (RWGS + CO2 hydrogenation to methanol)
+    on B-SYN RPLUG; rate per catalyst weight (RBASIS=CAT-WT), partial-pressure basis.
+  implementation: Aspen GENERAL reaction set (LHHW) attached to B-SYN RPLUG; CAT-WT=250000
+    kg emitted as CATWT on the reactor block. Constants transcribed from the Aspen V14
+    methanol synthesis lab reactor example (docs/superpowers/notes/lhhw_reference.inp),
+    Aspen-validated. T-REF is emitted as 228.42 <K> because the source deck is IN-UNITS
+    SI while this deck is IN-UNITS MET (deg C); the explicit <K> token preserves the
+    correct reference temperature regardless of the active unit set.
   primary_reference: Vanden Bussche and Froment, Journal of Catalysis 161, 1-10, 1996.
   secondary_reference: Graaf et al., Chemical Engineering Science 43, 3185-3195, 1988.
-  calibration_status: uncalibrated screening defaults; activation energies are set
-    to 0.0 after live sanity sweep isolated Aspen POWERLAW Arrhenius scaling as the
-    cause of near-zero methanol; replace with plant or vendor catalyst data before
-    design use.
+  calibration_status: Constants transcribed verbatim from the Aspen-validated reference
+    INP; loop-level physical fidelity still depends on item 1 (EOS) and item 3 (SN
+    stoichiometric number optimisation).
   excludes: methanation reactions; CH4 is treated as inert through B-SYN.
-  campaign_note: Live 10k TPD tuning promoted fresh-feed scale 2.0 with B-SYN
-    RPLUG LENGTH 21.3 and DIAM 4.0; low-pressure LIGHTS recovery, RADFRAC bottoms
-    rate 82000 kg/hr, and a product degassing flash meet production, purity, and
-    low-pressure product gates while holding combined vent methanol loss below
-    10% of the prior LIGHTS-loss baseline. CAT-WT remains documented but inactive
-    because INP generation does not emit it for RPLUG in this workflow.
+  campaign_note: "Live 10k TPD tuning retained: B-SYN RPLUG LENGTH 21.3 and DIAM
+    4.0; low-pressure LIGHTS recovery, RADFRAC bottoms rate 82000 kg/hr, and a product
+    degassing flash meet production, purity, and low-pressure product gates while
+    holding combined vent methanol loss below 10% of the prior LIGHTS-loss baseline."
 process_defaults:
   purity_expression: CH3OH wt% in MEOH-PRO
   product_stream: MEOH-PRO
