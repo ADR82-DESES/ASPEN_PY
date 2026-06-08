@@ -401,3 +401,13 @@ def test_lhhw_coeff_rejects_more_than_four():
     data["driving_force"]["term1"]["coeff"] = [1.0, 2.0, 3.0, 4.0, 5.0]
     with pytest.raises(PydanticValidationError, match="at most 4"):
         ReactionParameters(**data)
+
+
+def test_lhhw_kinetic_factor_rejects_blank_act_energy_unit():
+    with pytest.raises(PydanticValidationError, match="act_energy_unit cannot be empty"):
+        LhhwKineticFactor(pre_exp=1.0, act_energy=20.0, act_energy_unit="   ")
+
+
+def test_lhhw_coeff_rejects_empty_list():
+    with pytest.raises(PydanticValidationError, match="at least one value"):
+        LhhwDrivingForceTerm(exponents={"CO2": 1.0}, coeff=[])

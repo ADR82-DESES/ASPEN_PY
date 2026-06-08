@@ -850,8 +850,18 @@ class LhhwKineticFactor(BaseModel):
     act_energy_unit: str = "kcal/mol"
     t_ref: Optional[float] = None
 
+    @field_validator("act_energy_unit")
+    @classmethod
+    def _check_unit(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("act_energy_unit cannot be empty")
+        return cleaned
+
 
 def _validate_coeff_length(value: List[float]) -> List[float]:
+    if not value:
+        raise ValueError("coeff must contain at least one value (A)")
     if len(value) > 4:
         raise ValueError("coeff accepts at most 4 values (A, B, C, D)")
     return value
@@ -892,7 +902,6 @@ class LhhwAdsorption(BaseModel):
     power: float = 1.0
     terms: List[LhhwAdsorptionTerm]
     exponents: Dict[str, List[float]] = Field(default_factory=dict)  # component -> per-term vector
-    conc_basis: str = "PARTIALPRES"
 
     @model_validator(mode="after")
     def _check_vectors(self) -> "LhhwAdsorption":

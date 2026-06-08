@@ -155,6 +155,25 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                           f"Duplicate reaction set ID '{rxn_set.id}' found",
                           "Ensure each reaction set has a unique ID")
             reaction_set_ids.add(rxn_set.id)
+
+            set_types = {
+                reaction_lookup[rid].parameters.reaction_type.value
+                for rid in rxn_set.reaction_ids
+                if rid in reaction_lookup
+                and reaction_lookup[rid].parameters is not None
+            }
+            if "LHHW" in set_types and len(set_types) > 1:
+                add_error(
+                    "error",
+                    f"reaction_sets[{i}]",
+                    (
+                        f"Reaction set '{rxn_set.id}' mixes LHHW with non-LHHW "
+                        "reactions; the generator emits only the LHHW reactions for "
+                        "such a set"
+                    ),
+                    "Make every reaction in an LHHW reaction set use reaction_type=LHHW",
+                )
+
             for j, rxn_id in enumerate(rxn_set.reaction_ids):
                 if rxn_id not in reaction_ids:
                     add_error("error", f"reaction_sets[{i}].reaction_ids[{j}]",

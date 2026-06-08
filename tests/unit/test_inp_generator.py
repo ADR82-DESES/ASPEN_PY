@@ -1110,9 +1110,10 @@ BLOCK B1 HEATER
     assert any("Section 'CHEMISTRY' is out of order" in e for e in errors)
 
 
-def test_lhhw_set_with_mixed_reaction_types_does_not_crash():
-    # A GENERAL set that contains an LHHW reaction (id 1) and a KINETIC reaction (id 2):
-    # the generator must emit the LHHW reaction without crashing on the KINETIC one.
+def test_lhhw_set_with_mixed_reaction_types_is_rejected_by_generator():
+    # A GENERAL set that contains an LHHW reaction (id 1) and a KINETIC reaction (id 2).
+    # After hardening (Change 4), the validator — called inside generate_inp — must reject
+    # the mixed set with a ValidationError rather than silently dropping the KINETIC reaction.
     spec = PlantSpecification(**{
         "metadata": {"title": "LHHWmix",
                      "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
@@ -1155,12 +1156,11 @@ def test_lhhw_set_with_mixed_reaction_types_does_not_crash():
         "reaction_sets": [{"id": "RXN-MIX", "block_type": "GENERAL", "reaction_ids": [1, 2]}],
     })
 
-    inp = generate_inp(spec)  # must not raise
+    with pytest.raises(ValidationError) as exc_info:
+        generate_inp(spec)
 
-    assert "REACTIONS RXN-MIX GENERAL" in inp
-    assert "REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW" in inp
-    # the KINETIC reaction is not emitted by the LHHW path (no power-law RATE-CON shorthand here)
-    assert "RATE-CON 2 0.0001 60000.0" not in inp
+    errors_text = str(exc_info.value.report["errors"])
+    assert "mixes LHHW" in errors_text
 
 
 def test_generate_inp_groups_multiple_lhhw_reactions():
@@ -1260,6 +1260,60 @@ def test_lhhw_block_keyword_order_matches_reference():
              "ADSORP-EXP", "ADSORP-EQTER", "ADSORP-POW"]
     positions = [inp.index(token) for token in order]
     assert positions == sorted(positions), "LHHW keyword paragraphs are out of reference order"
+
+
+def test_generate_inp_lhhw_no_t_ref_omits_t_ref_keyword():
+    """When t_ref is omitted from kinetic_factor, the emitted RATE-CON must not contain T-REF."""
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW-no-tref",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"},
+            {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}},
+        ],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"},
+        ],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1,
+                 "stoichiometry": [
+                     {"component": "CO2", "coefficient": -1},
+                     {"component": "H2", "coefficient": -1},
+                     {"component": "CO", "coefficient": 1},
+                     {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0},
+                                   "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {
+                         "power": 2.0,
+                         "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                         "exponents": {"H2O": [0.0, 1.0]}}}},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "RATE-CON 1 PRE-EXP=0.5 ACT-ENERGY=20.0 <kcal/mol>" in inp
+    assert "T-REF" not in inp.split("REACTIONS")[1]  # no T-REF in the reactions paragraph
 
 
 def test_compr_type_parameter_keeps_batch_type_and_maps_efficiency():
