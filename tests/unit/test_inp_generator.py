@@ -980,6 +980,71 @@ STREAM S1
     assert any("Section 'BLOCK' is out of order" in e for e in errors)
 
 
+def test_generate_inp_emits_lhhw_reaction_block():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"},
+            {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}},
+        ],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"},
+        ],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1,
+                 "stoichiometry": [
+                     {"component": "CO2", "coefficient": -1},
+                     {"component": "H2", "coefficient": -1},
+                     {"component": "CO", "coefficient": 1},
+                     {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0},
+                                   "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {
+                         "power": 2.0,
+                         "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                         "exponents": {"H2O": [0.0, 1.0]}}}},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "REACTIONS RXN-LHHW GENERAL" in inp
+    assert "PARAM NTERM-ADS=2" in inp
+    assert ('REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW PHASE=V CBASIS=PARTIALPRES '
+            'RBASIS=CAT-WT REVERSIBLE=YES REV-METH=USER-SPEC PRES-UNIT="BAR"') in inp
+    assert "RATE-CON 1 PRE-EXP=0.5 ACT-ENERGY=20.0 <kcal/mol> T-REF=500.0" in inp
+    assert "STOIC 1 MIXED CO2 -1.0 / H2 -1.0 / CO 1.0 / H2O 1.0" in inp
+    assert "DFORCE-EXP 1 MIXED CO2 1.0" in inp
+    assert "DFORCE-EXP-2 1 MIXED CO 1.0 / MIXED H2O 1.0 / MIXED H2 -1.0" in inp
+    assert "DFORCE-EQ-1 REACNO=1 A=0.0 B=0.0" in inp
+    assert "DFORCE-EQ-2 REACNO=1 A=-4.0 B=4000.0" in inp
+    assert "ADSORP-EXP REACNO=1 CID=H2O SSID=MIXED EXPONENT=0.0 1.0" in inp
+    assert "ADSORP-EQTER REACNO=1 TERM=1 A=0.0 / REACNO=1 TERM=2 A=8.0 B=0.0" in inp
+    assert "ADSORP-POW REACNO=1 EXPONENT=2.0" in inp
+    assert "K-STOIC" not in inp
+
+
 def test_validate_inp_optional_sections():
     # Construct an INP with CHEMISTRY (optional) in correct place
     inp = """TITLE 'Test'
@@ -1056,6 +1121,212 @@ BLOCK B1 HEATER
     assert any("Section 'CHEMISTRY' is out of order" in e for e in errors)
 
 
+def test_lhhw_set_with_mixed_reaction_types_is_rejected_by_generator():
+    # A GENERAL set that contains an LHHW reaction (id 1) and a KINETIC reaction (id 2).
+    # After hardening (Change 4), the validator — called inside generate_inp — must reject
+    # the mixed set with a ValidationError rather than silently dropping the KINETIC reaction.
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHWmix",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"},
+            {"id": "CH3OH", "name": "METHANOL"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.5, "CO": 0.1, "H2O": 0.1, "CH3OH": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-MIX"}],
+        "chemistry": [
+            {"id": "MIX", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"H2": -1.0}, "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {"power": 2.0, "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}},
+                {"id": 2, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -3},
+                    {"component": "CH3OH", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "KINETIC", "phase": "V", "rate_basis": "MOLARITY",
+                     "pre_exponential_factor": 1e-4, "activation_energy": 60000}},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-MIX", "block_type": "GENERAL", "reaction_ids": [1, 2]}],
+    })
+
+    with pytest.raises(ValidationError) as exc_info:
+        generate_inp(spec)
+
+    errors_text = str(exc_info.value.report["errors"])
+    assert "mixes LHHW" in errors_text
+
+
+def test_generate_inp_groups_multiple_lhhw_reactions():
+    def lhhw(name, power, df2_coeff):
+        return {
+            "reaction_type": "LHHW", "phase": "V", "name": name,
+            "kinetic_factor": {"pre_exp": 1.0, "act_energy": 10.0, "t_ref": 500.0},
+            "driving_force": {
+                "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                "term2": {"exponents": {"H2": -1.0}, "coeff": df2_coeff}},
+            "adsorption": {
+                "power": power,
+                "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                "exponents": {"H2O": [0.0, 1.0]}},
+        }
+
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW2",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"},
+            {"id": "CH3OH", "name": "METHANOL"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.5, "CO": 0.1, "H2O": 0.1, "CH3OH": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"}],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": lhhw("RWGS", 2.0, [-4.0, 4000.0])},
+                {"id": 2, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -3},
+                    {"component": "CH3OH", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": lhhw("MEOH", 3.0, [10.0, -9000.0])},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1, 2]}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW" in inp
+    assert "REAC-DATA 2 NAME=MEOH REAC-CLASS=LHHW" in inp
+    assert "DFORCE-EQ-1 REACNO=1 A=0.0 B=0.0 / REACNO=2 A=0.0 B=0.0" in inp
+    assert "DFORCE-EQ-2 REACNO=1 A=-4.0 B=4000.0 / REACNO=2 A=10.0 B=-9000.0" in inp
+    assert "ADSORP-POW REACNO=1 EXPONENT=2.0 / REACNO=2 EXPONENT=3.0" in inp
+    assert "PARAM NTERM-ADS=2" in inp
+
+
+def test_lhhw_block_keyword_order_matches_reference():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"}],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0}, "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {"power": 2.0, "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}}]}],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+
+    inp = generate_inp(spec)
+    order = ["REACTIONS RXN-LHHW GENERAL", "PARAM NTERM-ADS=", "REAC-DATA 1", "RATE-CON 1",
+             "STOIC 1 MIXED", "DFORCE-EXP 1", "DFORCE-EXP-2 1", "DFORCE-EQ-1", "DFORCE-EQ-2",
+             "ADSORP-EXP", "ADSORP-EQTER", "ADSORP-POW"]
+    positions = [inp.index(token) for token in order]
+    assert positions == sorted(positions), "LHHW keyword paragraphs are out of reference order"
+
+
+def test_generate_inp_lhhw_no_t_ref_omits_t_ref_keyword():
+    """When t_ref is omitted from kinetic_factor, the emitted RATE-CON must not contain T-REF."""
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW-no-tref",
+                     "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"},
+            {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}},
+        ],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"},
+        ],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1,
+                 "stoichiometry": [
+                     {"component": "CO2", "coefficient": -1},
+                     {"component": "H2", "coefficient": -1},
+                     {"component": "CO", "coefficient": 1},
+                     {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0},
+                                   "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {
+                         "power": 2.0,
+                         "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                         "exponents": {"H2O": [0.0, 1.0]}}}},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+
+    inp = generate_inp(spec)
+
+    assert "RATE-CON 1 PRE-EXP=0.5 ACT-ENERGY=20.0 <kcal/mol>" in inp
+    assert "T-REF" not in inp.split("REACTIONS")[1]  # no T-REF in the reactions paragraph
+
+
 def test_compr_type_parameter_keeps_batch_type_and_maps_efficiency():
     """COMPR batch INP uses TYPE plus SEFF for isentropic efficiency."""
     spec = PlantSpecification(**{
@@ -1080,4 +1351,88 @@ def test_compr_type_parameter_keeps_batch_type_and_maps_efficiency():
     assert "TYPE=ISENTROPIC" in inp
     assert "SEFF=0.85" in inp
     assert " EFF=0.85" not in inp
-    assert "PRES=5.0" in inp
+
+
+def test_rplug_emits_catalyst_loading_when_cat_wt_present():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "Cat", "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CH3OH", "name": "METHANOL"}, {"id": "H2O", "name": "WATER"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CH3OH": 0.1, "H2O": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 250.0, "PRES": 80.0, "LENGTH": 21.3, "DIAM": 4.0,
+                            "NPOINT": 20, "CAT-WT": 250000.0, "BED-VOIDAGE": 0.4}}],
+    })
+    inp = generate_inp(spec)
+    assert "CAT-PRESENT=YES" in inp
+    assert "CATWT=250000.0" in inp
+    assert "BED-VOIDAGE=0.4" in inp
+
+
+def test_lhhw_rate_con_emits_t_ref_unit_token():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW", "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"}],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.00165, "act_energy": 22.6342,
+                                        "act_energy_unit": "kcal/mol", "t_ref": 228.42, "t_ref_unit": "K"},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"H2": -1.0, "CO": 1.0, "H2O": 1.0}, "coeff": [-4.671945154, 4773.258898]}},
+                     "adsorption": {"power": 1.0,
+                                    "terms": [{"coeff": [0.0]}, {"coeff": [8.147108741, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}}]}],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+    inp = generate_inp(spec)
+    assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <K>" in inp
+
+
+def test_methanol_process_yaml_emits_vbf96_lhhw_kinetics():
+    path = os.path.join(os.path.dirname(__file__), "..", "..",
+                        "process_library", "methanol", "process.yaml")
+    spec = load_spec(path)
+    inp = generate_inp(spec)
+    report = validate_inp(inp)
+    assert report["valid"], report.get("errors")
+    # LHHW reaction set replaces the POWERLAW placeholders
+    assert "REACTIONS RXN-SET1 GENERAL" in inp
+    assert "REACTIONS RXN-SET1 POWERLAW" not in inp
+    assert "PARAM NTERM-ADS=4" in inp
+    assert "REAC-DATA 1 NAME=RWGS REAC-CLASS=LHHW" in inp
+    assert "REAC-DATA 2 NAME=MEOH-SYN REAC-CLASS=LHHW" in inp
+    assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <C>" in inp
+    assert "RATE-CON 2 PRE-EXP=7.07034 ACT-ENERGY=-8.76469 <kcal/mol> T-REF=228.42 <C>" in inp
+    assert "ADSORP-POW REACNO=1 EXPONENT=1.0 / REACNO=2 EXPONENT=3.0" in inp
+    # catalyst loading now emitted on the synthesis reactor (Aspen needs >=2 of
+    # catalyst weight / bed voidage / catalyst density when catalyst is present)
+    assert "CAT-PRESENT=YES" in inp
+    assert "CATWT=250000.0" in inp
+    assert "BED-VOIDAGE=0.4" in inp

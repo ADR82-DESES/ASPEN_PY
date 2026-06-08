@@ -191,3 +191,108 @@ def test_rplug_kinetic_reaction_set_validates():
     report = validate_spec(data)
 
     assert report["valid"], report["errors"]
+
+
+def _lhhw_spec(adsorp_exponents: dict | None = None) -> dict:
+    return {
+        "metadata": {
+            "title": "LHHW",
+            "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
+        },
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"},
+            {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"},
+            {"id": "H2O", "name": "WATER"},
+        ],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}},
+        ],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"},
+        ],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1,
+                 "stoichiometry": [
+                     {"component": "CO2", "coefficient": -1},
+                     {"component": "H2", "coefficient": -1},
+                     {"component": "CO", "coefficient": 1},
+                     {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0}, "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {
+                         "power": 2.0,
+                         "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                         "exponents": adsorp_exponents if adsorp_exponents is not None else {"H2O": [0.0, 1.0]}}}},
+            ]},
+        ],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    }
+
+
+def test_validate_accepts_well_formed_lhhw_spec():
+    report = validate_spec(_lhhw_spec())
+    assert report["valid"], report["errors"]
+
+
+def test_validate_rejects_lhhw_adsorption_component_not_in_components():
+    report = validate_spec(_lhhw_spec(adsorp_exponents={"ARGON": [0.0, 1.0]}))
+    assert not report["valid"]
+    messages = " ".join(e["message"] for e in report["errors"])
+    assert "ARGON" in messages
+
+
+def test_validate_rejects_mixed_lhhw_and_non_lhhw_set():
+    spec = {
+        "metadata": {"title": "Mix", "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"},
+            {"id": "CH3OH", "name": "METHANOL"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.5, "CO": 0.1, "H2O": 0.1, "CH3OH": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-MIX"}],
+        "chemistry": [
+            {"id": "MIX", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"H2": -1.0}, "coeff": [-4.0, 4000.0]}},
+                     "adsorption": {"power": 2.0, "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}},
+                {"id": 2, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -3},
+                    {"component": "CH3OH", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {"reaction_type": "KINETIC", "phase": "V", "rate_basis": "MOLARITY",
+                                "pre_exponential_factor": 1e-4, "activation_energy": 60000}},
+            ]}],
+        "reaction_sets": [{"id": "RXN-MIX", "block_type": "GENERAL", "reaction_ids": [1, 2]}],
+    }
+    report = validate_spec(spec)
+    assert not report["valid"]
+    assert any("mixes LHHW" in e["message"] for e in report["errors"])

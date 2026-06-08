@@ -839,6 +839,85 @@ class ChemistryStoichiometry(BaseModel):
 class ReactionParameterType(str, enum.Enum):
     EQUIL = "EQUIL"
     KINETIC = "KINETIC"
+    LHHW = "LHHW"
+
+
+class LhhwKineticFactor(BaseModel):
+    """Kinetic factor k = k0·exp[-(E/R)(1/T - 1/T_ref)] (reference-T Arrhenius)."""
+    model_config = ConfigDict(extra="forbid")
+    pre_exp: float
+    act_energy: float
+    act_energy_unit: str = "kcal/mol"
+    t_ref: Optional[float] = None
+    t_ref_unit: Optional[str] = None
+
+    @field_validator("act_energy_unit")
+    @classmethod
+    def _check_unit(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("act_energy_unit cannot be empty")
+        return cleaned
+
+
+def _validate_coeff_length(value: List[float]) -> List[float]:
+    if not value:
+        raise ValueError("coeff must contain at least one value (A)")
+    if len(value) > 4:
+        raise ValueError("coeff accepts at most 4 values (A, B, C, D)")
+    return value
+
+
+class LhhwDrivingForceTerm(BaseModel):
+    """One driving-force term: Π p_j^exponent times K = exp(A + B/T + C·lnT + D·T)."""
+    model_config = ConfigDict(extra="forbid")
+    exponents: Dict[str, float] = Field(default_factory=dict)
+    coeff: List[float] = Field(default_factory=list)  # [A, B, C, D]; trailing entries omittable
+
+    @field_validator("coeff")
+    @classmethod
+    def _check_coeff(cls, value: List[float]) -> List[float]:
+        return _validate_coeff_length(value)
+
+
+class LhhwDrivingForce(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    term1: LhhwDrivingForceTerm
+    term2: LhhwDrivingForceTerm
+
+
+class LhhwAdsorptionTerm(BaseModel):
+    """One adsorption-denominator term coefficient K = exp(A + B/T + C·lnT + D·T)."""
+    model_config = ConfigDict(extra="forbid")
+    coeff: List[float] = Field(default_factory=list)  # [A, B, C, D]
+
+    @field_validator("coeff")
+    @classmethod
+    def _check_coeff(cls, value: List[float]) -> List[float]:
+        return _validate_coeff_length(value)
+
+
+class LhhwAdsorption(BaseModel):
+    """Adsorption denominator: (Σ_t K_t · Π p_j^exp_{t,j})^power."""
+    model_config = ConfigDict(extra="forbid")
+    power: float = 1.0
+    terms: List[LhhwAdsorptionTerm]
+    exponents: Dict[str, List[float]] = Field(default_factory=dict)  # component -> per-term vector
+
+    @model_validator(mode="after")
+    def _check_vectors(self) -> "LhhwAdsorption":
+        n = len(self.terms)
+        if n == 0:
+            raise ValueError("adsorption.terms must contain at least one term")
+        if self.power <= 0:
+            raise ValueError("adsorption.power must be positive")
+        for component, vector in self.exponents.items():
+            if len(vector) != n:
+                raise ValueError(
+                    f"adsorption.exponents['{component}'] must have {n} values "
+                    "(one per adsorption term)"
+                )
+        return self
 
 
 class ReactionParameters(BaseModel):
@@ -855,7 +934,20 @@ class ReactionParameters(BaseModel):
     activation_energy: Optional[float] = None
     temperature_exponent: Optional[float] = None
 
-    @field_validator("phase", "equilibrium_form", "equilibrium_basis", "rate_basis")
+    # LHHW rate-law blocks
+    kinetic_factor: Optional[LhhwKineticFactor] = None
+    driving_force: Optional[LhhwDrivingForce] = None
+    adsorption: Optional[LhhwAdsorption] = None
+    # LHHW REAC-DATA attributes (defaults applied at emit time)
+    name: Optional[str] = None
+    conc_basis: Optional[str] = None
+    cat_basis: Optional[str] = None
+    reversible: Optional[bool] = None
+    rev_method: Optional[str] = None
+    pres_unit: Optional[str] = None
+
+    @field_validator("phase", "equilibrium_form", "equilibrium_basis", "rate_basis",
+                     "conc_basis", "cat_basis", "rev_method", "pres_unit")
     @classmethod
     def normalize_string_fields(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
@@ -894,6 +986,50 @@ class ReactionParameters(BaseModel):
             if self.rate_basis is not None and self.rate_basis not in VALID_RATE_BASES:
                 allowed = ", ".join(VALID_RATE_BASES)
                 raise ValueError(f"rate_basis must be one of: {allowed}")
+
+        if self.reaction_type == ReactionParameterType.LHHW:
+            missing = [
+                field
+                for field, value in (
+                    ("kinetic_factor", self.kinetic_factor),
+                    ("driving_force", self.driving_force),
+                    ("adsorption", self.adsorption),
+                )
+                if value is None
+            ]
+            if missing:
+                raise ValueError(f"LHHW reactions require: {', '.join(missing)}")
+            forbidden = [
+                field
+                for field, value in (
+                    ("pre_exponential_factor", self.pre_exponential_factor),
+                    ("activation_energy", self.activation_energy),
+                    ("temperature_exponent", self.temperature_exponent),
+                    ("rate_basis", self.rate_basis),
+                    ("equilibrium_constants", self.equilibrium_constants),
+                    ("equilibrium_form", self.equilibrium_form),
+                    ("equilibrium_basis", self.equilibrium_basis),
+                )
+                if value is not None
+            ]
+            if forbidden:
+                raise ValueError(
+                    f"These fields are not valid for LHHW reactions: {', '.join(forbidden)}"
+                )
+        else:
+            lhhw_blocks = [
+                field
+                for field, value in (
+                    ("kinetic_factor", self.kinetic_factor),
+                    ("driving_force", self.driving_force),
+                    ("adsorption", self.adsorption),
+                )
+                if value is not None
+            ]
+            if lhhw_blocks:
+                raise ValueError(
+                    f"{', '.join(lhhw_blocks)} are only valid for LHHW reactions"
+                )
 
         return self
 
