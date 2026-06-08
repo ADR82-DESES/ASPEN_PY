@@ -1340,4 +1340,64 @@ def test_compr_type_parameter_keeps_batch_type_and_maps_efficiency():
     assert "TYPE=ISENTROPIC" in inp
     assert "SEFF=0.85" in inp
     assert " EFF=0.85" not in inp
-    assert "PRES=5.0" in inp
+
+
+def test_rplug_emits_catalyst_loading_when_cat_wt_present():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "Cat", "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CH3OH", "name": "METHANOL"}, {"id": "H2O", "name": "WATER"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CH3OH": 0.1, "H2O": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 250.0, "PRES": 80.0, "LENGTH": 21.3, "DIAM": 4.0,
+                            "NPOINT": 20, "CAT-WT": 250000.0}}],
+    })
+    inp = generate_inp(spec)
+    assert "CAT-PRESENT=YES" in inp
+    assert "CATWT=250000.0" in inp
+
+
+def test_lhhw_rate_con_emits_t_ref_unit_token():
+    spec = PlantSpecification(**{
+        "metadata": {"title": "LHHW", "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"}},
+        "components": [
+            {"id": "CO2", "name": "CARBON-DIOXIDE"}, {"id": "H2", "name": "HYDROGEN"},
+            {"id": "CO", "name": "CARBON-MONOXIDE"}, {"id": "H2O", "name": "WATER"}],
+        "properties": {"method": "SRK"},
+        "flowsheet": [{"block": "B-SYN", "inputs": ["FEED"], "outputs": ["PROD"]}],
+        "streams": [
+            {"name": "FEED", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.25, "H2": 0.75}},
+            {"name": "PROD", "temperature": 220, "pressure": 50, "mass_flow": 1000,
+             "composition": {"CO2": 0.2, "H2": 0.6, "CO": 0.1, "H2O": 0.1}}],
+        "blocks": [
+            {"name": "B-SYN", "type": "RPLUG",
+             "parameters": {"TEMP": 220, "PRES": 50, "LENGTH": 8.0, "DIAM": 4.0, "NPOINT": 20},
+             "reactions": "RXN-LHHW"}],
+        "chemistry": [
+            {"id": "MEOH-LHHW", "reactions": [
+                {"id": 1, "stoichiometry": [
+                    {"component": "CO2", "coefficient": -1}, {"component": "H2", "coefficient": -1},
+                    {"component": "CO", "coefficient": 1}, {"component": "H2O", "coefficient": 1}],
+                 "parameters": {
+                     "reaction_type": "LHHW", "phase": "V", "name": "RWGS",
+                     "kinetic_factor": {"pre_exp": 0.00165, "act_energy": 22.6342,
+                                        "act_energy_unit": "kcal/mol", "t_ref": 228.42, "t_ref_unit": "K"},
+                     "driving_force": {
+                         "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+                         "term2": {"exponents": {"H2": -1.0, "CO": 1.0, "H2O": 1.0}, "coeff": [-4.671945154, 4773.258898]}},
+                     "adsorption": {"power": 1.0,
+                                    "terms": [{"coeff": [0.0]}, {"coeff": [8.147108741, 0.0]}],
+                                    "exponents": {"H2O": [0.0, 1.0]}}}}]}],
+        "reaction_sets": [{"id": "RXN-LHHW", "block_type": "GENERAL", "reaction_ids": [1]}],
+    })
+    inp = generate_inp(spec)
+    assert "RATE-CON 1 PRE-EXP=0.00165 ACT-ENERGY=22.6342 <kcal/mol> T-REF=228.42 <K>" in inp

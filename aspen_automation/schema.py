@@ -849,6 +849,7 @@ class LhhwKineticFactor(BaseModel):
     act_energy: float
     act_energy_unit: str = "kcal/mol"
     t_ref: Optional[float] = None
+    t_ref_unit: Optional[str] = None
 
     @field_validator("act_energy_unit")
     @classmethod

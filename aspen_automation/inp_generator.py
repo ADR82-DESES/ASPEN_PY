@@ -664,6 +664,10 @@ def _generate_rplug_block(block: Block) -> List[str]:
         if source in parameters and target not in param_line:
             param_line[target] = parameters[source]
 
+    if "CAT-WT" in parameters:
+        param_line["CAT-PRESENT"] = "YES"
+        param_line["CATWT"] = parameters["CAT-WT"]
+
     lines = [_generate_rplug_param_line(param_line)]
 
     if str(rplug_type).upper() == "T-SPEC" and parameters.get("TEMP") is not None:
@@ -876,7 +880,10 @@ def _generate_lhhw_reactions(reaction_set: ReactionSet, reaction_lookup: Dict[in
             f"ACT-ENERGY={_format_value(kf.act_energy)} <{kf.act_energy_unit}>",
         ]
         if kf.t_ref is not None:
-            parts.append(f"T-REF={_format_value(kf.t_ref)}")
+            t_ref = f"T-REF={_format_value(kf.t_ref)}"
+            if kf.t_ref_unit:
+                t_ref += f" <{kf.t_ref_unit}>"
+            parts.append(t_ref)
         lines.append("    " + " ".join(parts))
 
     # STOIC (one per reaction)
