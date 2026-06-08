@@ -1,7 +1,7 @@
 metadata:
   title: Methanol Plant 10k TPD
-  description: 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR),
-    tuned with batch-first live Aspen validation.
+  description: 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR), tuned
+    with batch-first live Aspen validation.
   units:
     pressure: bar
     temperature: C
@@ -46,19 +46,27 @@ properties:
     - CH3OH
     - H2O
     model: NRTL
-    source_type: aspen_databank
+    source_type: explicit
     parameter_set: Aspen V14 NRTL methanol-water
-    databanks:
-    - APV140 VLE-IG
-    - APV140 VLE-LIT
-    - APV140 LLE-ASPEN
-    basis: Aspen Plus V14 NRTL property databank interaction parameters
+    values:
+      aij: -0.69201
+      aji: 2.73113
+      bij: 172.6353
+      bji: -616.882
+      cij: 0.3
+    basis: Aspen Plus V14 NRTL VLE-IG databank interaction parameters (CH3OH/H2O)
     provenance:
-      source: Aspen Plus V14 property databanks selected through DATABANKS/PROP-SOURCES
-      locator: APV140 VLE-IG, APV140 VLE-LIT, and APV140 LLE-ASPEN databanks
-      notes: Gate 1 batch probe with these databanks removed Aspen's zero NRTL binary-parameter warning.
-      verified_by: local Aspen V14 batch translation
-      verified_on: '2026-05-19'
+      source: Aspen Plus V14 VLE-IG databank, recovered via activity-coefficient calibration
+      locator: APV140 VLE-IG (compounds 526/1188); values reproduce Aspen's gamma
+        to RMS 2e-5
+      notes: Baked in explicitly because the COM-launched Aspen engine cannot retrieve
+        VLE-databank NRTL parameters under the virtualized environment (only the batch
+        engine can), leaving the COM run with zeroed NRTL. Coefficients recovered
+        by fitting Aspen's own batch-engine liquid activity coefficients (alpha-scan
+        minimum at 0.30). Emitted as a directional two-line BPVAL; verified to reproduce
+        the databank gamma (1.1323/1.1909 at 65 C, x=0.5).
+      verified_by: local Aspen V14 batch + COM round-trip
+      verified_on: '2026-06-04'
 flowsheeting_options: null
 flowsheet:
 - block: MIX-FEED
@@ -138,6 +146,7 @@ flowsheet:
   inputs:
   - CLIQ-RAW
   - REC-MEOH
+  - VNT-REC
   outputs:
   - CRUDE-LQ
 - block: B-DIST
@@ -157,7 +166,13 @@ flowsheet:
   - VENT-GAS
   - PRO-VENT
   outputs:
+  - VNT-RAW
+- block: B-VFLA
+  inputs:
+  - VNT-RAW
+  outputs:
   - VENT-TOT
+  - VNT-REC
 streams:
 - name: NG-FEED
   temperature: 40.0
@@ -358,7 +373,7 @@ streams:
     H2O: 0.014
     CO2: 0.0004
     CO: 0.0003
-    H2: 0.000001
+    H2: 1.0e-06
     CH4: 0.000299
 - name: CLIQ-RAW
   temperature: 80.0
@@ -370,8 +385,8 @@ streams:
     H2O: 0.1404
     CO2: 0.0004
     CO: 0.0001
-    H2: 0.000001
-    CH4: 0.000099
+    H2: 1.0e-06
+    CH4: 9.9e-05
 - name: CRUDE-LQ
   temperature: 65.0
   pressure: 1.8
@@ -382,7 +397,7 @@ streams:
     H2O: 0.0978
     CO2: 0.0004
     CO: 0.0001
-    H2: 0.000001
+    H2: 1.0e-06
     CH4: 0.000699
 - name: PURGE
   temperature: 40.0
@@ -402,10 +417,10 @@ streams:
   mole_flow: null
   composition:
     CH3OH: 0.99948
-    H2O: 0.00002
+    H2O: 2.0e-05
     CO2: 0.00029
     CO: 0.00012
-    CH4: 0.00009
+    CH4: 9.0e-05
 - name: WASTE-H2O
   temperature: 121.4
   pressure: 2.08
@@ -421,10 +436,10 @@ streams:
   mole_flow: null
   composition:
     CH3OH: 0.99948
-    H2O: 0.00002
+    H2O: 2.0e-05
     CO2: 0.00029
     CO: 0.00012
-    CH4: 0.00009
+    CH4: 9.0e-05
 - name: PRO-VENT
   temperature: 72.0
   pressure: 1.5
@@ -436,20 +451,43 @@ streams:
     CO: 0.00952
     CH4: 0.00705
     H2: 0.00012
-    N2: 0.00007
-- name: VENT-TOT
+    N2: 7.0e-05
+- name: VNT-RAW
   temperature: 54.0
   pressure: 1.5
-  mass_flow: 64060.0
+  mass_flow: 64000.0
   mole_flow: null
   composition:
-    CH3OH: 0.38435
-    CO2: 0.27962
+    CH3OH: 0.384
+    CO2: 0.28
     CO: 0.221
-    CH4: 0.07706
-    H2: 0.03171
-    H2O: 0.00442
-    N2: 0.00184
+    CH4: 0.077
+    H2: 0.032
+    H2O: 0.004
+    N2: 0.002
+- name: VENT-TOT
+  temperature: 25.0
+  pressure: 1.5
+  mass_flow: 40000.0
+  mole_flow: null
+  composition:
+    CO2: 0.4
+    CO: 0.34
+    CH4: 0.12
+    CH3OH: 0.09
+    H2: 0.047
+    N2: 0.003
+- name: VNT-REC
+  temperature: 25.0
+  pressure: 1.5
+  mass_flow: 24000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.86
+    CO2: 0.08
+    H2O: 0.01
+    CO: 0.04
+    CH4: 0.01
 blocks:
 - name: MIX-FEED
   type: MIXER
@@ -595,6 +633,14 @@ blocks:
   reactions: null
   split_fractions: null
   sep_fractions: null
+- name: B-VFLA
+  type: FLASH2
+  parameters:
+    TEMP: 40.0
+    PRES: 1.5
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
 chemistry:
 - id: MEOH-KINETIC
   reactions:
@@ -666,12 +712,12 @@ kinetic_models:
     cause of near-zero methanol; replace with plant or vendor catalyst data before
     design use.
   excludes: methanation reactions; CH4 is treated as inert through B-SYN.
-  campaign_note: Live 10k TPD tuning promoted fresh-feed scale 2.0 with B-SYN
-    RPLUG LENGTH 21.3 and DIAM 4.0; low-pressure LIGHTS recovery, RADFRAC bottoms
-    rate 82000 kg/hr, and a product degassing flash meet production, purity, and
-    low-pressure product gates while holding combined vent methanol loss below
-    10% of the prior LIGHTS-loss baseline. CAT-WT remains documented but inactive
-    because INP generation does not emit it for RPLUG in this workflow.
+  campaign_note: Live 10k TPD tuning promoted fresh-feed scale 2.0 with B-SYN RPLUG
+    LENGTH 21.3 and DIAM 4.0; low-pressure LIGHTS recovery, RADFRAC bottoms rate 82000
+    kg/hr, and a product degassing flash meet production, purity, and low-pressure
+    product gates while holding combined vent methanol loss below 10% of the prior
+    LIGHTS-loss baseline. CAT-WT remains documented but inactive because INP generation
+    does not emit it for RPLUG in this workflow.
 process_defaults:
   purity_expression: CH3OH wt% in MEOH-PRO
   product_stream: MEOH-PRO

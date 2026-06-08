@@ -779,8 +779,8 @@ def test_generate_inp_includes_nrtl_binary_parameter_databanks():
     assert "PROP-SOURCES 'APV140 PURE32' / 'APV140 VLE-IG' / 'APV140 VLE-LIT'" in inp
 
 
-def test_generate_inp_rejects_explicit_nrtl_binary_parameters_until_emitter_is_verified():
-    spec = PlantSpecification(**{
+def _explicit_nrtl_spec(values: dict) -> PlantSpecification:
+    return PlantSpecification(**{
         "metadata": {
             "title": "Explicit NRTL",
             "units": {"pressure": "bar", "temperature": "C", "flow": "kg/hr"},
@@ -796,38 +796,49 @@ def test_generate_inp_rejects_explicit_nrtl_binary_parameters_until_emitter_is_v
                     "components": ["CH3OH", "H2O"],
                     "model": "NRTL",
                     "source_type": "explicit",
-                    "values": {"aij": 1.0, "aji": 2.0, "cij": 0.3},
-                    "basis": "Aspen NRTL GAMKIJ 12-value form",
-                    "provenance": {"source": "test-only verified syntax placeholder"},
+                    "values": values,
+                    "basis": "Aspen V14 NRTL methanol-water",
+                    "provenance": {"source": "Aspen Plus V14 NRTL methanol-water"},
                 }
             ],
         },
         "flowsheet": [{"block": "B1", "inputs": ["FEED"], "outputs": ["PROD"]}],
         "streams": [
-            {
-                "name": "FEED",
-                "temperature": 25,
-                "pressure": 1,
-                "mass_flow": 100,
-                "composition": {"CH3OH": 0.5, "H2O": 0.5},
-            },
-            {
-                "name": "PROD",
-                "temperature": 25,
-                "pressure": 1,
-                "mass_flow": 100,
-                "composition": {"CH3OH": 0.5, "H2O": 0.5},
-            },
+            {"name": "FEED", "temperature": 25, "pressure": 1, "mass_flow": 100,
+             "composition": {"CH3OH": 0.5, "H2O": 0.5}},
+            {"name": "PROD", "temperature": 25, "pressure": 1, "mass_flow": 100,
+             "composition": {"CH3OH": 0.5, "H2O": 0.5}},
         ],
         "blocks": [{"name": "B1", "type": "MIXER"}],
     })
 
+
+def test_generate_inp_emits_directional_nrtl_binary_parameters():
+    # Aspen NRTL BPVAL is directional: forward line sets aij,bij,cij; reverse line
+    # (components swapped) sets aji,bji. Verified live to reproduce the databank gamma.
+    spec = _explicit_nrtl_spec(
+        {"aij": -0.69201, "aji": 2.73113, "bij": 172.6353, "bji": -616.882, "cij": 0.3}
+    )
+
+    inp = generate_inp(spec)
+
+    assert "PROPERTIES NRTL" in inp
+    assert "PROP-DATA NRTL-1" in inp
+    assert "PROP-LIST NRTL" in inp
+    assert "BPVAL CH3OH H2O -0.69201 172.6353 0.3" in inp
+    assert "BPVAL H2O CH3OH 2.73113 -616.882" in inp
+    assert inp.index("PROPERTIES NRTL") < inp.index("PROP-DATA NRTL-1") < inp.index("FLOWSHEET")
+
+
+def test_generate_inp_explicit_nrtl_rejects_temperature_limits():
+    spec_dict = _explicit_nrtl_spec({"aij": 1.0, "aji": 2.0, "cij": 0.3, "t_lower": 0.0}).model_dump()
+
     with pytest.raises(ValidationError) as exc_info:
-        generate_inp(spec)
+        generate_inp(spec_dict)
 
     error = exc_info.value.report["errors"][0]
-    assert error["location"] == "properties.binary_parameters[0].source_type"
-    assert "Explicit numeric NRTL binary-parameter INP emission is not yet enabled" in error["message"]
+    assert error["location"] == "properties.binary_parameters[0].values"
+    assert "temperature-limit" in error["message"]
 
 
 def test_edge_cases_optional_fields():
