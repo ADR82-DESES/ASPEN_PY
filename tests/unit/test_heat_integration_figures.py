@@ -23,9 +23,8 @@ def test_grand_composite_draws_steam_levels():
     levels = [SteamLevel("HP", 311.0, 100.0), SteamLevel("MP", 250.0, 40.0)]
     fig = fig_grand_composite(gcc, levels, dt_min=10.0)
     ax = fig.axes[0]
-    assert len(ax.lines) >= 1          # GCC curve present
-    # two steam levels drawn as horizontal reference lines
-    assert len(ax.get_lines()) + len(ax.collections) >= 1
+    # GCC curve (1 line) + two steam levels drawn as axhline reference lines (2 lines)
+    assert len(ax.lines) >= 3
 
 
 def test_figures_handle_empty_curves_without_crashing():
