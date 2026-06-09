@@ -17,7 +17,9 @@ Curve = List[Tuple[float, float]]
 
 @dataclass(frozen=True)
 class PinchResult:
-    pinch_temperature_c: float          # shifted (mean) pinch temperature
+    pinch_temperature_c: float          # shifted (mean) pinch temperature; the
+    #                                     highest-T node if several tie at the minimum
+    #                                     (e.g. threshold problems where Q_Hmin or Q_Cmin = 0)
     min_hot_utility_mw: float
     min_cold_utility_mw: float
     max_recovery_mw: float

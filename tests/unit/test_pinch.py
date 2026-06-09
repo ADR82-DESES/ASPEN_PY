@@ -48,3 +48,31 @@ def test_isothermal_latent_stream_goes_to_cold_utility():
     r = pinch_analysis(streams, dt_min=10.0)
     assert r.min_hot_utility_mw == pytest.approx(0.0)
     assert r.min_cold_utility_mw == pytest.approx(50.0)
+
+
+def test_cold_isothermal_reboiler_needs_hot_utility():
+    # Mirror of the hot-latent case for a COLD isothermal load (a RADFRAC reboiler).
+    # H1/C1 balance exactly; an extra cold reboiler of 50 MW at 80 C has nothing to
+    # recover from -> all 50 must come from hot utility. Guards the cold-iso sign.
+    streams = [
+        ThermalStream("H1", 100.0, 40.0, -120.0, "hot", False),
+        ThermalStream("C1", 30.0, 90.0, 120.0, "cold", False),
+        ThermalStream("CX", 80.0, 80.0, 50.0, "cold", True),
+    ]
+    r = pinch_analysis(streams, dt_min=10.0)
+    assert r.min_hot_utility_mw == pytest.approx(50.0)
+    assert r.min_cold_utility_mw == pytest.approx(0.0)
+
+
+def test_composite_curve_includes_isothermal_jump():
+    # A condenser (isothermal hot latent load) shows up as a vertical jump on the hot
+    # composite: two points share the phase-change temperature, spanning the duty.
+    streams = [
+        ThermalStream("H1", 150.0, 50.0, -200.0, "hot", False),
+        ThermalStream("H_COND", 100.0, 100.0, -50.0, "hot", True),
+    ]
+    hot, _ = build_composite_curves(streams)
+    t_vals = [t for t, _ in hot]
+    assert t_vals.count(100.0) == 2
+    h_at_100 = [h for t, h in hot if t == 100.0]
+    assert h_at_100[1] - h_at_100[0] == pytest.approx(50.0)
