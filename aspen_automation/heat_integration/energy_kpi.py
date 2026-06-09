@@ -14,6 +14,8 @@ def build_energy_kpi(
     utility_target: UtilityTarget,
     dt_min: float,
 ) -> Dict[str, Any]:
+    # Signed convention: cold duties are positive (heating), hot duties negative
+    # (cooling). So gross_cooling_mw is <= 0, and net_duty_mw = heating + cooling.
     gross_heating = sum(s.duty_mw for s in thermal_streams if s.kind == "cold")
     gross_cooling = sum(s.duty_mw for s in thermal_streams if s.kind == "hot")
     gross_abs = sum(abs(s.duty_mw) for s in thermal_streams)
