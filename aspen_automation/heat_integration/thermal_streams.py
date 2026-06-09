@@ -34,7 +34,9 @@ def _num(value: Any) -> Optional[float]:
         f = float(value)
     except (TypeError, ValueError):
         return None
-    return None if math.isnan(f) else f
+    # NaN/inf are not usable duties or temperatures; treat as missing so the stream
+    # is dropped rather than silently corrupting the pinch arithmetic downstream.
+    return None if math.isnan(f) or math.isinf(f) else f
 
 
 def _kind(duty_mw: float) -> str:
@@ -105,6 +107,10 @@ def extract_thermal_streams(
                 continue
             streams.append(ThermalStream(name, t_out, t_out, duty, _kind(duty), True))
         elif btype in SLOPING_TYPES:
+            # inputs[0]/outputs[0] are the primary feed/product; a multi-phase flash may
+            # list a secondary stream (e.g. a NaN-temperature liquid) after it. The
+            # flowsheet orders the representative phase first, so index 0 is the duty's
+            # supply/target temperature. A missing/NaN temperature drops the stream.
             t_in = temps.get(inputs[0]) if inputs else None
             t_out = temps.get(outputs[0]) if outputs else None
             if t_in is None or t_out is None:
