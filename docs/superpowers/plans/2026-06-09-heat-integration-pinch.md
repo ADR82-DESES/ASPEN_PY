@@ -718,10 +718,11 @@ def test_level_above_pinch_raises_no_steam():
 
 
 def test_two_levels_allocate_incrementally_hottest_first():
-    # MP shifted 75 -> H=100 ; LP shifted 25 -> H=290 (interp between (50,200),(20,300))
+    # MP shifted 75 -> H=100 (interp between (100,0),(50,200))
+    # LP shifted 23 -> H=290 (interp between (50,200),(20,300): 300 + 0.1*(200-300))
     r = target_utilities(
         _pinch(),
-        steam_levels=[SteamLevel("MP", 70.0, 40.0), SteamLevel("LP", 20.0, 6.0)],
+        steam_levels=[SteamLevel("MP", 70.0, 40.0), SteamLevel("LP", 18.0, 6.0)],
         compressor_work_mw=0.0,
         turbine_efficiency=0.8,
         condenser_temp_c=15.0,
