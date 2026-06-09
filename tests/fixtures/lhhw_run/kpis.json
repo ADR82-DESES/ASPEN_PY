@@ -1,0 +1,33 @@
+{
+  "production_rate_tpd": 13391.934911999999,
+  "product_stream": "MEOH-PRO",
+  "product_total_tpd": 13391.934911999999,
+  "product_component": "CH3OH",
+  "product_component_tpd": 13375.724349763199,
+  "methanol_tpd": 13375.724349763199,
+  "purity_fraction": 0.998789528,
+  "energy_consumption_mw": 3641.735774821121,
+  "energy_unit_basis": {
+    "raw_unit": "CAL/SEC",
+    "converted_unit": "MW",
+    "conversion": "1 CAL/SEC = 0.004184 kW = 0.000004184 MW"
+  },
+  "yield_fraction": null,
+  "convergence_status": "converged",
+  "synthesis_loop": {
+    "block": "B-SYN",
+    "available": true,
+    "inlet_stream": "R-IN",
+    "outlet_stream": "R-OUT",
+    "co_conversion_fraction": 0.7247755224005364,
+    "co2_conversion_fraction": 0.06310578177256902,
+    "h2_consumption_fraction": 0.43629654682105046,
+    "methanol_formation_kmol_hr": 20420.27665580573,
+    "methane_change_kmol_hr": 1.5998584785847925e-05,
+    "inlet_stoichiometric_number": 2.1525067222873684,
+    "inlet_ch4_mole_frac": 0.0525192042,
+    "inlet_co2_mole_frac": 0.0819866793,
+    "outlet_ch3oh_mole_frac": 0.203173811
+  },
+  "simulation_time_seconds": 36.13076591491699
+}
