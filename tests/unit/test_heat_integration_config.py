@@ -33,3 +33,10 @@ def test_overrides_from_spec_block():
 def test_from_spec_handles_none_and_non_dict():
     assert HeatIntegrationConfig.from_spec(None).dt_min_c == 10.0
     assert HeatIntegrationConfig.from_spec({"heat_integration": "nope"}).dt_min_c == 10.0
+
+
+def test_malformed_steam_levels_fall_back_to_defaults():
+    # a non-empty list whose entries all lack t_sat_c must not yield an empty config
+    spec = {"heat_integration": {"steam_levels": [{"name": "BAD"}, {"foo": 1}]}}
+    cfg = HeatIntegrationConfig.from_spec(spec)
+    assert [lv.name for lv in cfg.steam_levels] == ["HP", "MP", "LP"]
