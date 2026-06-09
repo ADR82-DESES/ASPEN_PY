@@ -196,6 +196,19 @@ def save_dashboard_figures(
             fig.savefig(str(path), bbox_inches="tight")
             out[f"{name}_{ext}"] = path
         plt.close(fig)
+
+    try:
+        from .heat_integration import figures_for_run
+
+        for name, fig in figures_for_run(results_dir, spec).items():
+            for ext in ("svg", "pdf"):
+                path = figdir / f"{name}.{ext}"
+                fig.savefig(str(path), bbox_inches="tight")
+                out[f"{name}_{ext}"] = path
+            plt.close(fig)
+    except Exception as exc:  # pragma: no cover - never break the dashboard
+        print(f"Heat-integration figures skipped ({exc}).")
+
     return out
 
 
