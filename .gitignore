@@ -44,6 +44,9 @@ pytest-cache-files-*/
 manual_verify_*/
 test_results/
 
+# Git worktrees (isolated dev workspaces)
+.worktrees/
+
 # Local tooling and IDE config
 .claude/
 .vscode/
