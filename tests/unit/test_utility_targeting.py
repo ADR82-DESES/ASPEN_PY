@@ -61,3 +61,22 @@ def test_two_levels_allocate_incrementally_hottest_first():
     )
     assert r.steam_raised_by_level["MP"] == pytest.approx(100.0)
     assert r.steam_raised_by_level["LP"] == pytest.approx(190.0)  # 290 - 100
+
+
+def test_above_pinch_level_does_not_contaminate_prev_cumulative():
+    # A skipped above-pinch level must not shift the baseline for lower levels.
+    # The methanol HP header (311 C) exercises this path.
+    r = target_utilities(
+        _pinch(),
+        steam_levels=[
+            SteamLevel("HP", 200.0, 100.0),   # shifted 205 > pinch 100 -> skipped
+            SteamLevel("MP", 45.0, 40.0),     # shifted 50 < pinch 100 -> H=200
+        ],
+        compressor_work_mw=0.0,
+        turbine_efficiency=0.8,
+        condenser_temp_c=20.0,
+        dt_min=10.0,
+    )
+    assert r.steam_raised_by_level["HP"] == pytest.approx(0.0)
+    # if prev_cumulative were wrongly updated by the HP continue, MP would be 0
+    assert r.steam_raised_by_level["MP"] == pytest.approx(200.0)
