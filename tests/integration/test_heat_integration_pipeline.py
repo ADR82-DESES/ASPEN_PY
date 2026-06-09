@@ -47,6 +47,15 @@ def test_pipeline_targets_are_thermodynamically_sane():
     assert integ["min_hot_utility_mw"] <= e["gross_heating_mw"] + 1e-6
     # the integrated headline is far smaller in magnitude than the gross Σ|duty|
     assert abs(kpi["energy_consumption_mw"]) < e["gross_abs_duty_mw"]
+    # energy-balance closure: max_recovery == total_cold - Q_hot == total_hot - Q_cold.
+    # Guards the float-boundary bug that dropped a stream (B-PDEG, T=37.1438003) at its
+    # own interval, which broke this identity by ~3 MW.
+    assert integ["max_recovery_mw"] == pytest.approx(
+        e["gross_heating_mw"] - integ["min_hot_utility_mw"], abs=0.5
+    )
+    assert integ["max_recovery_mw"] == pytest.approx(
+        -e["gross_cooling_mw"] - integ["min_cold_utility_mw"], abs=0.5
+    )
 
 
 def test_pipeline_reads_compressor_work_from_blocks():

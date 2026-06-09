@@ -17,9 +17,9 @@ Curve = List[Tuple[float, float]]
 
 @dataclass(frozen=True)
 class PinchResult:
-    pinch_temperature_c: float          # shifted (mean) pinch temperature; the
-    #                                     highest-T node if several tie at the minimum
-    #                                     (e.g. threshold problems where Q_Hmin or Q_Cmin = 0)
+    pinch_temperature_c: float          # shifted (mean) pinch temperature: the node where the
+    #                                     feasible cascade is minimum; the highest-T such node
+    #                                     if several tie (min() over descending-T nodes)
     min_hot_utility_mw: float
     min_cold_utility_mw: float
     max_recovery_mw: float
@@ -56,8 +56,10 @@ def _one_composite(streams_of_kind: List[ThermalStream]) -> Curve:
         cp = sum(
             s.cp_mw_per_c for s in streams_of_kind
             if not s.isothermal
-            and min(s.t_supply_c, s.t_target_c) <= t_lo
-            and max(s.t_supply_c, s.t_target_c) >= t_hi
+            # round to the grid precision: temps come from round(..., 6) bounds, so the
+            # endpoints must be rounded too or a stream is dropped at its own boundary.
+            and round(min(s.t_supply_c, s.t_target_c), 6) <= t_lo
+            and round(max(s.t_supply_c, s.t_target_c), 6) >= t_hi
         )
         h += cp * (t_hi - t_lo)
         curve.append((t_hi, h))
@@ -111,6 +113,9 @@ def pinch_analysis(streams: List[ThermalStream], dt_min: float) -> PinchResult:
         cp_hot = cp_cold = 0.0
         for s in sensible:
             a, b = _shifted_endpoints(s, shift)
+            # round to the grid precision (temps are rounded bounds) so a stream is not
+            # dropped at its own boundary interval by a sub-1e-6 float difference.
+            a, b = round(a, 6), round(b, 6)
             s_hi, s_lo = max(a, b), min(a, b)
             if s_lo <= t_lo and s_hi >= t_hi:
                 if s.kind == "hot":
