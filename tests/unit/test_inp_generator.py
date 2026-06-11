@@ -1434,5 +1434,5 @@ def test_methanol_process_yaml_emits_vbf96_lhhw_kinetics():
     # catalyst loading now emitted on the synthesis reactor (Aspen needs >=2 of
     # catalyst weight / bed voidage / catalyst density when catalyst is present)
     assert "CAT-PRESENT=YES" in inp
-    assert "CATWT=250000.0" in inp
+    assert "CATWT=167075.0" in inp
     assert "BED-VOIDAGE=0.4" in inp

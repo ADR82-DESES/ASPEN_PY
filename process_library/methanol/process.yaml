@@ -177,21 +177,21 @@ streams:
 - name: NG-FEED
   temperature: 40.0
   pressure: 30.0
-  mass_flow: 440000.0
+  mass_flow: 294052.0
   mole_flow: null
   composition:
     CH4: 1.0
 - name: STEAM
   temperature: 250.0
   pressure: 35.0
-  mass_flow: 297000.0
+  mass_flow: 198485.0
   mole_flow: null
   composition:
     H2O: 1.0
 - name: O2-FEED
   temperature: 150.0
   pressure: 30.0
-  mass_flow: 528000.0
+  mass_flow: 352862.0
   mole_flow: null
   composition:
     O2: 0.995
@@ -539,10 +539,10 @@ blocks:
   parameters:
     TEMP: 250.0
     PRES: 80.0
-    LENGTH: 21.3
+    LENGTH: 14.235
     DIAM: 4.0
     NPOINT: 20
-    CAT-WT: 250000.0
+    CAT-WT: 167075.0
     BED-VOIDAGE: 0.4
   reactions: RXN-SET1
   split_fractions: null
@@ -616,7 +616,7 @@ blocks:
     top_pressure: 1.5
     pressure_drop_per_stage: 0.02
     reflux_ratio: 2.0
-    bottoms_rate: 82000.0
+    bottoms_rate: 12200.0
     distillate_rate: null
     rate_basis: MASS
     max_outer_iterations: 50
@@ -786,7 +786,7 @@ kinetic_models:
 - id: VBF96_SCREENING
   description: 2-reaction CO2-based LHHW kinetics (RWGS + CO2 hydrogenation to methanol)
     on B-SYN RPLUG; rate per catalyst weight (RBASIS=CAT-WT), partial-pressure basis.
-  implementation: Aspen GENERAL reaction set (LHHW) attached to B-SYN RPLUG; CAT-WT=250000
+  implementation: Aspen GENERAL reaction set (LHHW) attached to B-SYN RPLUG; CAT-WT=167075
     kg + BED-VOIDAGE=0.4 emitted on the reactor block (Aspen requires two of catalyst
     weight / bed voidage / density). Constants transcribed from the Aspen V14 methanol
     synthesis lab reactor example (docs/superpowers/notes/lhhw_reference.inp),
@@ -803,10 +803,17 @@ kinetic_models:
   excludes: methanation reactions; CH4 is treated as inert through B-SYN.
   campaign_note: Live 10k TPD tuning promoted fresh-feed scale 2.0 with B-SYN RPLUG
     LENGTH 21.3 and DIAM 4.0; low-pressure LIGHTS recovery, RADFRAC bottoms rate 82000
-    kg/hr, and a product degassing flash meet production, purity, and low-pressure
+    kg/hr, and a product degassing flash met production, purity, and low-pressure
     product gates while holding combined vent methanol loss below 10% of the prior
-    LIGHTS-loss baseline. CAT-WT (250000 kg) and BED-VOIDAGE (0.4) are now emitted on
-    the B-SYN RPLUG block to support the LHHW catalyst-weight rate basis.
+    LIGHTS-loss baseline. On 2026-06-11 a self-similar downscale (k=0.6683 on the three
+    fresh feeds with CAT-WT 167075 kg and LENGTH 14.235 m at fixed DIAM, preserving
+    bed density, W/F, per-pass conversion, and SN) plus the column-bottoms defect fix
+    (bottoms_rate reset from 82000 to 12200 kg/hr, the measured column water load of
+    11050 kg/hr plus a 10% methanol cushion, recovering ~1571 TPD methanol formerly
+    forced out the bottoms) re-targeted the plant to 10k TPD and passed acceptance in
+    one run (9974 TPD, 99.88% purity, 20133 kg/hr vent methanol, 92.3% lights
+    recovery). CAT-WT and BED-VOIDAGE (0.4) remain emitted on the B-SYN RPLUG block
+    to support the LHHW catalyst-weight rate basis.
 process_defaults:
   purity_expression: CH3OH wt% in MEOH-PRO
   product_stream: MEOH-PRO
