@@ -155,6 +155,25 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                           f"Duplicate reaction set ID '{rxn_set.id}' found",
                           "Ensure each reaction set has a unique ID")
             reaction_set_ids.add(rxn_set.id)
+
+            set_types = {
+                reaction_lookup[rid].parameters.reaction_type.value
+                for rid in rxn_set.reaction_ids
+                if rid in reaction_lookup
+                and reaction_lookup[rid].parameters is not None
+            }
+            if "LHHW" in set_types and len(set_types) > 1:
+                add_error(
+                    "error",
+                    f"reaction_sets[{i}]",
+                    (
+                        f"Reaction set '{rxn_set.id}' mixes LHHW with non-LHHW "
+                        "reactions; the generator emits only the LHHW reactions for "
+                        "such a set"
+                    ),
+                    "Make every reaction in an LHHW reaction set use reaction_type=LHHW",
+                )
+
             for j, rxn_id in enumerate(rxn_set.reaction_ids):
                 if rxn_id not in reaction_ids:
                     add_error("error", f"reaction_sets[{i}].reaction_ids[{j}]",
@@ -166,6 +185,27 @@ def validate_spec(spec_dict: Dict[str, Any]) -> Dict[str, Any]:
                 reaction_loc = reaction_locations.get(rxn_id, f"reaction_id[{rxn_id}]")
                 if not reaction:
                     continue
+
+                if reaction.parameters and reaction.parameters.reaction_type.value == "LHHW":
+                    referenced: set[str] = set()
+                    df = reaction.parameters.driving_force
+                    if df:
+                        referenced.update(df.term1.exponents.keys())
+                        referenced.update(df.term2.exponents.keys())
+                    ads = reaction.parameters.adsorption
+                    if ads:
+                        referenced.update(ads.exponents.keys())
+                    for component in sorted(referenced):
+                        if comp_ids and component not in comp_ids:
+                            add_error(
+                                "error",
+                                f"{reaction_loc}.parameters",
+                                (
+                                    f"Component '{component}' used in LHHW reaction '{rxn_id}' "
+                                    "but not defined in components"
+                                ),
+                                "Add the component to the components list or fix the exponent key",
+                            )
 
                 if rxn_set.block_type.upper() == "REQUIL":
                     if not reaction.parameters:

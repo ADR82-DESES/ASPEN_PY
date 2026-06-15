@@ -12,6 +12,7 @@ from .schema import (
     FlowsheetConnection,
     Properties,
     Reaction,
+    ReactionParameterType,
     ReactionParameters,
     ReactionSet,
 )
@@ -24,6 +25,13 @@ DEFAULT_DATABANKS = [
     "INORGANIC",
     "NOASPENPCD",
 ]
+
+# Aspen's NRTL BPVAL is DIRECTIONAL: "BPVAL c1 c2 ..." fills only the forward (i->j)
+# elements in this positional order, and the reverse (j->i) params are set by a second
+# "BPVAL c2 c1 ..." line. Verified live against the VLE-IG databank gamma.
+NRTL_BPVAL_FORWARD_ORDER = ["aij", "bij", "cij", "dij", "eij", "fij"]
+NRTL_BPVAL_REVERSE_ORDER = ["aji", "bji", "cij", "dij", "eji", "fji"]
+NRTL_UNSUPPORTED_EXPLICIT_FIELDS = ("t_lower", "t_upper")
 
 PRESSURE_UNITS = {
     "bar": "BAR",
@@ -139,6 +147,9 @@ def generate_inp(spec: Union[PlantSpecification, Dict[str, Any]], output_path: O
     # 6. PROPERTIES
     sections.append(f"PROPERTIES {spec_obj.properties.method}")
 
+    # 6b. Explicit binary-parameter PROP-DATA blocks (baked-in NRTL values)
+    sections.extend(_generate_binary_parameters(spec_obj.properties))
+
 
     # 7. FLOWSHEET
     sections.append(_generate_flowsheet(spec_obj.flowsheet))
@@ -226,20 +237,24 @@ def _validate_generator_compatibility(spec_obj: PlantSpecification) -> None:
     for index, entry in enumerate(spec_obj.properties.binary_parameters or []):
         if entry.source_type != "explicit":
             continue
-        errors.append(
-            {
-                "severity": "error",
-                "location": f"properties.binary_parameters[{index}].source_type",
-                "message": (
-                    "Explicit numeric NRTL binary-parameter INP emission is not yet enabled because "
-                    "the direct Aspen V14 property-parameter syntax has not been verified in this generator."
-                ),
-                "suggestion": (
-                    "Use source_type 'aspen_databank' with verified Aspen property databanks, or add a "
-                    "dedicated tested emitter for explicit NRTL parameters before using source_type 'explicit'."
-                ),
-            }
-        )
+        # The directional two-line BPVAL emitter handles aij..fji. Temperature limits
+        # use a separate Aspen syntax that is not emitted, so reject them explicitly.
+        unsupported_fields = sorted(set(entry.values or {}) & set(NRTL_UNSUPPORTED_EXPLICIT_FIELDS))
+        if unsupported_fields:
+            errors.append(
+                {
+                    "severity": "error",
+                    "location": f"properties.binary_parameters[{index}].values",
+                    "message": (
+                        f"Explicit NRTL emission does not yet support temperature-limit field(s) "
+                        f"{', '.join(unsupported_fields)}; only the coefficients aij..fji are written."
+                    ),
+                    "suggestion": (
+                        "Omit t_lower/t_upper, or extend _generate_binary_parameters with a verified "
+                        "Aspen syntax before specifying them."
+                    ),
+                }
+            )
 
     if errors:
         raise ValidationError("Generator compatibility validation failed.", {"valid": False, "errors": errors})
@@ -388,6 +403,65 @@ def _binary_parameter_databanks(props: Properties) -> List[str]:
             if cleaned and not any(existing.upper() == cleaned.upper() for existing in databanks):
                 databanks.append(cleaned)
     return databanks
+
+
+def _format_param_value(value: float) -> str:
+    """Render a numeric parameter for an Aspen BPVAL line (always a real, never sci)."""
+    text = f"{float(value):.10g}"
+    if "." not in text and "e" not in text and "E" not in text:
+        text += ".0"
+    return text
+
+
+def _trim_trailing_zeros(values: List[float]) -> List[float]:
+    out = list(values)
+    while out and out[-1] == 0.0:
+        out.pop()
+    return out
+
+
+def _generate_binary_parameters(props: Properties) -> List[str]:
+    """Emit PROP-DATA blocks for explicit NRTL binary parameters.
+
+    Aspen's NRTL ``BPVAL`` is directional: ``BPVAL c1 c2 ...`` fills the forward
+    (i->j) elements positionally as [aij, bij, cij, dij, eij, fij], so the reverse
+    (j->i) parameters must be written on a second ``BPVAL c2 c1 ...`` line. Writing
+    all five [aij, aji, bij, bji, cij] on one line mis-maps them (aji->bij,
+    bij->alpha). Verified live: this two-line form reproduces the databank gamma.
+
+    Explicit values are baked into the deck so they survive into the COM run, whose
+    engine cannot retrieve VLE-databank parameters under the virtualized environment.
+    """
+    sections: List[str] = []
+    explicit_index = 0
+    for entry in props.binary_parameters or []:
+        if entry.source_type != "explicit":
+            continue
+        explicit_index += 1
+        values = entry.values or {}
+        comp_i, comp_j = entry.components
+
+        forward = _trim_trailing_zeros(
+            [float(values.get(field, 0.0)) for field in NRTL_BPVAL_FORWARD_ORDER]
+        )
+        # The reverse line only needs aji/bji unless the rarer eji/fji terms are set;
+        # those sit at reverse slots 5-6 and require the symmetric cij/dij as padding.
+        if values.get("eji", 0.0) or values.get("fji", 0.0):
+            reverse = _trim_trailing_zeros(
+                [float(values.get(field, 0.0)) for field in NRTL_BPVAL_REVERSE_ORDER]
+            )
+        else:
+            reverse = _trim_trailing_zeros(
+                [float(values.get("aji", 0.0)), float(values.get("bji", 0.0))]
+            )
+
+        lines = [f"PROP-DATA NRTL-{explicit_index}", "    PROP-LIST NRTL"]
+        if forward:
+            lines.append(f"    BPVAL {comp_i} {comp_j} " + " ".join(_format_param_value(v) for v in forward))
+        if reverse:
+            lines.append(f"    BPVAL {comp_j} {comp_i} " + " ".join(_format_param_value(v) for v in reverse))
+        sections.append("\n".join(lines))
+    return sections
 
 
 def _generate_flowsheeting_options(options: Optional[Any]) -> str:
@@ -663,6 +737,15 @@ def _generate_rplug_block(block: Block) -> List[str]:
         if source in parameters and target not in param_line:
             param_line[target] = parameters[source]
 
+    # Catalyst loading. Aspen requires at least TWO of {catalyst loading, bed voidage,
+    # catalyst density} when a catalyst is present (ZURE04.29), so emit every one supplied.
+    catalyst_params = (("CAT-WT", "CATWT"), ("BED-VOIDAGE", "BED-VOIDAGE"), ("CAT-DENSITY", "CAT-DENSITY"))
+    present_catalyst = [(src, tgt) for src, tgt in catalyst_params if src in parameters]
+    if present_catalyst:
+        param_line["CAT-PRESENT"] = "YES"
+        for src, tgt in present_catalyst:
+            param_line[tgt] = parameters[src]
+
     lines = [_generate_rplug_param_line(param_line)]
 
     if str(rplug_type).upper() == "T-SPEC" and parameters.get("TEMP") is not None:
@@ -776,10 +859,22 @@ def _generate_reac_data_line(rxn_id: int, params: Optional[ReactionParameters]) 
         parts.append(f"CBASIS={params.rate_basis}")
     return " ".join(parts)
 
+def _set_is_lhhw(reaction_set: ReactionSet, reaction_lookup: Dict[int, Reaction]) -> bool:
+    for rid in reaction_set.reaction_ids:
+        reaction = reaction_lookup.get(rid)
+        params = reaction.parameters if reaction else None
+        if params and params.reaction_type == ReactionParameterType.LHHW:
+            return True
+    return False
+
+
 def _generate_reactions(reaction_set: ReactionSet, reaction_lookup: Dict[int, Reaction]) -> str:
     block_type = reaction_set.block_type.upper()
     if block_type == "REQUIL":
         return ""
+
+    if _set_is_lhhw(reaction_set, reaction_lookup):
+        return _generate_lhhw_reactions(reaction_set, reaction_lookup)
 
     lines = [f"REACTIONS {reaction_set.id} {block_type}"]
     for rxn_id in reaction_set.reaction_ids:
@@ -811,6 +906,108 @@ def _generate_reaction_parameter_lines(rxn_id: int, params: Optional[ReactionPar
         lines.append(f"    RATE-CON {rxn_id} {' '.join(rate_values)}")
 
     return lines
+
+
+def _format_coeff(coeff: List[float]) -> str:
+    """Render an LHHW coefficient list as 'A=.. B=.. C=.. D=..' for the values provided."""
+    labels = ["A", "B", "C", "D"]
+    return " ".join(f"{labels[i]}={_format_value(value)}" for i, value in enumerate(coeff))
+
+
+def _generate_lhhw_reactions(reaction_set: ReactionSet, reaction_lookup: Dict[int, Reaction]) -> str:
+    pairs = [(rid, reaction_lookup.get(rid)) for rid in reaction_set.reaction_ids]
+    pairs = [
+        (rid, rxn)
+        for rid, rxn in pairs
+        if rxn is not None
+        and rxn.parameters is not None
+        and rxn.parameters.reaction_type == ReactionParameterType.LHHW
+    ]
+    if not pairs:
+        return ""
+
+    nterm = max(
+        (len(rxn.parameters.adsorption.terms) for _, rxn in pairs if rxn.parameters.adsorption),
+        default=0,
+    )
+
+    lines = [f"REACTIONS {reaction_set.id} GENERAL", f"    PARAM NTERM-ADS={nterm}"]
+
+    # REAC-DATA (one per reaction)
+    for rid, rxn in pairs:
+        p = rxn.parameters
+        reversible = p.reversible if p.reversible is not None else True
+        attrs = [f"REAC-DATA {rid}"]
+        if p.name:
+            attrs.append(f"NAME={p.name}")
+        attrs.append("REAC-CLASS=LHHW")
+        attrs.append(f"PHASE={p.phase or 'V'}")
+        attrs.append(f"CBASIS={p.conc_basis or 'PARTIALPRES'}")
+        attrs.append(f"RBASIS={p.cat_basis or 'CAT-WT'}")
+        attrs.append(f"REVERSIBLE={'YES' if reversible else 'NO'}")
+        attrs.append(f"REV-METH={p.rev_method or 'USER-SPEC'}")
+        attrs.append(f'PRES-UNIT="{p.pres_unit or "BAR"}"')
+        lines.append("    " + " ".join(attrs))
+
+    # RATE-CON (kinetic factor, one per reaction)
+    for rid, rxn in pairs:
+        kf = rxn.parameters.kinetic_factor
+        parts = [
+            f"RATE-CON {rid}",
+            f"PRE-EXP={_format_value(kf.pre_exp)}",
+            f"ACT-ENERGY={_format_value(kf.act_energy)} <{kf.act_energy_unit}>",
+        ]
+        if kf.t_ref is not None:
+            t_ref = f"T-REF={_format_value(kf.t_ref)}"
+            if kf.t_ref_unit:
+                t_ref += f" <{kf.t_ref_unit}>"
+            parts.append(t_ref)
+        lines.append("    " + " ".join(parts))
+
+    # STOIC (one per reaction)
+    for rid, rxn in pairs:
+        lines.extend(_wrap_slash_items(f"STOIC {rid} MIXED ", _format_stoichiometry_items(rxn)))
+
+    # DFORCE-EXP / DFORCE-EXP-2 (one per reaction)
+    for keyword, attr in (("DFORCE-EXP", "term1"), ("DFORCE-EXP-2", "term2")):
+        for rid, rxn in pairs:
+            term = getattr(rxn.parameters.driving_force, attr)
+            items = [f"MIXED {comp} {_format_value(exp)}" for comp, exp in term.exponents.items()]
+            lines.extend(_wrap_slash_items(f"{keyword} {rid} ", items))
+
+    # DFORCE-EQ-1 / DFORCE-EQ-2 (grouped across reactions)
+    for keyword, attr in (("DFORCE-EQ-1", "term1"), ("DFORCE-EQ-2", "term2")):
+        items = [
+            f"REACNO={rid} " + _format_coeff(getattr(rxn.parameters.driving_force, attr).coeff)
+            for rid, rxn in pairs
+        ]
+        lines.extend(_wrap_slash_items(f"{keyword} ", items))
+
+    # ADSORP-EXP (grouped: per reaction, per component)
+    ads_exp_items = [
+        f"REACNO={rid} CID={comp} SSID=MIXED EXPONENT="
+        + " ".join(_format_value(x) for x in vector)
+        for rid, rxn in pairs
+        for comp, vector in rxn.parameters.adsorption.exponents.items()
+    ]
+    lines.extend(_wrap_slash_items("ADSORP-EXP ", ads_exp_items))
+
+    # ADSORP-EQTER (grouped: per reaction, per term)
+    eqter_items = [
+        f"REACNO={rid} TERM={t} " + _format_coeff(term.coeff)
+        for rid, rxn in pairs
+        for t, term in enumerate(rxn.parameters.adsorption.terms, start=1)
+    ]
+    lines.extend(_wrap_slash_items("ADSORP-EQTER ", eqter_items))
+
+    # ADSORP-POW (grouped)
+    pow_items = [
+        f"REACNO={rid} EXPONENT={_format_value(rxn.parameters.adsorption.power)}"
+        for rid, rxn in pairs
+    ]
+    lines.extend(_wrap_slash_items("ADSORP-POW ", pow_items))
+
+    return "\n".join(lines)
 
 
 def _generate_comments(text: str) -> str:

@@ -1,7 +1,7 @@
 metadata:
   title: Methanol Plant 10k TPD
-  description: 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR),
-    tuned with batch-first live Aspen validation.
+  description: 10,000 TPD Grade AA Methanol via Autothermal Reforming (ATR), tuned
+    with batch-first live Aspen validation.
   units:
     pressure: bar
     temperature: C
@@ -32,12 +32,41 @@ components:
   name: NITROGEN
   formula: null
 properties:
-  method: RK-SOAVE
+  method: NRTL
   databanks:
   - APV140 PURE32
   - APV140 AQUEOUS
   - APV140 SOLIDS
   - APV140 INORGANIC
+  - APV140 VLE-IG
+  - APV140 VLE-LIT
+  - APV140 LLE-ASPEN
+  binary_parameters:
+  - components:
+    - CH3OH
+    - H2O
+    model: NRTL
+    source_type: explicit
+    parameter_set: Aspen V14 NRTL methanol-water
+    values:
+      aij: -0.69201
+      aji: 2.73113
+      bij: 172.6353
+      bji: -616.882
+      cij: 0.3
+    basis: Aspen Plus V14 NRTL VLE-IG databank interaction parameters (CH3OH/H2O)
+    provenance:
+      source: Aspen Plus V14 VLE-IG databank, recovered via activity-coefficient calibration
+      locator: APV140 VLE-IG (compounds 526/1188); values reproduce Aspen's gamma
+        to RMS 2e-5
+      notes: Baked in explicitly because the COM-launched Aspen engine cannot retrieve
+        VLE-databank NRTL parameters under the virtualized environment (only the batch
+        engine can), leaving the COM run with zeroed NRTL. Coefficients recovered
+        by fitting Aspen's own batch-engine liquid activity coefficients (alpha-scan
+        minimum at 0.30). Emitted as a directional two-line BPVAL; verified to reproduce
+        the databank gamma (1.1323/1.1909 at 65 C, x=0.5).
+      verified_by: local Aspen V14 batch + COM round-trip
+      verified_on: '2026-06-04'
 flowsheeting_options: null
 flowsheet:
 - block: MIX-FEED
@@ -91,31 +120,78 @@ flowsheet:
   outputs:
   - PURGE
   - RECYCLE
-- block: B-DIST
+- block: B-DP
   inputs:
   - CRUDE-ME
   outputs:
-  - MEOH-PRO
+  - CRUDE-LP
+- block: B-DEGAS
+  inputs:
+  - CRUDE-LP
+  outputs:
+  - LIGHTS
+  - CLIQ-RAW
+- block: B-LCOOL
+  inputs:
+  - LIGHTS
+  outputs:
+  - LGT-CLD
+- block: B-LFLA
+  inputs:
+  - LGT-CLD
+  outputs:
+  - VENT-GAS
+  - REC-MEOH
+- block: MIX-COL
+  inputs:
+  - CLIQ-RAW
+  - REC-MEOH
+  - VNT-REC
+  outputs:
+  - CRUDE-LQ
+- block: B-DIST
+  inputs:
+  - CRUDE-LQ
+  outputs:
+  - MEOH-RAW
   - WASTE-H2O
+- block: B-PDEG
+  inputs:
+  - MEOH-RAW
+  outputs:
+  - PRO-VENT
+  - MEOH-PRO
+- block: MIX-VENT
+  inputs:
+  - VENT-GAS
+  - PRO-VENT
+  outputs:
+  - VNT-RAW
+- block: B-VFLA
+  inputs:
+  - VNT-RAW
+  outputs:
+  - VENT-TOT
+  - VNT-REC
 streams:
 - name: NG-FEED
   temperature: 40.0
   pressure: 30.0
-  mass_flow: 440000.0
+  mass_flow: 294052.0
   mole_flow: null
   composition:
     CH4: 1.0
 - name: STEAM
   temperature: 250.0
   pressure: 35.0
-  mass_flow: 297000.0
+  mass_flow: 198485.0
   mole_flow: null
   composition:
     H2O: 1.0
 - name: O2-FEED
   temperature: 150.0
   pressure: 30.0
-  mass_flow: 528000.0
+  mass_flow: 352862.0
   mole_flow: null
   composition:
     O2: 0.995
@@ -240,6 +316,89 @@ streams:
     CO2: 0.005
     CO: 0.003
     H2: 0.002
+- name: CRUDE-LP
+  temperature: 80.0
+  pressure: 1.8
+  mass_flow: 460000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.905
+    H2O: 0.085
+    CO2: 0.005
+    CO: 0.003
+    H2: 0.002
+- name: LIGHTS
+  temperature: 80.0
+  pressure: 1.8
+  mass_flow: 315000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.825
+    H2O: 0.035
+    CO2: 0.039
+    CO: 0.074
+    H2: 0.0005
+    CH4: 0.0265
+- name: LGT-CLD
+  temperature: 50.0
+  pressure: 1.8
+  mass_flow: 315000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.825
+    H2O: 0.035
+    CO2: 0.039
+    CO: 0.074
+    H2: 0.0005
+    CH4: 0.0265
+- name: VENT-GAS
+  temperature: 50.0
+  pressure: 1.8
+  mass_flow: 53300.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.266
+    H2O: 0.147
+    CO2: 0.164
+    CO: 0.31
+    H2: 0.002
+    CH4: 0.111
+- name: REC-MEOH
+  temperature: 50.0
+  pressure: 1.8
+  mass_flow: 172900.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.985
+    H2O: 0.014
+    CO2: 0.0004
+    CO: 0.0003
+    H2: 1.0e-06
+    CH4: 0.000299
+- name: CLIQ-RAW
+  temperature: 80.0
+  pressure: 1.8
+  mass_flow: 480000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.859
+    H2O: 0.1404
+    CO2: 0.0004
+    CO: 0.0001
+    H2: 1.0e-06
+    CH4: 9.9e-05
+- name: CRUDE-LQ
+  temperature: 65.0
+  pressure: 1.8
+  mass_flow: 720000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.901
+    H2O: 0.0978
+    CO2: 0.0004
+    CO: 0.0001
+    H2: 1.0e-06
+    CH4: 0.000699
 - name: PURGE
   temperature: 40.0
   pressure: 80.0
@@ -252,27 +411,83 @@ streams:
     CH4: 0.06
     H2O: 0.02
 - name: MEOH-PRO
-  temperature: 40.0
+  temperature: 72.0
   pressure: 1.5
-  mass_flow: 416666.7
+  mass_flow: 409050.0
   mole_flow: null
   composition:
-    CH3OH: 0.9985
-    H2O: 0.001
-    CO2: 0.0003
-    CO: 0.0001
-    CH4: 0.0001
+    CH3OH: 0.99948
+    H2O: 2.0e-05
+    CO2: 0.00029
+    CO: 0.00012
+    CH4: 9.0e-05
 - name: WASTE-H2O
-  temperature: 45.0
-  pressure: 1.2
-  mass_flow: 43333.3
+  temperature: 121.4
+  pressure: 2.08
+  mass_flow: 68000.0
   mole_flow: null
   composition:
-    H2O: 0.96
-    CH3OH: 0.03
-    CO2: 0.005
-    CO: 0.003
-    H2: 0.002
+    H2O: 0.99726
+    CH3OH: 0.00274
+- name: MEOH-RAW
+  temperature: 56.0
+  pressure: 1.5
+  mass_flow: 419820.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.99948
+    H2O: 2.0e-05
+    CO2: 0.00029
+    CO: 0.00012
+    CH4: 9.0e-05
+- name: PRO-VENT
+  temperature: 72.0
+  pressure: 1.5
+  mass_flow: 10770.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.8989
+    CO2: 0.08434
+    CO: 0.00952
+    CH4: 0.00705
+    H2: 0.00012
+    N2: 7.0e-05
+- name: VNT-RAW
+  temperature: 54.0
+  pressure: 1.5
+  mass_flow: 64000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.384
+    CO2: 0.28
+    CO: 0.221
+    CH4: 0.077
+    H2: 0.032
+    H2O: 0.004
+    N2: 0.002
+- name: VENT-TOT
+  temperature: 25.0
+  pressure: 1.5
+  mass_flow: 40000.0
+  mole_flow: null
+  composition:
+    CO2: 0.4
+    CO: 0.34
+    CH4: 0.12
+    CH3OH: 0.09
+    H2: 0.047
+    N2: 0.003
+- name: VNT-REC
+  temperature: 25.0
+  pressure: 1.5
+  mass_flow: 24000.0
+  mole_flow: null
+  composition:
+    CH3OH: 0.86
+    CO2: 0.08
+    H2O: 0.01
+    CO: 0.04
+    CH4: 0.01
 blocks:
 - name: MIX-FEED
   type: MIXER
@@ -324,10 +539,11 @@ blocks:
   parameters:
     TEMP: 250.0
     PRES: 80.0
-    LENGTH: 19.613
+    LENGTH: 14.235
     DIAM: 4.0
     NPOINT: 20
-    CAT-WT: 250000.0
+    CAT-WT: 167075.0
+    BED-VOIDAGE: 0.4
   reactions: RXN-SET1
   split_fractions: null
   sep_fractions: null
@@ -349,38 +565,151 @@ blocks:
   - stream: PURGE
     fraction: 0.15
   sep_fractions: null
-- name: B-DIST
-  type: SEP
+- name: B-DP
+  type: VALVE
+  parameters:
+    P-OUT: 1.8
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+- name: B-DEGAS
+  type: FLASH2
+  parameters:
+    TEMP: 80.0
+    PRES: 0.0
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+- name: B-LCOOL
+  type: HEATER
+  parameters:
+    TEMP: 50.0
+    PRES: 1.8
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+- name: B-LFLA
+  type: FLASH2
+  parameters:
+    TEMP: 50.0
+    PRES: 1.8
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+- name: MIX-COL
+  type: MIXER
   parameters: null
   reactions: null
   split_fractions: null
-  sep_fractions:
-  - stream: MEOH-PRO
-    substream: MIXED
-    component: CH3OH
-    fraction: 0.99
-  - stream: MEOH-PRO
-    substream: MIXED
-    component: H2O
-    fraction: 0.001
+  sep_fractions: null
+- name: B-DIST
+  type: RADFRAC
+  parameters: null
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+  radfrac:
+    n_stages: 30
+    feed_stage: 16
+    condenser: TOTAL
+    reboiler: KETTLE
+    top_pressure: 1.5
+    pressure_drop_per_stage: 0.02
+    reflux_ratio: 2.0
+    bottoms_rate: 12200.0
+    distillate_rate: null
+    rate_basis: MASS
+    max_outer_iterations: 50
+- name: B-PDEG
+  type: FLASH2
+  parameters:
+    TEMP: 72.0
+    PRES: 1.5
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+- name: MIX-VENT
+  type: MIXER
+  parameters: null
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
+- name: B-VFLA
+  type: FLASH2
+  parameters:
+    TEMP: 40.0
+    PRES: 1.5
+  reactions: null
+  split_fractions: null
+  sep_fractions: null
 chemistry:
 - id: MEOH-KINETIC
   reactions:
   - id: 1
     stoichiometry:
-    - component: CO
+    - component: CO2
       coefficient: -1.0
     - component: H2
-      coefficient: -2.0
-    - component: CH3OH
+      coefficient: -1.0
+    - component: CO
+      coefficient: 1.0
+    - component: H2O
       coefficient: 1.0
     parameters:
-      reaction_type: KINETIC
+      reaction_type: LHHW
       phase: V
-      rate_basis: MOLARITY
-      pre_exponential_factor: 0.01
-      activation_energy: 0.0
-      temperature_exponent: 0.0
+      name: RWGS
+      conc_basis: PARTIALPRES
+      cat_basis: CAT-WT
+      reversible: true
+      rev_method: USER-SPEC
+      pres_unit: BAR
+      kinetic_factor:
+        pre_exp: 0.00165
+        act_energy: 22.6342
+        act_energy_unit: kcal/mol
+        t_ref: 228.42
+        t_ref_unit: C
+      driving_force:
+        term1:
+          exponents:
+            CO2: 1.0
+          coeff:
+          - 0.0
+          - 0.0
+        term2:
+          exponents:
+            H2: -1.0
+            CO: 1.0
+            H2O: 1.0
+          coeff:
+          - -4.671945154
+          - 4773.258898
+      adsorption:
+        power: 1.0
+        exponents:
+          H2O:
+          - 0.0
+          - 1.0
+          - 0.0
+          - 1.0
+          H2:
+          - 0.0
+          - -1.0
+          - 0.5
+          - 0.0
+        terms:
+        - coeff:
+          - 0.0
+        - coeff:
+          - 8.147108741
+          - 0.0
+        - coeff:
+          - -0.6951
+          - 2068.3
+        - coeff:
+          - -23.438
+          - 14928.19686
   - id: 2
     stoichiometry:
     - component: CO2
@@ -392,51 +721,99 @@ chemistry:
     - component: H2O
       coefficient: 1.0
     parameters:
-      reaction_type: KINETIC
+      reaction_type: LHHW
       phase: V
-      rate_basis: MOLARITY
-      pre_exponential_factor: 0.005
-      activation_energy: 0.0
-      temperature_exponent: 0.0
-  - id: 3
-    stoichiometry:
-    - component: CO
-      coefficient: -1.0
-    - component: H2O
-      coefficient: -1.0
-    - component: CO2
-      coefficient: 1.0
-    - component: H2
-      coefficient: 1.0
-    parameters:
-      reaction_type: KINETIC
-      phase: V
-      rate_basis: MOLARITY
-      pre_exponential_factor: 0.002
-      activation_energy: 0.0
-      temperature_exponent: 0.0
+      name: MEOH-SYN
+      conc_basis: PARTIALPRES
+      cat_basis: CAT-WT
+      reversible: true
+      rev_method: USER-SPEC
+      pres_unit: BAR
+      kinetic_factor:
+        pre_exp: 7.07034
+        act_energy: -8.76469
+        act_energy_unit: kcal/mol
+        t_ref: 228.42
+        t_ref_unit: C
+      driving_force:
+        term1:
+          exponents:
+            CO2: 1.0
+            H2: 1.0
+          coeff:
+          - 0.0
+          - 0.0
+        term2:
+          exponents:
+            H2: -2.0
+            CH3OH: 1.0
+            H2O: 1.0
+          coeff:
+          - 24.3889813
+          - -7059.72589
+      adsorption:
+        power: 3.0
+        exponents:
+          H2O:
+          - 0.0
+          - 1.0
+          - 0.0
+          - 1.0
+          H2:
+          - 0.0
+          - -1.0
+          - 0.5
+          - 0.0
+        terms:
+        - coeff:
+          - 0.0
+        - coeff:
+          - 8.147108741
+          - 0.0
+        - coeff:
+          - -0.69515
+          - 2068.3
+        - coeff:
+          - -23.43827453
+          - 14928.19686
 reaction_sets:
 - id: RXN-SET1
-  block_type: POWERLAW
+  block_type: GENERAL
   reaction_ids:
   - 1
   - 2
-  - 3
 kinetic_models:
 - id: VBF96_SCREENING
-  description: Methanol-selective RPLUG screening surrogate for Cu/ZnO/Al2O3 synthesis.
-  implementation: Aspen POWERLAW reaction set attached to B-SYN RPLUG; not an exact
-    LHHW rate-law implementation.
+  description: 2-reaction CO2-based LHHW kinetics (RWGS + CO2 hydrogenation to methanol)
+    on B-SYN RPLUG; rate per catalyst weight (RBASIS=CAT-WT), partial-pressure basis.
+  implementation: Aspen GENERAL reaction set (LHHW) attached to B-SYN RPLUG; CAT-WT=167075
+    kg + BED-VOIDAGE=0.4 emitted on the reactor block (Aspen requires two of catalyst
+    weight / bed voidage / density). Constants transcribed from the Aspen V14 methanol
+    synthesis lab reactor example (docs/superpowers/notes/lhhw_reference.inp),
+    Aspen-validated. T-REF is emitted as 228.42 <C> (the classic Vanden Bussche-Froment
+    reference temperature, 501.57 K); an explicit Celsius token is used so the reference
+    temperature is correct regardless of the deck's active unit set. Verified by Gate-1
+    batch translation (the <K> form caused RPLUG integration runaway; the <C> form
+    converges).
   primary_reference: Vanden Bussche and Froment, Journal of Catalysis 161, 1-10, 1996.
   secondary_reference: Graaf et al., Chemical Engineering Science 43, 3185-3195, 1988.
-  calibration_status: uncalibrated screening defaults; activation energies are set
-    to 0.0 after live sanity sweep isolated Aspen POWERLAW Arrhenius scaling as the
-    cause of near-zero methanol; replace with plant or vendor catalyst data before
-    design use.
+  calibration_status: Constants transcribed verbatim from the Aspen-validated reference
+    INP; loop-level physical fidelity still depends on item 1 (EOS) and item 3 (SN
+    stoichiometric number optimisation).
   excludes: methanation reactions; CH4 is treated as inert through B-SYN.
-  campaign_note: Live 10k TPD tuning promoted fresh-feed scale 2.0 with B-SYN
-    RPLUG LENGTH 19.613 and DIAM 4.0; CAT-WT remains documented but inactive because
-    INP generation does not emit it for RPLUG in this workflow.
+  campaign_note: Live 10k TPD tuning promoted fresh-feed scale 2.0 with B-SYN RPLUG
+    LENGTH 21.3 and DIAM 4.0; low-pressure LIGHTS recovery, RADFRAC bottoms rate 82000
+    kg/hr, and a product degassing flash met production, purity, and low-pressure
+    product gates while holding combined vent methanol loss below 10% of the prior
+    LIGHTS-loss baseline. On 2026-06-11 a self-similar downscale (k=0.6683 on the three
+    fresh feeds with CAT-WT 167075 kg and LENGTH 14.235 m at fixed DIAM, preserving
+    bed density, W/F, per-pass conversion, and SN) plus the column-bottoms defect fix
+    (bottoms_rate reset from 82000 to 12200 kg/hr, the measured column water load of
+    11050 kg/hr plus a 10% methanol cushion, recovering ~1571 TPD methanol formerly
+    forced out the bottoms) re-targeted the plant to 10k TPD and passed acceptance in
+    one run (9974 TPD, 99.88% purity, 20133 kg/hr vent methanol, 92.3% lights
+    recovery). CAT-WT and BED-VOIDAGE (0.4) remain emitted on the B-SYN RPLUG block
+    to support the LHHW catalyst-weight rate basis.
 process_defaults:
   purity_expression: CH3OH wt% in MEOH-PRO
   product_stream: MEOH-PRO
@@ -447,3 +824,14 @@ targets:
   purity:
     expression: CH3OH wt% in MEOH-PRO
     min_value: 0.9985
+  product_conditions:
+  - stream: MEOH-PRO
+    pressure: 1.5
+    pressure_tolerance: 0.05
+  component_loss_limits:
+  - stream: VENT-TOT
+    component: CH3OH
+    max_kg_hr: 26200.0
+    basis: mass
+    baseline_kg_hr: 261131.0
+    description: Require at least 90% recovery of the previous LIGHTS methanol loss.

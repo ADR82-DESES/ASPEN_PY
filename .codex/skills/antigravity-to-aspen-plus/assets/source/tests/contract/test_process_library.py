@@ -62,11 +62,11 @@ def test_process_library_methanol_spec_uses_rigorous_final_column_without_purifi
     degas_block = next(block for block in spec["blocks"] if block["name"] == "B-DEGAS")
     dist_block = next(block for block in spec["blocks"] if block["name"] == "B-DIST")
     assert syn_block["type"] == "RPLUG"
-    assert syn_block["parameters"]["LENGTH"] == 21.3
+    assert syn_block["parameters"]["LENGTH"] == 14.235
     assert degas_block["type"] == "FLASH2"
     assert degas_block["parameters"]["TEMP"] == 80.0
     assert dist_block["type"] == "RADFRAC"
-    assert dist_block["radfrac"]["bottoms_rate"] == 82000.0
+    assert dist_block["radfrac"]["bottoms_rate"] == 12200.0
     assert next(block for block in spec["blocks"] if block["name"] == "B-LCOOL")["type"] == "HEATER"
     assert next(block for block in spec["blocks"] if block["name"] == "B-LFLA")["type"] == "FLASH2"
     assert next(block for block in spec["blocks"] if block["name"] == "MIX-COL")["type"] == "MIXER"

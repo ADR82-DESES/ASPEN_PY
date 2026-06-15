@@ -1208,9 +1208,19 @@ def calculate_kpis(
 
     duty_mw = _numeric_series(blocks_df, "duty_mw").dropna()
     energy_consumption_mw = float(duty_mw.abs().sum()) if not duty_mw.empty else 0.0
+    energy_block: Optional[Dict[str, Any]] = None
+    try:
+        from .heat_integration import analyze_heat_integration
+
+        heat = analyze_heat_integration(blocks_df, streams_df, spec_dict)
+        if heat is not None:
+            energy_block = heat["energy"]
+            energy_consumption_mw = heat["energy_consumption_mw"]
+    except Exception as exc:  # pragma: no cover - defensive: never break KPI extraction
+        energy_block = {"available": False, "reason": f"heat integration unavailable: {exc}"}
     synthesis_loop = calculate_synthesis_loop_diagnostics(spec_dict, streams_df)
 
-    return {
+    kpis: Dict[str, Any] = {
         "production_rate_tpd": production_rate_tpd,
         "product_stream": product_stream_name,
         "product_total_tpd": product_total_tpd,
@@ -1224,6 +1234,9 @@ def calculate_kpis(
         "convergence_status": diagnostics.get("convergence_status", "unknown"),
         "synthesis_loop": synthesis_loop,
     }
+    if energy_block is not None:
+        kpis["energy"] = energy_block
+    return kpis
 
 
 def extract_results(

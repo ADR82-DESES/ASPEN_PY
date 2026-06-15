@@ -315,3 +315,99 @@ def test_schema_rejects_malformed_component_loss_limits():
 
     assert report["valid"] is False
     assert "basis: mass" in messages
+
+
+# ---------------------------------------------------------------------------
+# LHHW reaction parameter tests
+# ---------------------------------------------------------------------------
+
+from aspen_automation.schema import (
+    ReactionParameters,
+    ReactionParameterType,
+    LhhwKineticFactor,
+    LhhwDrivingForce,
+    LhhwDrivingForceTerm,
+    LhhwAdsorption,
+    LhhwAdsorptionTerm,
+)
+from pydantic import ValidationError as PydanticValidationError
+
+
+def _valid_lhhw_params() -> dict:
+    return {
+        "reaction_type": "LHHW",
+        "phase": "V",
+        "name": "RWGS",
+        "kinetic_factor": {"pre_exp": 0.5, "act_energy": 20.0, "t_ref": 500.0},
+        "driving_force": {
+            "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0, 0.0]},
+            "term2": {"exponents": {"CO": 1.0, "H2O": 1.0, "H2": -1.0}, "coeff": [-4.0, 4000.0]},
+        },
+        "adsorption": {
+            "power": 2.0,
+            "terms": [{"coeff": [0.0]}, {"coeff": [8.0, 0.0]}],
+            "exponents": {"H2O": [0.0, 1.0]},
+        },
+    }
+
+
+def test_lhhw_reaction_parameters_accepts_valid_structure():
+    params = ReactionParameters(**_valid_lhhw_params())
+    assert params.reaction_type == ReactionParameterType.LHHW
+    assert params.kinetic_factor.pre_exp == 0.5
+    assert params.kinetic_factor.act_energy_unit == "kcal/mol"  # default
+    assert params.driving_force.term2.exponents["H2"] == -1.0
+    assert params.adsorption.power == 2.0
+    assert len(params.adsorption.terms) == 2
+
+
+def test_lhhw_requires_all_three_blocks():
+    data = _valid_lhhw_params()
+    del data["adsorption"]
+    with pytest.raises(PydanticValidationError, match="adsorption"):
+        ReactionParameters(**data)
+
+
+def test_lhhw_forbids_power_law_fields():
+    data = _valid_lhhw_params()
+    data["pre_exponential_factor"] = 1.0
+    with pytest.raises(PydanticValidationError, match="not valid for LHHW"):
+        ReactionParameters(**data)
+
+
+def test_non_lhhw_forbids_lhhw_blocks():
+    with pytest.raises(PydanticValidationError, match="only valid for LHHW"):
+        ReactionParameters(
+            reaction_type="KINETIC",
+            phase="V",
+            pre_exponential_factor=1.0,
+            activation_energy=10.0,
+            driving_force={
+                "term1": {"exponents": {"CO2": 1.0}, "coeff": [0.0]},
+                "term2": {"exponents": {"CO": 1.0}, "coeff": [0.0]},
+            },
+        )
+
+
+def test_lhhw_adsorption_exponent_vector_length_must_match_terms():
+    data = _valid_lhhw_params()
+    data["adsorption"]["exponents"] = {"H2O": [0.0, 1.0, 0.0]}  # 3 != 2 terms
+    with pytest.raises(PydanticValidationError, match="one per adsorption term"):
+        ReactionParameters(**data)
+
+
+def test_lhhw_coeff_rejects_more_than_four():
+    data = _valid_lhhw_params()
+    data["driving_force"]["term1"]["coeff"] = [1.0, 2.0, 3.0, 4.0, 5.0]
+    with pytest.raises(PydanticValidationError, match="at most 4"):
+        ReactionParameters(**data)
+
+
+def test_lhhw_kinetic_factor_rejects_blank_act_energy_unit():
+    with pytest.raises(PydanticValidationError, match="act_energy_unit cannot be empty"):
+        LhhwKineticFactor(pre_exp=1.0, act_energy=20.0, act_energy_unit="   ")
+
+
+def test_lhhw_coeff_rejects_empty_list():
+    with pytest.raises(PydanticValidationError, match="at least one value"):
+        LhhwDrivingForceTerm(exponents={"CO2": 1.0}, coeff=[])
