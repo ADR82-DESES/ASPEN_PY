@@ -22,6 +22,36 @@ Prefer this batch-first capsule path over raw COM block creation. The COM block 
 
 If this skill conflicts with generic Aspen Plus rules, follow this skill for workflow, file selection, and implementation patterns. Use generic Aspen COM guidance only when this skill is silent.
 
+## References
+
+Deep-dive notes live in `references/`. Read the relevant one before working in that area:
+
+- `references/com-under-appsanywhere.md` — why the COM-launched engine emits the
+  zero-NRTL (zero-binary-parameter) warning under AppsAnywhere/Cloudpaging virtualization
+  while the batch engine does not, how to prove it from `context_probe.json`, why it
+  cannot be fixed COM-side, and when the warning is cosmetic vs. real.
+- `references/aspen-databank-sql.md` — where Aspen stores databank binary parameters
+  (`AspenInstance40` SQL LocalDB, `APV140`, `CompoundsBinaryNumericProperties`), how to
+  read it read-only for provenance, and the DRM boundary (values are AES-encrypted — do
+  not decrypt).
+- `references/binary-parameter-calibration.md` — the sanctioned way to recover real
+  binary-interaction coefficients: fit the model to γ that Aspen's batch engine reports on
+  a (T, x) grid (`PROP-SET GAMMA` + `STREAM-REPOR`), with the recovered methanol–water
+  NRTL values.
+- `references/nrtl-bpval-syntax.md` — the **directional, two-line** `BPVAL` rule the INP
+  generator follows for `source_type: explicit` NRTL params, the single-line bug it fixes,
+  and how to verify (`UVAL*`, γ check).
+- `references/vent-recovery-tuning.md` — closing acceptance on a rate-limited reactor by
+  recovering vented product with a dedicated `FLASH2` (temperature sweet-spot, verified
+  dead ends).
+- `references/self-similar-plant-scaling.md` — retargeting a converged deck to a new
+  nameplate (e.g. 10k TPD) by scaling fresh feeds + reactor `CAT-WT`/`LENGTH` by one factor
+  `k` while freezing intensive specs (reflux, T/P, `DIAM`); why W/F, per-pass conversion,
+  and SN stay put; the kinetics-validity caveat.
+- `references/radfrac-bottoms-rate.md` — why a `RADFRAC` `bottoms_rate` is an absolute spec
+  that must equal the column-feed water+heavies load (and be re-tracked at each scale), the
+  two failure directions, and the methanol-slip vs purity cushion trade.
+
 ## Replication Contract
 
 This skill is self-contained. It includes a working source snapshot under `assets/source/`:
